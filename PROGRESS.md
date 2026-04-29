@@ -1,6 +1,6 @@
 # test-platform 开发进度
 
-> 参考方案：`/Users/meteoroid/Documents/管理目录/无所谓.md`
+> 参考方案：`/Users/meteoroid/Documents/管理目录/DESIGN.md`
 
 ## 阶段 0：整理当前项目（iOS-Automation-Framework）
 
