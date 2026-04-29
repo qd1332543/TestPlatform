@@ -55,4 +55,4 @@ npm run dev
 
 ## 参考方案
 
-详见 `DESIGN.md`（项目规划文档）
+详见 [DESIGN.md](./DESIGN.md)（项目规划文档）
