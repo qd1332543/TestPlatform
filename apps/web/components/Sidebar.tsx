@@ -96,11 +96,18 @@ export default function Sidebar() {
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
           title={collapsed ? '展开' : '收起'}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            {collapsed
-              ? <path d="M5 2l5 5-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              : <path d="M9 2L4 7l5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            }
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            {collapsed ? (
+              <>
+                <path d="M3 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M7 5l4 3-4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </>
+            ) : (
+              <>
+                <path d="M13 3v10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                <path d="M9 5l-4 3 4 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </>
+            )}
           </svg>
         </button>
       </div>
