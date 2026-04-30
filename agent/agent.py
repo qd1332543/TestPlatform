@@ -138,7 +138,7 @@ def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
                 }
 
             if mode == "supabase":
-                report(task_id, result)
+                report(task_id, result, task=task)
             else:
                 report(config["platform"]["local_task_store"], task_id, result)
 
