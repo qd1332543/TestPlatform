@@ -1,17 +1,62 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
 const templates = [
-  { label: '📋 查询失败任务', desc: '查看最近哪些任务失败了', text: '查询最近失败的任务，列出项目名称、套件名称和失败原因' },
-  { label: '🚀 创建新项目', desc: '快速新建一个测试项目', text: '帮我创建一个新项目，项目名称：[填写名称]，标识：[填写key]，仓库地址：[填写repo_url]' },
-  { label: '▶️ 创建测试任务', desc: '为指定项目触发一次测试', text: '帮我为项目 [项目名] 的套件 [套件名] 在 [dev/staging/prod] 环境创建一个测试任务' },
-  { label: '📊 分析今日报告', desc: '汇总今天的测试结果', text: '分析今日测试报告，总结成功率、主要失败原因，并给出改进建议' },
-  { label: '🖥️ 查询执行器', desc: '查看执行器在线状态', text: '列出当前所有执行器的名称和在线状态' },
-  { label: '🔍 查询项目套件', desc: '查看某项目下的测试套件', text: '列出项目 [项目名] 下所有的测试套件' },
+  {
+    label: '失败任务',
+    icon: '🔴',
+    desc: '查看最近失败的任务',
+    text: '查询最近失败的任务，列出项目名称、套件名称和失败原因',
+  },
+  {
+    label: '创建项目',
+    icon: '📁',
+    desc: '新建一个测试项目',
+    text: '帮我创建一个新项目，项目名称：[名称]，标识：[key]，仓库地址：[repo_url]',
+  },
+  {
+    label: '触发测试',
+    icon: '▶️',
+    desc: '为项目创建测试任务',
+    text: '帮我为项目 [项目名] 的套件 [套件名] 在 [环境] 环境创建一个测试任务',
+  },
+  {
+    label: '今日报告',
+    icon: '📊',
+    desc: '汇总今天的测试结果',
+    text: '分析今日测试报告，总结成功率、主要失败原因，并给出改进建议',
+  },
+  {
+    label: '执行器状态',
+    icon: '🖥️',
+    desc: '查看执行器在线情况',
+    text: '列出当前所有执行器的名称和在线状态',
+  },
+  {
+    label: '项目套件',
+    icon: '🗂️',
+    desc: '查看项目下的套件列表',
+    text: '列出项目 [项目名] 下所有的测试套件',
+  },
 ]
+
+// Parse template text into segments: plain text and [param] placeholders
+function parseTemplate(text: string): { type: 'text' | 'param'; value: string }[] {
+  const parts: { type: 'text' | 'param'; value: string }[] = []
+  const regex = /\[([^\]]+)\]/g
+  let last = 0
+  let m
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > last) parts.push({ type: 'text', value: text.slice(last, m.index) })
+    parts.push({ type: 'param', value: m[1] })
+    last = m.index + m[0].length
+  }
+  if (last < text.length) parts.push({ type: 'text', value: text.slice(last) })
+  return parts
+}
 
 export default function AiPage() {
   const [input, setInput] = useState('')
@@ -24,9 +69,45 @@ export default function AiPage() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  function applyTemplate(text: string) {
+  // Apply template: fill input and select first [param]
+  const applyTemplate = useCallback((text: string) => {
     setInput(text)
-    inputRef.current?.focus()
+    setTimeout(() => {
+      const el = inputRef.current
+      if (!el) return
+      const idx = text.indexOf('[')
+      const end = text.indexOf(']')
+      if (idx !== -1 && end !== -1) {
+        el.focus()
+        el.setSelectionRange(idx, end + 1)
+      } else {
+        el.focus()
+      }
+    }, 0)
+  }, [])
+
+  // Tab key: jump to next [param] in input
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      const el = inputRef.current
+      if (!el) return
+      const val = el.value
+      const cursor = el.selectionEnd ?? 0
+      // Find next [ after cursor
+      const next = val.indexOf('[', cursor)
+      const nextEnd = val.indexOf(']', next)
+      if (next !== -1 && nextEnd !== -1) {
+        el.setSelectionRange(next, nextEnd + 1)
+      } else {
+        // Wrap around to first [
+        const first = val.indexOf('[')
+        const firstEnd = val.indexOf(']', first)
+        if (first !== -1 && firstEnd !== -1) el.setSelectionRange(first, firstEnd + 1)
+      }
+    } else if (e.key === 'Enter' && !e.shiftKey) {
+      handleSend()
+    }
   }
 
   async function handleSend() {
@@ -53,43 +134,43 @@ export default function AiPage() {
 
   return (
     <div className="flex flex-col h-full max-w-3xl mx-auto">
-      <div className="mb-6">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white text-lg shadow-md shadow-indigo-200">✦</div>
-          <div>
-            <h1 className="text-xl font-semibold text-gray-900">AI 助手</h1>
-            <p className="text-xs text-gray-400">由 DeepSeek 驱动 · 可创建项目、任务、分析报告</p>
-          </div>
+      {/* Header */}
+      <div className="mb-5 flex items-center gap-3">
+        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xl shadow-lg shadow-indigo-200">✦</div>
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 leading-tight">AI 助手</h1>
+          <p className="text-xs text-gray-400">DeepSeek · 创建项目 / 触发测试 / 分析报告</p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto space-y-4 min-h-0 pb-4">
+      {/* Messages */}
+      <div className="flex-1 overflow-auto space-y-4 min-h-0 pb-2">
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center text-3xl text-indigo-400">✦</div>
+          <div className="flex flex-col items-center justify-center h-full gap-3 text-center select-none">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-indigo-50 to-violet-50 flex items-center justify-center text-4xl">✦</div>
             <div>
-              <p className="text-gray-700 font-medium">你好，我是 AI 助手</p>
-              <p className="text-sm text-gray-400 mt-1">可以帮你分析测试结果、创建任务、查询报告</p>
+              <p className="text-gray-800 font-semibold text-base">你好，我是 AI 助手</p>
+              <p className="text-sm text-gray-400 mt-1">选择下方模板快速开始，或直接输入问题</p>
             </div>
           </div>
         )}
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'assistant' && (
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-xs mr-2 mt-0.5 shrink-0">✦</div>
+              <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs shrink-0 mt-0.5 shadow-sm">✦</div>
             )}
-            <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${
+            <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed shadow-sm ${
               m.role === 'user'
-                ? 'bg-indigo-600 text-white rounded-tr-sm'
-                : 'bg-white text-gray-800 border border-gray-100 shadow-sm rounded-tl-sm'
+                ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-tr-sm'
+                : 'bg-white text-gray-800 border border-gray-100 rounded-tl-sm'
             }`}>
               {m.content}
             </div>
           </div>
         ))}
         {loading && (
-          <div className="flex justify-start">
-            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white text-xs mr-2 mt-0.5 shrink-0">✦</div>
+          <div className="flex gap-2 justify-start">
+            <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-xs shrink-0 mt-0.5 shadow-sm">✦</div>
             <div className="px-4 py-3 rounded-2xl rounded-tl-sm bg-white border border-gray-100 shadow-sm">
               <div className="flex gap-1 items-center h-4">
                 <span className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -102,38 +183,51 @@ export default function AiPage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* 模板块 */}
-      <div className="grid grid-cols-3 gap-2 mb-3">
-        {templates.map(t => (
-          <button
-            key={t.label}
-            onClick={() => applyTemplate(t.text)}
-            className="flex flex-col items-start px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-left hover:border-indigo-300 hover:bg-indigo-50 transition-colors group"
-          >
-            <span className="text-xs font-medium text-gray-700 group-hover:text-indigo-700">{t.label}</span>
-            <span className="text-xs text-gray-400 mt-0.5 group-hover:text-indigo-400">{t.desc}</span>
-          </button>
-        ))}
+      {/* Templates */}
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        {templates.map(t => {
+          const parts = parseTemplate(t.text)
+          return (
+            <button
+              key={t.label}
+              onClick={() => applyTemplate(t.text)}
+              className="flex flex-col items-start px-3 py-3 bg-white border border-gray-100 rounded-2xl text-left hover:border-indigo-200 hover:shadow-md hover:shadow-indigo-50 transition-all group shadow-sm"
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-base leading-none">{t.icon}</span>
+                <span className="text-xs font-semibold text-gray-700 group-hover:text-indigo-700">{t.label}</span>
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed line-clamp-2">
+                {parts.map((p, i) =>
+                  p.type === 'param'
+                    ? <span key={i} className="text-indigo-400 font-medium">[{p.value}]</span>
+                    : <span key={i}>{p.value}</span>
+                )}
+              </p>
+            </button>
+          )
+        })}
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-100 pt-3">
-        <div className="flex gap-2 bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm focus-within:border-indigo-300 focus-within:shadow-indigo-100 focus-within:shadow-md transition-all">
+      <div className="mt-3">
+        <div className="flex gap-2 bg-white border border-gray-200 rounded-2xl px-4 py-2.5 shadow-sm focus-within:border-indigo-300 focus-within:shadow-md focus-within:shadow-indigo-100 transition-all">
           <input
             ref={inputRef}
-            className="flex-1 text-sm text-gray-900 placeholder-gray-400 outline-none bg-transparent py-1"
-            placeholder="输入消息，按 Enter 发送..."
+            className="flex-1 text-sm text-gray-900 placeholder-gray-400 outline-none bg-transparent py-0.5"
+            placeholder="输入消息，Tab 切换参数，Enter 发送..."
             value={input}
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend()}
+            onKeyDown={handleKeyDown}
             disabled={loading}
           />
           <button
             onClick={handleSend}
             disabled={loading || !input.trim()}
-            className="px-4 py-1.5 bg-indigo-600 text-white text-sm rounded-xl hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-1.5 bg-gradient-to-r from-indigo-600 to-violet-600 text-white text-sm rounded-xl hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity font-medium"
           >发送</button>
         </div>
+        <p className="text-xs text-gray-400 mt-1.5 px-1">点击模板后用 <kbd className="px-1 py-0.5 bg-gray-100 rounded text-gray-500 font-mono text-xs">Tab</kbd> 键跳转到下一个参数</p>
       </div>
     </div>
   )
