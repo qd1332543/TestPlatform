@@ -6,8 +6,8 @@ import json
 import httpx
 from pathlib import Path
 
-CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
-MODEL = "claude-sonnet-4-6"
+DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions"
+MODEL = "deepseek-chat"
 MAX_LOG_CHARS = 8000
 
 
@@ -23,7 +23,7 @@ def _read_log(log_path: str | None) -> str:
 
 def analyze_failure(task: dict, exec_result: dict) -> dict:
     """调用 Claude API 分析失败原因，返回结构化分析结果"""
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    api_key = os.environ.get("DEEPSEEK_API_KEY", "")
     if not api_key:
         return {}
 
@@ -47,10 +47,9 @@ Return ONLY a JSON object with these fields:
 """
 
     resp = httpx.post(
-        CLAUDE_API_URL,
+        DEEPSEEK_API_URL,
         headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
+            "Authorization": f"Bearer {api_key}",
             "content-type": "application/json",
         },
         json={
@@ -61,7 +60,7 @@ Return ONLY a JSON object with these fields:
         timeout=60,
     )
     resp.raise_for_status()
-    raw = resp.json()["content"][0]["text"]
+    raw = resp.json()["choices"][0]["message"]["content"]
 
     try:
         # 提取 JSON（Claude 可能包裹在 ```json 中）

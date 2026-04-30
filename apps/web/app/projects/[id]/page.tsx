@@ -10,12 +10,13 @@ type TestSuiteRow = {
   command: string
 }
 
-export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
+export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: project } = await supabase
     .from('projects')
     .select('*, test_suites(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!project) notFound()

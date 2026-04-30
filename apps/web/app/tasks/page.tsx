@@ -24,7 +24,8 @@ function relationName(relation: { name: string } | { name: string }[] | null) {
   return Array.isArray(relation) ? relation[0]?.name : relation?.name
 }
 
-export default async function TasksPage({ searchParams }: { searchParams: { status?: string } }) {
+export default async function TasksPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  const { status } = await searchParams
   const supabase = await createClient()
   let query = supabase
     .from('tasks')
@@ -32,7 +33,7 @@ export default async function TasksPage({ searchParams }: { searchParams: { stat
     .order('created_at', { ascending: false })
     .limit(50)
 
-  if (searchParams.status) query = query.eq('status', searchParams.status)
+  if (status) query = query.eq('status', status)
 
   const { data: tasks } = await query
 
@@ -56,7 +57,7 @@ export default async function TasksPage({ searchParams }: { searchParams: { stat
           <Link
             key={f.value}
             href={f.value ? `/tasks?status=${f.value}` : '/tasks'}
-            className={`px-3 py-1 rounded border ${searchParams.status === f.value || (!searchParams.status && !f.value) ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-gray-200 hover:bg-gray-50'}`}
+            className={`px-3 py-1 rounded border ${status === f.value || (!status && !f.value) ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-gray-200 hover:bg-gray-50'}`}
           >{f.label}</Link>
         ))}
       </div>

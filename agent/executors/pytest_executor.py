@@ -36,6 +36,9 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
         **parameters,
     }
     command = _format_command(suite["command"], format_values)
+    # macOS 上 python 命令不存在，替换为 python3
+    if command.startswith("python "):
+        command = "python3" + command[6:]
 
     # 如果 suite 有 allure 报告且命令未显式声明 --alluredir，则注入默认目录。
     allure_dir = None
