@@ -78,7 +78,7 @@ def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
 
             task_id = task["id"]
             suite_id = task["suite_id"]
-            retry_count = task.get("parameters", {}).get("_retry_count", 0)
+            retry_count = (task.get("parameters") or {}).get("_retry_count", 0)
 
             # 锁定任务
             locked = lock_task(task_id, executor_id) if mode == "supabase" else lock_task(

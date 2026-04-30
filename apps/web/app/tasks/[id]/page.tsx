@@ -6,12 +6,13 @@ const statusColor: Record<string, string> = {
   failed: 'text-red-500', cancelled: 'text-gray-400', timeout: 'text-orange-500',
 }
 
-export default async function TaskDetailPage({ params }: { params: { id: string } }) {
+export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await createClient()
   const { data: task } = await supabase
     .from('tasks')
     .select('*, projects(name), test_suites(name, command), executors(name), reports(*), ai_analyses(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (!task) notFound()

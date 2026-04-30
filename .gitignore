@@ -13,3 +13,7 @@ __pycache__/
 .pytest-tmp/
 pytest-cache-files-*/
 .test-platform-agent/
+
+# Agent local config (contains sensitive paths)
+agent/config.yaml
+agent/.venv/

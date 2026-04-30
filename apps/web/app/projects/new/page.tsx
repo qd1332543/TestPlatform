@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 
 type ProjectForm = {
   key: string
@@ -22,13 +21,20 @@ export default function NewProjectPage() {
   const router = useRouter()
   const [form, setForm] = useState({ key: '', name: '', repo_url: '', description: '' })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    const supabase = createClient()
-    const { error } = await supabase.from('projects').insert(form)
-    if (error) { setError(error.message); return }
+    setLoading(true)
+    const res = await fetch('/api/projects', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    const data = await res.json()
+    setLoading(false)
+    if (!res.ok) { setError(data.error ?? '创建失败'); return }
     router.push('/projects')
   }
 
@@ -40,7 +46,7 @@ export default function NewProjectPage() {
           <div key={key}>
             <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
             <input
-              className="w-full border border-gray-200 rounded px-3 py-2 text-sm"
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm text-gray-900 bg-white placeholder-gray-400"
               placeholder={placeholder}
               value={form[key]}
               onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
@@ -49,8 +55,8 @@ export default function NewProjectPage() {
           </div>
         ))}
         {error && <p className="text-sm text-red-500">{error}</p>}
-        <button type="submit" className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
-          创建
+        <button type="submit" disabled={loading} className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:opacity-50">
+          {loading ? '创建中...' : '创建'}
         </button>
       </form>
     </div>
