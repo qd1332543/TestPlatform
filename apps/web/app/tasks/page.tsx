@@ -5,9 +5,13 @@ const statusMap: Record<string, string> = {
   queued: '排队中', running: '执行中', succeeded: '成功',
   failed: '失败', cancelled: '已取消', timeout: '超时',
 }
-const statusColor: Record<string, string> = {
-  queued: 'text-gray-500', running: 'text-blue-500', succeeded: 'text-green-600',
-  failed: 'text-red-500', cancelled: 'text-gray-400', timeout: 'text-orange-500',
+const statusStyle: Record<string, string> = {
+  queued: 'bg-gray-100 text-gray-600',
+  running: 'bg-blue-50 text-blue-600',
+  succeeded: 'bg-green-50 text-green-700',
+  failed: 'bg-red-50 text-red-600',
+  cancelled: 'bg-gray-100 text-gray-400',
+  timeout: 'bg-orange-50 text-orange-600',
 }
 
 type TaskRow = {
@@ -34,7 +38,6 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     .limit(50)
 
   if (status) query = query.eq('status', status)
-
   const { data: tasks } = await query
 
   const filters = [
@@ -47,45 +50,60 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   ]
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 max-w-5xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">任务中心</h1>
-        <Link href="/tasks/new" className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">新建任务</Link>
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">任务中心</h1>
+          <p className="text-sm text-gray-400 mt-1">查看和管理测试任务</p>
+        </div>
+        <Link href="/tasks/new" className="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 font-medium transition-colors">新建任务</Link>
       </div>
-      <div className="flex gap-2 text-sm">
+
+      <div className="flex gap-2">
         {filters.map(f => (
           <Link
             key={f.value}
             href={f.value ? `/tasks?status=${f.value}` : '/tasks'}
-            className={`px-3 py-1 rounded border ${status === f.value || (!status && !f.value) ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-gray-200 hover:bg-gray-50'}`}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              status === f.value || (!status && !f.value)
+                ? 'bg-indigo-600 text-white'
+                : 'bg-white border border-gray-200 text-gray-600 hover:border-indigo-300 hover:text-indigo-600'
+            }`}
           >{f.label}</Link>
         ))}
       </div>
-      <div className="bg-white rounded-lg border border-gray-200">
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="border-b border-gray-100">
-            <tr className="text-left text-gray-500">
-              <th className="px-4 py-3 font-medium">项目</th>
-              <th className="px-4 py-3 font-medium">套件</th>
-              <th className="px-4 py-3 font-medium">环境</th>
-              <th className="px-4 py-3 font-medium">状态</th>
-              <th className="px-4 py-3 font-medium">执行器</th>
-              <th className="px-4 py-3 font-medium">时间</th>
-              <th className="px-4 py-3 font-medium">操作</th>
+          <thead>
+            <tr className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-50">
+              <th className="px-5 py-3 font-medium">项目</th>
+              <th className="px-5 py-3 font-medium">套件</th>
+              <th className="px-5 py-3 font-medium">环境</th>
+              <th className="px-5 py-3 font-medium">状态</th>
+              <th className="px-5 py-3 font-medium">执行器</th>
+              <th className="px-5 py-3 font-medium">时间</th>
+              <th className="px-5 py-3 font-medium">操作</th>
             </tr>
           </thead>
           <tbody>
             {!tasks?.length ? (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">暂无任务</td></tr>
+              <tr><td colSpan={7} className="px-5 py-10 text-center text-gray-400">暂无任务</td></tr>
             ) : (tasks as TaskRow[]).map((t) => (
-              <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50">
-                <td className="px-4 py-3">{relationName(t.projects) ?? '-'}</td>
-                <td className="px-4 py-3">{relationName(t.test_suites) ?? '-'}</td>
-                <td className="px-4 py-3">{t.environment}</td>
-                <td className={`px-4 py-3 font-medium ${statusColor[t.status]}`}>{statusMap[t.status] ?? t.status}</td>
-                <td className="px-4 py-3 text-gray-400">{relationName(t.executors) ?? '-'}</td>
-                <td className="px-4 py-3 text-gray-400">{new Date(t.created_at).toLocaleString('zh-CN')}</td>
-                <td className="px-4 py-3"><Link href={`/tasks/${t.id}`} className="text-blue-600 hover:underline">详情</Link></td>
+              <tr key={t.id} className="border-b border-gray-50 last:border-0 hover:bg-slate-50 transition-colors">
+                <td className="px-5 py-3 font-medium text-gray-900">{relationName(t.projects) ?? '-'}</td>
+                <td className="px-5 py-3 text-gray-600">{relationName(t.test_suites) ?? '-'}</td>
+                <td className="px-5 py-3 text-gray-500">{t.environment}</td>
+                <td className="px-5 py-3">
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusStyle[t.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                    {statusMap[t.status] ?? t.status}
+                  </span>
+                </td>
+                <td className="px-5 py-3 text-gray-400">{relationName(t.executors) ?? '-'}</td>
+                <td className="px-5 py-3 text-gray-400">{new Date(t.created_at).toLocaleString('zh-CN')}</td>
+                <td className="px-5 py-3">
+                  <Link href={`/tasks/${t.id}`} className="text-indigo-600 hover:text-indigo-800 font-medium transition-colors">详情</Link>
+                </td>
               </tr>
             ))}
           </tbody>
