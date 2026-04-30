@@ -6,6 +6,7 @@ type SuiteEntry = { id?: string; key?: string; suite_key?: string; name?: string
 type Contract = { suites?: SuiteEntry[] }
 
 const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   let contract: Contract
   try {
-    contract = yaml.load(yml)
+    contract = yaml.load(yml) as Contract
   } catch {
     return NextResponse.json({ error: 'YAML 解析失败' }, { status: 400 })
   }
