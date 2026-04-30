@@ -49,7 +49,7 @@ export default async function Dashboard() {
   ]
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-8 w-full">
       <div>
         <h1 className="text-2xl font-bold text-white">Dashboard</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>今日测试概览</p>

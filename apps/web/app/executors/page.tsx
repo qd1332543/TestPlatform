@@ -13,7 +13,7 @@ export default async function ExecutorsPage() {
     .order('status')
 
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 w-full">
       <div>
         <h1 className="text-2xl font-bold text-white">执行器</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>管理自动化测试执行节点</p>

@@ -36,7 +36,7 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-lg">
+    <div className="space-y-6 max-w-xl">
       <div>
         <h1 className="text-2xl font-bold text-white">新建项目</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>填写项目基本信息</p>
