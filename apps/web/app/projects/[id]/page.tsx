@@ -3,6 +3,13 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ImportSuitesForm from '@/components/ImportSuitesForm'
 
+type TestSuiteRow = {
+  id: string
+  name: string
+  type: string
+  command: string
+}
+
 export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
   const { data: project } = await supabase
@@ -42,7 +49,7 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
               </tr>
             </thead>
             <tbody>
-              {project.test_suites.map((s: any) => (
+              {(project.test_suites as TestSuiteRow[]).map((s) => (
                 <tr key={s.id} className="border-b border-gray-50">
                   <td className="px-4 py-3">{s.name}</td>
                   <td className="px-4 py-3 text-gray-500">{s.type}</td>

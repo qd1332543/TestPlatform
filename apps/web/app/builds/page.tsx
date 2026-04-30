@@ -1,6 +1,20 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
+type BuildRow = {
+  id: string
+  platform: string
+  version: string
+  build_number: string | null
+  artifact_url: string
+  created_at: string
+  projects: { name: string } | { name: string }[] | null
+}
+
+function relationName(relation: { name: string } | { name: string }[] | null) {
+  return Array.isArray(relation) ? relation[0]?.name : relation?.name
+}
+
 export default async function BuildsPage() {
   const supabase = await createClient()
   const { data: builds } = await supabase
@@ -30,9 +44,9 @@ export default async function BuildsPage() {
           <tbody>
             {!builds?.length ? (
               <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-400">暂无构建产物</td></tr>
-            ) : builds.map((b: any) => (
+            ) : (builds as BuildRow[]).map((b) => (
               <tr key={b.id} className="border-b border-gray-50 hover:bg-gray-50">
-                <td className="px-4 py-3">{b.projects?.name ?? '-'}</td>
+                <td className="px-4 py-3">{relationName(b.projects) ?? '-'}</td>
                 <td className="px-4 py-3">{b.platform}</td>
                 <td className="px-4 py-3">{b.version}</td>
                 <td className="px-4 py-3 text-gray-400">{b.build_number ?? '-'}</td>

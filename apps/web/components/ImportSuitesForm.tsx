@@ -22,7 +22,7 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
       setStatus(`成功导入 ${data.imported} 个套件`)
       setYml('')
       router.refresh()
-    } catch (e) {
+    } catch {
       setStatus('请求失败')
     }
   }
