@@ -5,11 +5,12 @@ import { useState, useRef, useEffect } from 'react'
 type Message = { role: 'user' | 'assistant'; content: string }
 
 const templates = [
-  { label: '查询失败任务', text: '查询最近失败的任务，列出项目名称、套件和失败原因' },
-  { label: '创建项目', text: '帮我创建一个新项目，项目名称：[名称]，标识：[key]，仓库：[repo_url]' },
-  { label: '创建任务', text: '帮我为项目 [项目名] 的套件 [套件名] 在 [dev/staging/prod] 环境创建一个测试任务' },
-  { label: '分析报告', text: '分析今日测试报告，总结成功率、主要失败原因和建议' },
-  { label: '查询执行器', text: '列出当前所有执行器的状态' },
+  { label: '📋 查询失败任务', desc: '查看最近哪些任务失败了', text: '查询最近失败的任务，列出项目名称、套件名称和失败原因' },
+  { label: '🚀 创建新项目', desc: '快速新建一个测试项目', text: '帮我创建一个新项目，项目名称：[填写名称]，标识：[填写key]，仓库地址：[填写repo_url]' },
+  { label: '▶️ 创建测试任务', desc: '为指定项目触发一次测试', text: '帮我为项目 [项目名] 的套件 [套件名] 在 [dev/staging/prod] 环境创建一个测试任务' },
+  { label: '📊 分析今日报告', desc: '汇总今天的测试结果', text: '分析今日测试报告，总结成功率、主要失败原因，并给出改进建议' },
+  { label: '🖥️ 查询执行器', desc: '查看执行器在线状态', text: '列出当前所有执行器的名称和在线状态' },
+  { label: '🔍 查询项目套件', desc: '查看某项目下的测试套件', text: '列出项目 [项目名] 下所有的测试套件' },
 ]
 
 export default function AiPage() {
@@ -102,13 +103,16 @@ export default function AiPage() {
       </div>
 
       {/* 模板块 */}
-      <div className="flex gap-2 flex-wrap mb-3">
+      <div className="grid grid-cols-3 gap-2 mb-3">
         {templates.map(t => (
           <button
             key={t.label}
             onClick={() => applyTemplate(t.text)}
-            className="px-3 py-1.5 text-xs bg-white border border-gray-200 rounded-full text-gray-600 hover:border-indigo-300 hover:text-indigo-600 transition-colors"
-          >{t.label}</button>
+            className="flex flex-col items-start px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-left hover:border-indigo-300 hover:bg-indigo-50 transition-colors group"
+          >
+            <span className="text-xs font-medium text-gray-700 group-hover:text-indigo-700">{t.label}</span>
+            <span className="text-xs text-gray-400 mt-0.5 group-hover:text-indigo-400">{t.desc}</span>
+          </button>
         ))}
       </div>
 
