@@ -160,7 +160,7 @@ export default function AiPage() {
   }
 
   return (
-    <div className="flex flex-col h-full max-w-3xl mx-auto">
+    <div className="flex flex-col h-full w-full max-w-3xl mx-auto min-w-0">
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg"
@@ -172,7 +172,7 @@ export default function AiPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto space-y-4 min-h-0 pb-2">
+      <div className="flex-1 overflow-y-auto space-y-4 min-h-0 pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#1E2D45 transparent' }}>
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center select-none">
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
