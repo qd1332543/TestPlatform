@@ -10,6 +10,20 @@ const statusColor: Record<string, string> = {
   failed: 'text-red-500', cancelled: 'text-gray-400', timeout: 'text-orange-500',
 }
 
+type TaskRow = {
+  id: string
+  status: string
+  environment: string
+  created_at: string
+  projects: { name: string } | { name: string }[] | null
+  test_suites: { name: string } | { name: string }[] | null
+  executors: { name: string } | { name: string }[] | null
+}
+
+function relationName(relation: { name: string } | { name: string }[] | null) {
+  return Array.isArray(relation) ? relation[0]?.name : relation?.name
+}
+
 export default async function TasksPage({ searchParams }: { searchParams: { status?: string } }) {
   const supabase = await createClient()
   let query = supabase
@@ -62,13 +76,13 @@ export default async function TasksPage({ searchParams }: { searchParams: { stat
           <tbody>
             {!tasks?.length ? (
               <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">暂无任务</td></tr>
-            ) : tasks.map((t: any) => (
+            ) : (tasks as TaskRow[]).map((t) => (
               <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50">
-                <td className="px-4 py-3">{t.projects?.name ?? '-'}</td>
-                <td className="px-4 py-3">{t.test_suites?.name ?? '-'}</td>
+                <td className="px-4 py-3">{relationName(t.projects) ?? '-'}</td>
+                <td className="px-4 py-3">{relationName(t.test_suites) ?? '-'}</td>
                 <td className="px-4 py-3">{t.environment}</td>
                 <td className={`px-4 py-3 font-medium ${statusColor[t.status]}`}>{statusMap[t.status] ?? t.status}</td>
-                <td className="px-4 py-3 text-gray-400">{t.executors?.name ?? '-'}</td>
+                <td className="px-4 py-3 text-gray-400">{relationName(t.executors) ?? '-'}</td>
                 <td className="px-4 py-3 text-gray-400">{new Date(t.created_at).toLocaleString('zh-CN')}</td>
                 <td className="px-4 py-3"><Link href={`/tasks/${t.id}`} className="text-blue-600 hover:underline">详情</Link></td>
               </tr>

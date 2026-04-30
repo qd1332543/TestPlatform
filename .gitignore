@@ -2,10 +2,14 @@ node_modules/
 .next/
 .env.local
 *.env
+*.log
 .DS_Store
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
+.pytest_cache/
+.pytest-tmp/
+pytest-cache-files-*/
 .test-platform-agent/

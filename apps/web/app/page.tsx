@@ -1,6 +1,19 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
+type RecentTaskRow = {
+  id: string
+  status: string
+  environment: string
+  created_at: string
+  projects: { name: string } | { name: string }[] | null
+  test_suites: { name: string } | { name: string }[] | null
+}
+
+function relationName(relation: { name: string } | { name: string }[] | null) {
+  return Array.isArray(relation) ? relation[0]?.name : relation?.name
+}
+
 export default async function Dashboard() {
   const supabase = await createClient()
 
@@ -83,10 +96,10 @@ export default async function Dashboard() {
               </tr>
             </thead>
             <tbody>
-              {recentTasks.map((t: any) => (
+              {(recentTasks as RecentTaskRow[]).map((t) => (
                 <tr key={t.id} className="border-b border-gray-50 hover:bg-gray-50">
-                  <td className="px-4 py-3">{t.projects?.name ?? '-'}</td>
-                  <td className="px-4 py-3">{t.test_suites?.name ?? '-'}</td>
+                  <td className="px-4 py-3">{relationName(t.projects) ?? '-'}</td>
+                  <td className="px-4 py-3">{relationName(t.test_suites) ?? '-'}</td>
                   <td className="px-4 py-3">{t.environment}</td>
                   <td className={`px-4 py-3 font-medium ${statusColor[t.status] ?? ''}`}>{t.status}</td>
                   <td className="px-4 py-3 text-gray-400">{new Date(t.created_at).toLocaleString('zh-CN')}</td>

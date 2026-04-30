@@ -34,6 +34,9 @@ def find_repo(config: dict, project_key: str) -> str:
 def _setup_supabase_env(config: dict):
     os.environ.setdefault("SUPABASE_URL", config["platform"].get("supabase_url", ""))
     key_env = config["platform"].get("supabase_service_role_key_env", "SUPABASE_SERVICE_ROLE_KEY")
+    bucket = config.get("artifacts", {}).get("supabase_bucket")
+    if bucket:
+        os.environ.setdefault("SUPABASE_ARTIFACT_BUCKET", bucket)
     if not os.environ.get("SUPABASE_URL"):
         raise ValueError("SUPABASE_URL is not set")
     if not os.environ.get(key_env):
@@ -60,9 +63,9 @@ def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
     else:
         from agent.services.task_client import get_queued_task, lock_task, update_task
         from agent.reporters.local_reporter import report
+        from agent.services.artifact_downloader import download_artifact
         executor_id = None
         get_suite_info = None
-        download_artifact = None
 
     log.info(f"Polling every {poll_interval}s (mode={mode}) ...")
 
@@ -88,8 +91,13 @@ def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
             log.info(f"Picked up task {task_id}: suite={suite_id} retry={retry_count}")
 
             try:
+                parameters = task.get("parameters") or {}
+                parameters.setdefault("environment", task.get("environment", ""))
+
                 if mode == "supabase":
                     suite_row = get_suite_info(suite_id)
+                    if not suite_row:
+                        raise KeyError(f"Suite '{suite_id}' not found")
                     project_key = suite_row["projects"]["key"]
                     repo_path = find_repo(config, project_key)
                     contract = load_contract(repo_path)
@@ -108,14 +116,20 @@ def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
                         if build_info:
                             artifact_dir = str(Path(output_root) / task_id / "artifacts")
                             local_path = download_artifact(build_info["artifact_url"], artifact_dir)
+                            parameters["app_path"] = local_path
+                            parameters["app_platform"] = build_info.get("platform")
                             log.info(f"Downloaded artifact to {local_path}")
                 else:
                     project_key = task["project_key"]
                     repo_path = find_repo(config, project_key)
                     contract = load_contract(repo_path)
                     suite = get_suite(contract, suite_id)
+                    app_url = parameters.get("app_url")
+                    if app_url and not parameters.get("app_path"):
+                        artifact_dir = str(Path(output_root) / task_id / "artifacts")
+                        parameters["app_path"] = download_artifact(app_url, artifact_dir)
 
-                result = run_suite(suite, repo_path, output_root, task_id)
+                result = run_suite(suite, repo_path, output_root, task_id, parameters=parameters)
 
             except Exception as e:
                 log.error(f"Task {task_id} error: {e}")
