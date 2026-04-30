@@ -86,7 +86,7 @@ test-platform
 - 云鹿商城 iOS UI 自动化测试。
 - 云鹿商城性能测试。
 - 提供可被平台识别的测试套件配置。
-- 运行本地 Agent，作为第一个执行样板。
+- 作为第一个测试项目接入样板，验证平台执行协议。
 
 当前项目不应该承担：
 
@@ -96,6 +96,43 @@ test-platform
 - 通用任务调度中心。
 - 三端统一产品界面。
 - 多租户能力。
+- 通用 Local Agent 的长期实现。
+
+### 3.3 被测 App、测试工程与执行器边界
+
+平台接入移动端项目时，需要区分三个对象：
+
+| 对象 | 说明 | 示例 |
+|---|---|---|
+| 被测 App / App Artifact | 待测试的安装包或构建产物 | `.ipa`、`.apk`、TestFlight 包、内部构建链接 |
+| 自动化测试工程 | 存放怎么测的代码和配置 | `iOS-Automation-Framework`、Android UI 测试仓库 |
+| 执行器 / Local Agent | 领取平台任务并在真实环境中运行测试 | 本地 Mac Agent、GitHub Actions Executor、云真机 Executor |
+
+`iOS-Automation-Framework` 不是被测 App，也不应该长期作为通用执行器。它的核心职责是提供测试套件、测试脚本、业务断言、Page Object、测试数据和 `test-platform.yml` 接入描述。
+
+平台可以直接管理 `.ipa` / `.apk` 包，但如果没有对应测试套件，只能做安装、启动、崩溃检测、基础 smoke 或探索性测试。完整业务回归仍需要自动化测试工程提供稳定脚本和断言。
+
+推荐执行链路：
+
+```text
+ipa / apk / build_url
+  -> 作为任务参数或 app_build 记录进入平台
+
+TestPlatform
+  -> 创建任务、选择项目、套件、环境和构建产物
+
+Local Agent
+  -> 领取任务、下载安装包、准备设备、调用测试工程命令
+
+iOS-Automation-Framework
+  -> 执行 pytest / Appium / Locust 用例并生成报告
+
+Local Agent
+  -> 上传日志、截图、Allure 报告并更新任务状态
+
+TestPlatform
+  -> 展示结果、趋势和 AI 分析
+```
 
 ---
 
@@ -124,6 +161,7 @@ test-platform
 | Test Repository | 自动化测试代码仓库 |
 | Test Suite | 测试套件，例如登录 API、购物车 UI、全量回归 |
 | Test Case | 单条测试用例，后续用于更细粒度管理 |
+| App Build | 被测 App 构建产物，例如 ipa、apk、构建链接 |
 | Environment | 测试环境，例如 dev、staging、prod |
 | Device | 本地真机、模拟器、云真机 |
 | Executor | 执行器，例如本地 Mac、GitHub Actions、云真机农场 |
@@ -287,6 +325,13 @@ test-platform/
 │   │   └── package.json
 │   └── mobile/
 │       └── README.md
+├── agent/
+│   ├── README.md
+│   ├── agent.py
+│   ├── config.example.yaml
+│   ├── executors/
+│   ├── services/
+│   └── reporters/
 ├── packages/
 │   ├── shared/
 │   ├── api-client/
@@ -340,6 +385,18 @@ test-platform/
 
 负责数据库迁移和可选 Edge Functions。
 
+### 10.5 agent
+
+短期内 Local Agent 放在平台仓库的 `agent/` 目录中开发，作为平台执行协议的参考实现。
+
+这样做的原因：
+
+- 平台表结构、任务状态机、任务锁定协议和 Agent 可以同步演进。
+- MVP 阶段不需要维护多个仓库和版本兼容。
+- 方便一个人快速跑通“创建任务 -> 执行测试 -> 回传报告”的闭环。
+
+中长期如果出现多机器安装、独立版本发布、自动升级、多执行器插件化等需求，再拆分为独立仓库或独立包，例如 `test-platform-agent`。
+
 ---
 
 ## 11. 当前项目改造方案
@@ -353,9 +410,15 @@ iOS-Automation-Framework/
 ├── Performance/
 ├── Reports/
 ├── tools/webui/
-├── agent/
 └── test-platform.yml
 ```
+
+改造目标：
+
+- 保留测试工程职责：API/UI/性能测试、Page Object、测试数据、Allure 输出。
+- 新增平台接入协议：`test-platform.yml` 描述项目、套件、命令、环境依赖和产物目录。
+- 弱化本地 Web 控制台：`tools/webui` 只作为单项目本地调试 Demo，不作为平台中心。
+- 不在测试工程中长期放置通用 Agent。通用 Local Agent 暂时放在 `TestPlatform/agent`。
 
 ### 11.1 新增 test-platform.yml
 
@@ -399,10 +462,10 @@ suites:
     command: locust -f Performance/locust_scripts/locustfile.py --headless
 ```
 
-### 11.2 新增 agent 目录
+### 11.2 Local Agent 放在平台仓库
 
 ```text
-agent/
+test-platform/agent/
 ├── agent.py
 ├── config.example.yaml
 ├── executors/
@@ -427,6 +490,14 @@ Agent 职责：
 - 收集日志、截图、Allure 报告。
 - 上传产物。
 - 更新任务状态。
+
+`iOS-Automation-Framework` 只需要保证测试命令可以被 Agent 调用，例如：
+
+```bash
+pytest API_Automation/cases -v --alluredir=Reports/platform/api/allure-results
+pytest UI_Automation/Tests -v -n 0 --alluredir=Reports/platform/ui/allure-results
+locust -f Performance/locust_scripts/locustfile.py --headless
+```
 
 ### 11.3 保留 tools/webui
 
@@ -476,13 +547,29 @@ Agent 职责：
 | capabilities | 能力标签 |
 | last_heartbeat_at | 最近心跳时间 |
 
-### 12.4 tasks
+### 12.4 app_builds
+
+| 字段 | 说明 |
+|---|---|
+| id | 构建产物 ID |
+| project_id | 所属项目 |
+| platform | ios / android |
+| version | App 版本 |
+| build_number | 构建号 |
+| git_commit | 业务 App 源码 commit，可选 |
+| artifact_url | ipa / apk / 构建产物下载地址 |
+| bundle_id | iOS Bundle ID，可选 |
+| package_name | Android package name，可选 |
+| created_at | 创建时间 |
+
+### 12.5 tasks
 
 | 字段 | 说明 |
 |---|---|
 | id | 任务 ID |
 | project_id | 项目 ID |
 | suite_id | 测试套件 ID |
+| app_build_id | 被测 App 构建产物 ID，可选 |
 | environment | 测试环境 |
 | status | queued / running / succeeded / failed / timeout / cancelled |
 | executor_id | 执行器 ID |
@@ -492,7 +579,7 @@ Agent 职责：
 | started_at | 开始时间 |
 | finished_at | 结束时间 |
 
-### 12.5 reports
+### 12.6 reports
 
 | 字段 | 说明 |
 |---|---|
@@ -504,7 +591,7 @@ Agent 职责：
 | summary | 执行摘要 |
 | created_at | 创建时间 |
 
-### 12.6 ai_analyses
+### 12.7 ai_analyses
 
 | 字段 | 说明 |
 |---|---|
@@ -740,121 +827,58 @@ cart_api.py 里添加购物车接口是怎么调用的？
 
 ## 15. 执行方案
 
-### 阶段 0：整理当前项目
+### 短期：职责拆分与本地闭环
 
 目标：
 
-把 `iOS-Automation-Framework` 整理成可被平台接入的样板项目。
+把 `iOS-Automation-Framework` 整理成职责单一的测试工程，并在 `TestPlatform/agent` 中跑通本地执行闭环。
 
 任务：
 
-- 清理本地临时文件。
 - 明确 API/UI/性能测试入口。
 - 固化 Allure 输出目录。
 - 新增 `test-platform.yml`。
 - 整理 README 中的执行说明。
-- 保留 `tools/webui` 作为本地 Demo。
+- 明确 `tools/webui` 只作为本地 Demo，不承担平台职责。
+- 在 `TestPlatform` 中新增 `agent/` 目录。
+- Agent 初期支持读取本地 JSON/SQLite 任务。
+- Agent 能调用 `iOS-Automation-Framework` 的 suite 命令并收集日志、Allure 结果。
 
-### 阶段 1：本地 Agent MVP
-
-目标：
-
-证明平台下发任务、本地执行、回传结果的链路可行。
-
-任务：
-
-- 新增 `agent/` 目录。
-- 支持读取 `test-platform.yml`。
-- 支持执行 API suite。
-- 支持执行 UI suite。
-- 支持写入日志。
-- 支持生成 Allure 报告。
-- 初期可用本地 JSON 或 SQLite 模拟任务表。
-
-### 阶段 2：平台 Web MVP
+### 中期：平台调度与多项目接入
 
 目标：
 
-做出第一个可用的平台 Web 版本。
+让平台真正管理项目、构建产物、套件、执行器和报告，支持多个测试项目按统一协议接入。
 
 任务：
 
-- 新建 `test-platform` 仓库。
-- 选择 Next.js / React 作为 Web 技术栈。
-- 接入 Supabase Auth。
-- 创建 projects、test_suites、executors、tasks、reports 表。
-- 实现 Dashboard。
-- 实现项目中心。
-- 实现任务中心。
-- 实现任务详情。
 - Agent 改为轮询 Supabase 任务表。
+- Agent 支持任务锁定、心跳、超时和失败重试。
+- 平台新增或完善 `app_builds`，任务可绑定 `.ipa` / `.apk` / build URL。
+- Web 页面支持上传或登记构建产物。
+- 支持多个测试仓库接入，不把云鹿业务逻辑写入平台。
+- 引入 AI 失败分析，写入 `ai_analyses` 并在任务详情展示。
+- 支持基础报告问答，优先查询结构化任务、报告、分析数据。
 
-### 阶段 3：AI 失败分析
-
-目标：
-
-让每次失败任务自动生成分析结论。
-
-任务：
-
-- 收集失败日志和报告摘要。
-- 调用 LLM。
-- 生成结构化分析。
-- 写入 `ai_analyses` 表。
-- 在任务详情页展示。
-
-### 阶段 4：AI 报告问答
+### 远期：独立 Agent 与高级执行能力
 
 目标：
 
-让用户可以自然语言查询历史报告、失败记录和代码逻辑。
+把 Local Agent 从平台仓库中拆成可安装、可升级、可扩展的独立执行器，并扩展云真机、CI/CD 和 AI 测试能力。
 
 任务：
 
-- 复用 AI 助手页面。
-- 查询任务、报告、分析结果。
-- 后续引入向量索引。
-- 支持按项目和时间范围提问。
-
-### 阶段 5：多项目接入
-
-目标：
-
-从云鹿商城扩展到更多项目。
-
-任务：
-
-- 完善接入规范。
-- 支持多个 Git 仓库。
-- 支持不同测试框架。
-- 支持不同执行器类型。
-- 提供示例项目模板。
-
-### 阶段 6：移动端入口
-
-目标：
-
-实现三端统一体验。
-
-任务：
-
-- 第一版做响应式 Web。
-- 第二版用 WebView 封装 iOS/Android。
-- 后续根据需求考虑 React Native 或 Flutter。
-
-### 阶段 7：云真机和高级调度
-
-目标：
-
-提升执行能力和平台规模。
-
-任务：
-
+- 将 `TestPlatform/agent` 拆为 `test-platform-agent` 独立仓库或包。
+- 支持 Agent 安装、配置、版本管理和自动升级。
+- 支持插件化执行器：pytest、Appium、Playwright、Jest、Newman、GitHub Actions。
 - 抽象 `CloudDeviceFarmExecutor`。
 - 接入一个云真机平台。
 - 支持构建包上传。
 - 支持云端状态轮询。
 - 支持报告下载和统一展示。
+- 支持响应式 Web 和 WebView 移动端入口。
+- 引入向量索引，支持跨报告、日志、代码的 AI 问答。
+- 允许 AI 生成测试用例草稿，但必须人工确认后进入分支或 PR。
 
 ---
 

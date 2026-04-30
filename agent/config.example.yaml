@@ -1,0 +1,39 @@
+agent:
+  name: local-mac-01
+  type: local_mac
+  workspace: default
+  heartbeat_interval_seconds: 30
+  work_dir: .test-platform-agent
+
+platform:
+  mode: local
+  local_task_store: .test-platform-agent/tasks.json
+  supabase_url: ""
+  supabase_service_role_key_env: SUPABASE_SERVICE_ROLE_KEY
+
+capabilities:
+  os:
+    - macos
+  tools:
+    - python
+    - pytest
+    - appium
+    - xcode
+    - allure
+  test_types:
+    - api
+    - ui
+    - performance
+  app_artifacts:
+    - ipa
+    - app
+
+repositories:
+  - key: yunlu-ios
+    path: ../iOS-Automation-Framework
+    contract: test-platform.yml
+
+artifacts:
+  upload_mode: local
+  local_output_root: .test-platform-agent/artifacts
+  supabase_bucket: test-artifacts
