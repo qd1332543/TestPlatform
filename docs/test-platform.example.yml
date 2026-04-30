@@ -1,0 +1,37 @@
+# test-platform.yml - 测试工程接入规范示例
+# 将此文件放在测试仓库根目录，命名为 test-platform.yml
+
+project:
+  key: yunlu-ios          # 唯一标识，与平台 projects.key 一致
+  name: 云鹿商城 iOS       # 展示名称
+
+suites:
+  - key: api-smoke
+    name: API 冒烟测试
+    type: api
+    command: pytest tests/api -m smoke --alluredir=allure-results
+    requires:
+      - python
+      - pytest
+
+  - key: ui-regression
+    name: UI 回归测试
+    type: ui
+    command: pytest tests/ui --alluredir=allure-results
+    requires:
+      - python
+      - pytest
+      - appium
+      - xcode
+
+  - key: perf-baseline
+    name: 性能基线测试
+    type: performance
+    command: pytest tests/perf --alluredir=allure-results
+    requires:
+      - python
+      - pytest
+
+artifacts:
+  allure_results: allure-results   # Allure 产物目录（相对于仓库根）
+  logs: logs                        # 日志目录（可选）
