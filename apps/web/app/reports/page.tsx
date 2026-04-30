@@ -1,6 +1,6 @@
 export default function ReportsPage() {
   return (
-    <div className="space-y-6 max-w-5xl">
+    <div className="space-y-6 w-full">
       <div>
         <h1 className="text-2xl font-bold text-white">报告中心</h1>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>查看 AI 分析报告和测试结果</p>
