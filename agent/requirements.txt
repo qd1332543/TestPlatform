@@ -1,0 +1,4 @@
+allure-pytest>=2.13,<3
+httpx>=0.28,<1
+pytest>=8,<9
+PyYAML>=6,<7
