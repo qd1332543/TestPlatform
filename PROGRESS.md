@@ -16,13 +16,13 @@
 ### Local Agent MVP（TestPlatform/agent）
 
 - [x] 新增 `agent/` 目录
-- [ ] 支持读取测试工程的 `test-platform.yml`
-- [ ] 支持本地 JSON/SQLite 模拟任务表
-- [ ] 支持执行 API suite
-- [ ] 支持执行 UI suite
-- [ ] 支持收集日志
-- [ ] 支持收集 Allure 结果
-- [ ] 支持把任务状态写回本地任务表
+- [x] 支持读取测试工程的 `test-platform.yml`
+- [x] 支持本地 JSON/SQLite 模拟任务表
+- [x] 支持执行 API suite
+- [x] 支持执行 UI suite
+- [x] 支持收集日志
+- [x] 支持收集 Allure 结果
+- [x] 支持把任务状态写回本地任务表
 
 ## 中期：平台调度与多项目接入
 

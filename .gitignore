@@ -3,3 +3,9 @@ node_modules/
 .env.local
 *.env
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.test-platform-agent/
