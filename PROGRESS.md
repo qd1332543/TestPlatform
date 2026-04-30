@@ -36,15 +36,15 @@
 - [x] 实现项目中心
 - [x] 实现任务中心
 - [x] 实现任务详情
-- [ ] Agent 改为轮询 Supabase 任务表
+- [x] Agent 改为轮询 Supabase 任务表
 
 ### 构建产物与任务调度
 
-- [ ] 增加或完善 `app_builds` 概念，支持 `.ipa` / `.apk` / build URL
-- [ ] 任务支持关联 `app_build_id`
-- [ ] Web 页面支持登记或选择构建产物
-- [ ] Agent 支持下载或读取任务指定的 App 包
-- [ ] Agent 支持任务锁定、心跳、超时和失败重试
+- [x] 增加或完善 `app_builds` 概念，支持 `.ipa` / `.apk` / build URL
+- [x] 任务支持关联 `app_build_id`
+- [x] Web 页面支持登记或选择构建产物
+- [x] Agent 支持下载或读取任务指定的 App 包
+- [x] Agent 支持任务锁定、心跳、超时和失败重试
 
 ### AI 失败分析
 
