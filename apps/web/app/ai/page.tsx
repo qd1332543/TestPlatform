@@ -138,21 +138,31 @@ export default function AiPage() {
       </div>
 
       {/* Templates */}
-      <div className="mt-3 grid grid-cols-3 gap-2">
+      <div className="mt-3 grid grid-cols-3 gap-3">
         {templates.map(t => {
           const parts = parseTemplate(t.text)
           return (
             <button key={t.label} onClick={() => applyTemplate(t.text)}
-              className="flex flex-col items-start px-3 py-3 rounded-xl text-left transition-all group"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#3B82F6')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}
+              className="flex flex-col items-start px-4 py-4 rounded-2xl text-left transition-all duration-200"
+              style={{
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.borderColor = '#3B82F6'
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.2)'
+                e.currentTarget.style.transform = 'translateY(-2px)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.borderColor = 'var(--border)'
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'
+                e.currentTarget.style.transform = 'translateY(0)'
+              }}
             >
-              <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-sm leading-none">{t.icon}</span>
-                <span className="text-xs font-semibold text-white">{t.label}</span>
-              </div>
-              <p className="text-xs leading-relaxed line-clamp-2" style={{ color: 'var(--text-muted)' }}>
+              <div className="text-2xl mb-2">{t.icon}</div>
+              <div className="text-sm font-semibold text-white mb-1">{t.label}</div>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                 {parts.map((p, i) =>
                   p.type === 'param'
                     ? <span key={i} style={{ color: '#60A5FA' }}>[{p.value}]</span>
