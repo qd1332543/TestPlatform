@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import ImportSuitesForm from '@/components/ImportSuitesForm'
 
 export default async function ProjectDetailPage({ params }: { params: { id: string } }) {
   const supabase = await createClient()
@@ -52,6 +53,8 @@ export default async function ProjectDetailPage({ params }: { params: { id: stri
           </table>
         )}
       </div>
+
+      <ImportSuitesForm projectId={project.id} />
     </div>
   )
 }
