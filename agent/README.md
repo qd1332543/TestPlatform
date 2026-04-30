@@ -28,7 +28,21 @@ agent/
 └── services/
 ```
 
-Only the README and config template are committed at this stage. Runtime code should be added when the local task loop is implemented.
+Runtime code now covers the MVP loop for local JSON tasks and Supabase-backed tasks. It is still intentionally small and should be treated as the reference implementation for the platform protocol, not as a separately distributed product yet.
+
+## App Artifact Handling
+
+When a task includes `app_build_id` in Supabase mode, the agent downloads the matching `app_builds.artifact_url` into the task artifact directory and exposes it to the suite command through:
+
+- `TEST_PLATFORM_APP_PATH`
+- `APP_PATH`
+- `{app_path}` command template variable
+
+Local JSON tasks can pass either `parameters.app_path` or `parameters.app_url`. If `app_url` is provided, the agent downloads it before execution and then sets the same environment variables.
+
+## Report Handling
+
+Suite logs are always written locally under the configured artifact root. In Supabase mode, if `artifacts.supabase_bucket` is configured, the reporter uploads `output.log` and a zipped `allure-results` archive to Supabase Storage and stores the resulting URLs in `reports`.
 
 ## Relationship With iOS-Automation-Framework
 

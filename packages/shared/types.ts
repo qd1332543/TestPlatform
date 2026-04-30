@@ -31,10 +31,24 @@ export interface Executor {
   last_heartbeat_at: string | null
 }
 
+export interface AppBuild {
+  id: string
+  project_id: string
+  platform: 'ios' | 'android' | 'web'
+  version: string
+  build_number: string | null
+  artifact_url: string
+  bundle_id: string | null
+  package_name: string | null
+  git_commit: string | null
+  created_at: string
+}
+
 export interface Task {
   id: string
   project_id: string
   suite_id: string
+  app_build_id: string | null
   environment: string
   status: TaskStatus
   executor_id: string | null

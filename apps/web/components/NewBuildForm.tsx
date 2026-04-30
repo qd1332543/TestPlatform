@@ -8,7 +8,7 @@ interface Project { id: string; name: string }
 
 export default function NewBuildForm({ projects }: { projects: Project[] }) {
   const router = useRouter()
-  const [form, setForm] = useState({ project_id: '', platform: 'ios', version: '', build_number: '', artifact_url: '', bundle_id: '', git_commit: '' })
+  const [form, setForm] = useState({ project_id: '', platform: 'ios', version: '', build_number: '', artifact_url: '', bundle_id: '', package_name: '', git_commit: '' })
   const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,7 +51,8 @@ export default function NewBuildForm({ projects }: { projects: Project[] }) {
       {field('版本号', 'version', true, '1.0.0')}
       {field('Build 号', 'build_number', false, '100')}
       {field('产物 URL', 'artifact_url', true, 'https://...')}
-      {field('Bundle ID / Package Name', 'bundle_id', false, 'com.example.app')}
+      {field('Bundle ID', 'bundle_id', false, 'com.example.app')}
+      {field('Package Name', 'package_name', false, 'com.example.app')}
       {field('Git Commit', 'git_commit', false, 'abc1234')}
       {error && <p className="text-sm text-red-500">{error}</p>}
       <button type="submit" className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">登记构建</button>
