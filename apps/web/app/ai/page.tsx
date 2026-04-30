@@ -4,40 +4,87 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 
 type Message = { role: 'user' | 'assistant'; content: string }
 
+const TemplateIcons = {
+  failed: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="12" fill="#2A0F0F" stroke="#EF4444" strokeWidth="1.5"/>
+      <path d="M14 8v7M14 18v1.5" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
+    </svg>
+  ),
+  project: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="7" width="22" height="17" rx="2.5" fill="#0D1829" stroke="#3B82F6" strokeWidth="1.5"/>
+      <path d="M3 12h22" stroke="#3B82F6" strokeWidth="1.2"/>
+      <path d="M3 11V9.5C3 8.1 4.1 7 5.5 7H10l2 2.5H3" fill="#1E3A5F"/>
+      <path d="M8 17h12M8 20.5h8" stroke="#60A5FA" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  trigger: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <circle cx="14" cy="14" r="12" fill="#0D1829" stroke="#3B82F6" strokeWidth="1.5"/>
+      <path d="M11 9.5l9 4.5-9 4.5V9.5Z" fill="#3B82F6" stroke="#3B82F6" strokeWidth="1" strokeLinejoin="round"/>
+    </svg>
+  ),
+  report: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="3" width="20" height="22" rx="2.5" fill="#0D2818" stroke="#22C55E" strokeWidth="1.5"/>
+      <path d="M8 10h12M8 14h12M8 18h7" stroke="#22C55E" strokeWidth="1.3" strokeLinecap="round"/>
+      <circle cx="20" cy="19" r="4" fill="#0D2818" stroke="#22C55E" strokeWidth="1.2"/>
+      <path d="M18.5 19l1 1 2-2" stroke="#22C55E" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  executor: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="6" width="22" height="16" rx="2.5" fill="#0D1829" stroke="#A78BFA" strokeWidth="1.5"/>
+      <rect x="3" y="19" width="22" height="3" rx="1" fill="#1a1040" stroke="#A78BFA" strokeWidth="1"/>
+      <path d="M9 13l3 3 6-6" stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="14" cy="21.5" r="0.8" fill="#A78BFA"/>
+    </svg>
+  ),
+  suite: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="3" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
+      <rect x="15" y="3" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
+      <rect x="3" y="15" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
+      <rect x="15" y="15" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
+    </svg>
+  ),
+}
+
 const templates = [
   {
     label: '失败任务分析',
-    icon: '🔴',
+    icon: TemplateIcons.failed,
     desc: '查看最近失败的任务，列出项目、套件和具体失败原因，快速定位问题',
     text: '查询最近失败的任务，列出项目名称、套件名称和失败原因',
   },
   {
     label: '创建新项目',
-    icon: '📁',
+    icon: TemplateIcons.project,
     desc: '快速新建一个测试项目，配置项目名称、唯一标识和代码仓库地址',
     text: '帮我创建一个新项目，项目名称：[名称]，标识：[key]，仓库地址：[repo_url]',
   },
   {
     label: '触发测试任务',
-    icon: '▶️',
+    icon: TemplateIcons.trigger,
     desc: '为指定项目的测试套件在目标环境中创建并触发一次自动化测试',
     text: '帮我为项目 [项目名] 的套件 [套件名] 在 [环境] 环境创建一个测试任务',
   },
   {
     label: '今日测试报告',
-    icon: '📊',
+    icon: TemplateIcons.report,
     desc: '汇总今天所有测试的执行情况，分析成功率趋势和主要失败原因',
     text: '分析今日测试报告，总结成功率、主要失败原因，并给出改进建议',
   },
   {
     label: '执行器状态',
-    icon: '🖥️',
+    icon: TemplateIcons.executor,
     desc: '查看所有注册执行器的在线状态、负载情况和最近执行记录',
     text: '列出当前所有执行器的名称、在线状态和最近执行的任务',
   },
   {
     label: '项目套件列表',
-    icon: '🗂️',
+    icon: TemplateIcons.suite,
     desc: '查看指定项目下所有测试套件的名称、类型和执行命令配置',
     text: '列出项目 [项目名] 下所有的测试套件，包括套件类型和执行命令',
   },
@@ -190,7 +237,7 @@ export default function AiPage() {
                 e.currentTarget.style.transform = 'translateY(0)'
               }}
             >
-              <div className="text-2xl mb-2">{t.icon}</div>
+              <div className="mb-2">{t.icon}</div>
               <div className="text-sm font-semibold text-white mb-1">{t.label}</div>
               <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                 {parts.map((p, i) =>
