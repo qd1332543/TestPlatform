@@ -138,7 +138,7 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      <div className="px-2 mt-4 pt-3 border-t" style={{ borderColor: 'var(--border)' }}>
+      <div className="px-2 mt-4 pt-1">
         <Link href="/settings" title={collapsed ? '设置' : undefined}
           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
           style={{ color: 'var(--text-muted)' }}
