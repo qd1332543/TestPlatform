@@ -2,7 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+const settingsKey = 'testplatform.settings.v1'
+const defaultPlatformName = '星流测试台'
+
+function normalizePlatformName(value?: string) {
+  const name = value?.trim()
+  if (!name || name === 'TestPlatform') return defaultPlatformName
+  return name
+}
 
 const Icons = {
   ai: (
@@ -74,7 +83,32 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [platformName, setPlatformName] = useState(defaultPlatformName)
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
+
+  useEffect(() => {
+    const loadName = () => {
+      const raw = window.localStorage.getItem(settingsKey)
+      if (!raw) {
+        setPlatformName(defaultPlatformName)
+        return
+      }
+      try {
+        const settings = JSON.parse(raw) as { platformName?: string }
+        setPlatformName(normalizePlatformName(settings.platformName))
+      } catch {
+        setPlatformName(defaultPlatformName)
+      }
+    }
+
+    queueMicrotask(loadName)
+    window.addEventListener('storage', loadName)
+    window.addEventListener('testplatform-settings-updated', loadName)
+    return () => {
+      window.removeEventListener('storage', loadName)
+      window.removeEventListener('testplatform-settings-updated', loadName)
+    }
+  }, [])
 
   return (
     <aside
@@ -84,7 +118,7 @@ export default function Sidebar() {
       <div className="flex items-center justify-between px-3 mb-6 h-9">
         {!collapsed && (
           <div className="overflow-hidden">
-            <div className="text-white font-bold text-sm tracking-wide whitespace-nowrap">TestPlatform</div>
+            <div className="text-white font-bold text-sm tracking-wide whitespace-nowrap truncate">{platformName}</div>
             <div className="text-xs whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>自动化测试平台</div>
           </div>
         )}
@@ -141,7 +175,10 @@ export default function Sidebar() {
       <div className="px-2 mt-4 pt-1">
         <Link href="/settings" title={collapsed ? '设置' : undefined}
           className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
-          style={{ color: 'var(--text-muted)' }}
+          style={isActive('/settings')
+            ? { background: 'var(--bg-card)', color: '#fff', fontWeight: 500 }
+            : { color: 'var(--text-muted)' }
+          }
         >
           <span className="shrink-0">{Icons.settings}</span>
           {!collapsed && <span>设置</span>}

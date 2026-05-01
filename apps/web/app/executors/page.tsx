@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import AgentSupervisor from '@/components/AgentSupervisor'
 
 const statusStyle: Record<string, { bg: string; color: string; dot: string; label: string }> = {
   online:  { bg: '#0D2818', color: '#22C55E', dot: '#22C55E', label: '在线' },
@@ -16,8 +17,9 @@ export default async function ExecutorsPage() {
     <div className="space-y-6 w-full">
       <div>
         <h1 className="text-2xl font-bold text-white">执行器</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>管理自动化测试执行节点</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>启动 Local Agent，管理自动化测试执行节点</p>
       </div>
+      <AgentSupervisor />
       <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
         <table className="w-full text-sm">
           <thead>

@@ -2,7 +2,17 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 
-type Message = { role: 'user' | 'assistant'; content: string }
+type Suggestion = { label: string; prompt: string }
+type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
+type Message = { role: 'user' | 'assistant'; content: string; suggestions?: Suggestion[]; actions?: ToolResult[] }
+type Conversation = { id: string; title: string; messages: Message[]; updatedAt: number }
+
+const historyKey = 'testplatform.ai.conversations.v1'
+const settingsKey = 'testplatform.settings.v1'
+const defaultAiSettings = {
+  aiModel: 'deepseek-v4-pro',
+  aiBaseUrl: 'https://api.deepseek.com',
+}
 
 const TemplateIcons = {
   failed: (
@@ -103,14 +113,262 @@ function parseTemplate(text: string) {
   return parts
 }
 
+function newConversation(): Conversation {
+  return { id: crypto.randomUUID(), title: '新对话', messages: [], updatedAt: Date.now() }
+}
+
+function titleFromMessage(content: string) {
+  const compact = content.trim().replace(/\s+/g, ' ')
+  return compact.length > 18 ? `${compact.slice(0, 18)}...` : compact || '新对话'
+}
+
+function getAiSettings() {
+  const raw = window.localStorage.getItem(settingsKey)
+  if (!raw) return defaultAiSettings
+  try {
+    const settings = JSON.parse(raw) as { aiModel?: string; aiBaseUrl?: string }
+    return {
+      aiModel: settings.aiModel?.trim() || defaultAiSettings.aiModel,
+      aiBaseUrl: settings.aiBaseUrl?.trim() || defaultAiSettings.aiBaseUrl,
+    }
+  } catch {
+    return defaultAiSettings
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
+function relationName(value: unknown) {
+  if (Array.isArray(value)) return relationName(value[0])
+  if (!isRecord(value)) return '-'
+  return typeof value.name === 'string' ? value.name : '-'
+}
+
+function taskActionData(action: ToolResult) {
+  if (!action.ok || !['create_task', 'get_task_detail'].includes(action.action ?? '') || !isRecord(action.data)) return null
+  return action.data
+}
+
+function projectActionData(action: ToolResult) {
+  if (!action.ok || action.action !== 'create_project' || !isRecord(action.data)) return null
+  return action.data
+}
+
+function firstRecord(value: unknown) {
+  if (Array.isArray(value)) return isRecord(value[0]) ? value[0] : null
+  return isRecord(value) ? value : null
+}
+
+function statusMeta(status: string) {
+  const map: Record<string, { label: string; color: string; bg: string }> = {
+    queued: { label: '排队中', color: '#60A5FA', bg: '#0D1829' },
+    running: { label: '运行中', color: '#3B82F6', bg: '#0D1F3C' },
+    succeeded: { label: '已成功', color: '#22C55E', bg: '#0D2818' },
+    failed: { label: '已失败', color: '#EF4444', bg: '#2A0F0F' },
+    cancelled: { label: '已取消', color: '#64748B', bg: '#1a2438' },
+    timeout: { label: '已超时', color: '#F97316', bg: '#2A1A0A' },
+  }
+  return map[status] ?? { label: status || '-', color: '#94A3B8', bg: '#1a2438' }
+}
+
+function formatDate(value: unknown) {
+  return typeof value === 'string' ? new Date(value).toLocaleString('zh-CN') : '-'
+}
+
+function ActionCards({ actions }: { actions?: ToolResult[] }) {
+  const visibleActions = actions?.filter(action => action.ok && ['create_task', 'get_task_detail', 'create_project'].includes(action.action ?? '')) ?? []
+  if (!visibleActions.length) return null
+
+  return (
+    <div className="space-y-3">
+      {visibleActions.map((action, index) => {
+        const task = taskActionData(action)
+        if (task) {
+          const taskId = typeof task.id === 'string' ? task.id : '-'
+          const environment = typeof task.environment === 'string' ? task.environment : '-'
+          const status = typeof task.status === 'string' ? task.status : '-'
+          const meta = statusMeta(status)
+          const report = firstRecord(task.reports)
+          const analysis = firstRecord(task.ai_analyses)
+          const title = action.action === 'create_task' ? '测试任务已创建' : '任务状态'
+          return (
+            <div key={`${action.action}-${taskId}-${index}`} className="rounded-xl overflow-hidden" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
+              <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full" style={{ background: meta.color }} />
+                  <span className="font-semibold text-white">{title}</span>
+                </div>
+                <span className="px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: meta.bg, color: meta.color }}>{meta.label}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-3 px-4 py-3 text-xs">
+                <div>
+                  <div style={{ color: 'var(--text-muted)' }}>项目</div>
+                  <div className="mt-1 font-medium text-white truncate">{relationName(task.projects)}</div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-muted)' }}>套件</div>
+                  <div className="mt-1 font-medium text-white truncate">{relationName(task.test_suites)}</div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-muted)' }}>环境</div>
+                  <div className="mt-1 font-medium text-white">{environment}</div>
+                </div>
+                <div>
+                  <div style={{ color: 'var(--text-muted)' }}>任务 ID</div>
+                  <div className="mt-1 font-mono text-[11px] truncate" style={{ color: '#60A5FA' }}>{taskId}</div>
+                </div>
+                {action.action === 'get_task_detail' && (
+                  <>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)' }}>创建时间</div>
+                      <div className="mt-1 text-white">{formatDate(task.created_at)}</div>
+                    </div>
+                    <div>
+                      <div style={{ color: 'var(--text-muted)' }}>开始时间</div>
+                      <div className="mt-1 text-white">{formatDate(task.started_at)}</div>
+                    </div>
+                  </>
+                )}
+              </div>
+              {report && typeof report.summary === 'string' && (
+                <div className="px-4 py-3 text-xs" style={{ borderTop: '1px solid var(--border)' }}>
+                  <div className="font-medium text-white">报告摘要</div>
+                  <div className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{report.summary}</div>
+                </div>
+              )}
+              {analysis && (
+                <div className="px-4 py-3 text-xs" style={{ borderTop: '1px solid var(--border)' }}>
+                  <div className="font-medium text-white">AI 分析</div>
+                  {typeof analysis.failure_reason === 'string' && <div className="mt-1" style={{ color: '#EF4444' }}>{analysis.failure_reason}</div>}
+                  {typeof analysis.suggestion === 'string' && <div className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</div>}
+                </div>
+              )}
+            </div>
+          )
+        }
+
+        const project = projectActionData(action)
+        if (project) {
+          const key = typeof project.key === 'string' ? project.key : '-'
+          const name = typeof project.name === 'string' ? project.name : '-'
+          const repo = typeof project.repo_url === 'string' && project.repo_url ? project.repo_url : '-'
+          return (
+            <div key={`${action.action}-${key}-${index}`} className="rounded-xl px-4 py-3" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
+              <div className="flex items-center gap-2 font-semibold text-white">
+                <span className="w-2 h-2 rounded-full" style={{ background: '#22C55E' }} />
+                项目已创建
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div><div style={{ color: 'var(--text-muted)' }}>名称</div><div className="mt-1 text-white">{name}</div></div>
+                <div><div style={{ color: 'var(--text-muted)' }}>标识</div><div className="mt-1 font-mono" style={{ color: '#60A5FA' }}>{key}</div></div>
+                <div className="col-span-2"><div style={{ color: 'var(--text-muted)' }}>仓库</div><div className="mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>{repo}</div></div>
+              </div>
+            </div>
+          )
+        }
+
+        return null
+      })}
+    </div>
+  )
+}
+
+function isTableSeparator(line: string) {
+  return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line)
+}
+
+function splitTableRow(line: string) {
+  return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim())
+}
+
+function MessageContent({ content, hasActions }: { content: string; hasActions: boolean }) {
+  const lines = content.split('\n')
+  const nodes: React.ReactNode[] = []
+  let index = 0
+
+  while (index < lines.length) {
+    if (lines[index]?.includes('|') && isTableSeparator(lines[index + 1] ?? '')) {
+      const headers = splitTableRow(lines[index])
+      index += 2
+      const rows: string[][] = []
+      while (index < lines.length && lines[index].includes('|')) {
+        rows.push(splitTableRow(lines[index]))
+        index += 1
+      }
+      nodes.push(
+        <div key={`table-${index}`} className="my-2 overflow-hidden rounded-xl" style={{ border: '1px solid var(--border)' }}>
+          <table className="w-full text-xs">
+            <thead style={{ background: '#0A0F1E' }}>
+              <tr>
+                {headers.map(header => (
+                  <th key={header} className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>{header}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex} style={{ borderTop: '1px solid var(--border)' }}>
+                  {row.map((cell, cellIndex) => (
+                    <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top" style={{ color: '#CBD5E1' }}>{cell.replace(/\*\*/g, '').replace(/`/g, '')}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+      continue
+    }
+
+    const paragraph: string[] = []
+    while (index < lines.length && !(lines[index]?.includes('|') && isTableSeparator(lines[index + 1] ?? ''))) {
+      paragraph.push(lines[index])
+      index += 1
+    }
+    const text = paragraph.join('\n').trim()
+    if (text) nodes.push(<div key={`text-${index}`} className="whitespace-pre-wrap">{text}</div>)
+  }
+
+  return <div className={hasActions ? 'mt-3 space-y-2' : 'space-y-2'}>{nodes}</div>
+}
+
 export default function AiPage() {
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [activeId, setActiveId] = useState('')
   const [loading, setLoading] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
+
+  useEffect(() => {
+    const raw = window.localStorage.getItem(historyKey)
+    if (raw) {
+      try {
+        const stored = JSON.parse(raw) as Conversation[]
+        if (Array.isArray(stored) && stored.length > 0) {
+          const sorted = stored.sort((a, b) => b.updatedAt - a.updatedAt)
+          queueMicrotask(() => {
+            setConversations(sorted)
+            setActiveId(sorted[0].id)
+            setMessages(sorted[0].messages)
+          })
+          return
+        }
+      } catch {
+        window.localStorage.removeItem(historyKey)
+      }
+    }
+    const first = newConversation()
+    queueMicrotask(() => {
+      setConversations([first])
+      setActiveId(first.id)
+    })
+  }, [])
 
   const applyTemplate = useCallback((text: string) => {
     setInput(text)
@@ -122,6 +380,53 @@ export default function AiPage() {
       if (idx !== -1 && end !== -1) el.setSelectionRange(idx, end + 1)
     }, 0)
   }, [])
+
+  function createConversation() {
+    const conversation = newConversation()
+    setConversations(prev => [conversation, ...prev])
+    setActiveId(conversation.id)
+    setMessages([])
+    setInput('')
+  }
+
+  function selectConversation(conversation: Conversation) {
+    if (loading) return
+    setActiveId(conversation.id)
+    setMessages(conversation.messages)
+    setInput('')
+  }
+
+  function deleteConversation(id: string) {
+    if (loading) return
+    setConversations(prev => {
+      const remaining = prev.filter(c => c.id !== id)
+      const next = remaining.length ? remaining : [newConversation()]
+      window.localStorage.setItem(historyKey, JSON.stringify(next))
+      if (id === activeId) {
+        setActiveId(next[0].id)
+        setMessages(next[0].messages)
+      }
+      return next
+    })
+  }
+
+  function persistMessages(nextMessages: Message[]) {
+    setMessages(nextMessages)
+    setConversations(prev => {
+      const next = prev
+        .map(c => c.id === activeId
+          ? {
+              ...c,
+              messages: nextMessages,
+              title: c.title === '新对话' && nextMessages[0]?.content ? titleFromMessage(nextMessages[0].content) : c.title,
+              updatedAt: nextMessages.length ? Date.now() : c.updatedAt,
+            }
+          : c)
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+      window.localStorage.setItem(historyKey, JSON.stringify(next.slice(0, 30)))
+      return next
+    })
+  }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Tab') {
@@ -138,37 +443,98 @@ export default function AiPage() {
     }
   }
 
+  function applySuggestion(prompt: string) {
+    setInput(prompt)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
   async function handleSend() {
     if (!input.trim() || loading) return
     const userMsg: Message = { role: 'user', content: input }
     const history = messages.map(({ role, content }) => ({ role, content }))
-    setMessages(prev => [...prev, userMsg])
+    const currentInput = input
+    const withUser = [...messages, userMsg]
+    persistMessages(withUser)
     setInput('')
     setLoading(true)
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: input, history }),
+        body: JSON.stringify({ message: currentInput, history, aiConfig: getAiSettings() }),
       })
       const data = await res.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.reply ?? data.error ?? '请求失败' }])
+      persistMessages([...withUser, {
+        role: 'assistant',
+        content: data.reply ?? data.error ?? '请求失败',
+        actions: Array.isArray(data.actions) ? data.actions : [],
+        suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
+      }])
     } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: '请求失败，请重试' }])
+      persistMessages([...withUser, { role: 'assistant', content: '请求失败，请重试' }])
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-3xl mx-auto min-w-0">
+    <div className="flex h-full w-full gap-4 min-w-0">
+      <aside className="hidden lg:flex w-64 shrink-0 flex-col rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="p-3" style={{ borderBottom: '1px solid var(--border)' }}>
+          <button
+            onClick={createConversation}
+            className="w-full px-3 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
+            style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}
+          >
+            + 新对话
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {conversations.map(c => (
+            <div key={c.id} className="group flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => selectConversation(c)}
+                className="min-w-0 flex-1 rounded-lg px-3 py-2 text-left transition-colors"
+                style={activeId === c.id
+                  ? { background: '#0D1829', border: '1px solid #1E3A5F' }
+                  : { border: '1px solid transparent' }
+                }
+              >
+                <div className="truncate text-sm font-medium" style={{ color: activeId === c.id ? '#fff' : 'var(--text-secondary)' }}>{c.title}</div>
+                <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                  {c.messages.length ? `${c.messages.length} 条消息` : '暂无消息'}
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => deleteConversation(c.id)}
+                className="w-7 h-7 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ color: 'var(--text-muted)' }}
+                title="删除对话"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <div className="flex flex-col h-full w-full max-w-3xl mx-auto min-w-0">
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg"
           style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)', boxShadow: '0 4px 20px #3B82F640' }}>✦</div>
         <div>
           <h1 className="text-xl font-bold text-white leading-tight">AI 助手</h1>
-          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>DeepSeek · 创建项目 / 触发测试 / 分析报告</p>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>DeepSeek · 创建项目 / 创建任务 / 查询套件 / 分析报告</p>
         </div>
+        <button
+          onClick={createConversation}
+          className="lg:hidden ml-auto px-3 py-1.5 rounded-lg text-xs font-medium text-white"
+          style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}
+        >
+          新对话
+        </button>
       </div>
 
       {/* Messages */}
@@ -189,12 +555,28 @@ export default function AiPage() {
               <div className="w-7 h-7 rounded-xl flex items-center justify-center text-white text-xs shrink-0 mt-0.5"
                 style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>✦</div>
             )}
-            <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${m.role === 'user' ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
+            <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm leading-relaxed ${m.role === 'user' ? 'rounded-tr-sm whitespace-pre-wrap' : 'rounded-tl-sm'}`}
               style={m.role === 'user'
                 ? { background: 'linear-gradient(135deg, #3B82F6, #6366F1)', color: '#fff' }
                 : { background: 'var(--bg-card)', color: '#CBD5E1', border: '1px solid var(--border)' }
               }>
-              {m.content}
+              <ActionCards actions={m.actions} />
+              {m.content && <MessageContent content={m.content} hasActions={Boolean(m.actions?.length)} />}
+              {m.role === 'assistant' && Boolean(m.suggestions?.length) && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {m.suggestions?.map(suggestion => (
+                    <button
+                      key={suggestion.prompt}
+                      type="button"
+                      onClick={() => applySuggestion(suggestion.prompt)}
+                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-left transition-colors"
+                      style={{ background: '#0D1829', color: '#60A5FA', border: '1px solid #1E3A5F' }}
+                    >
+                      {suggestion.label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -283,6 +665,7 @@ export default function AiPage() {
         <p className="text-xs mt-2 text-center" style={{ color: 'var(--text-muted)' }}>
           内容由 AI 生成，请仔细甄别 · <kbd className="px-1 py-0.5 rounded font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>Tab</kbd> 切换参数
         </p>
+      </div>
       </div>
     </div>
   )
