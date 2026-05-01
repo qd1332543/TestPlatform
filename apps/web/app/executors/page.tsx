@@ -1,50 +1,64 @@
 import { createClient } from '@/lib/supabase/server'
+import AgentSupervisor from '@/components/AgentSupervisor'
 
-const statusColor: Record<string, string> = {
-  online: 'text-green-600', offline: 'text-gray-400', busy: 'text-orange-500',
+const statusStyle: Record<string, { bg: string; color: string; dot: string; label: string }> = {
+  online:  { bg: '#0D2818', color: '#22C55E', dot: '#22C55E', label: '在线' },
+  offline: { bg: '#1a2438', color: '#64748B', dot: '#475569', label: '离线' },
+  busy:    { bg: '#2A1A0A', color: '#F97316', dot: '#F97316', label: '忙碌' },
 }
 
 export default async function ExecutorsPage() {
   const supabase = await createClient()
   const { data: executors } = await supabase
-    .from('executors')
-    .select('id, name, type, status, capabilities, last_heartbeat_at')
+    .from('executors').select('id, name, type, status, capabilities, last_heartbeat_at')
     .order('status')
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">执行器</h1>
-      <div className="bg-white rounded-lg border border-gray-200">
+    <div className="space-y-6 w-full">
+      <div>
+        <h1 className="text-2xl font-bold text-white">执行器</h1>
+        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>启动 Local Agent，管理自动化测试执行节点</p>
+      </div>
+      <AgentSupervisor />
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
         <table className="w-full text-sm">
-          <thead className="border-b border-gray-100">
-            <tr className="text-left text-gray-500">
-              <th className="px-4 py-3 font-medium">名称</th>
-              <th className="px-4 py-3 font-medium">类型</th>
-              <th className="px-4 py-3 font-medium">状态</th>
-              <th className="px-4 py-3 font-medium">能力标签</th>
-              <th className="px-4 py-3 font-medium">最近心跳</th>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              {['名称', '类型', '状态', '能力标签', '最近心跳'].map(h => (
+                <th key={h} className="px-5 py-3 text-left text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {!executors?.length ? (
-              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">暂无执行器</td></tr>
-            ) : executors.map(e => (
-              <tr key={e.id} className="border-b border-gray-50 hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium">{e.name}</td>
-                <td className="px-4 py-3 text-gray-500">{e.type}</td>
-                <td className={`px-4 py-3 font-medium ${statusColor[e.status] ?? ''}`}>{e.status}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-1">
-                    {(e.capabilities as string[] | null)?.map(c => (
-                      <span key={c} className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">{c}</span>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-gray-400">
-                  {e.last_heartbeat_at ? new Date(e.last_heartbeat_at).toLocaleString('zh-CN') : '-'}
-                </td>
-              </tr>
-            ))}
+              <tr><td colSpan={5} className="px-5 py-10 text-center" style={{ color: 'var(--text-muted)' }}>暂无执行器</td></tr>
+            ) : executors.map(e => {
+              const s = statusStyle[e.status] ?? statusStyle.offline
+              return (
+                <tr key={e.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td className="px-5 py-3 font-medium text-white">{e.name}</td>
+                  <td className="px-5 py-3">
+                    <span className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: '#0D1829', color: '#60A5FA', border: '1px solid #1E3A5F' }}>{e.type}</span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: s.bg, color: s.color }}>
+                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
+                      {s.label}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {(e.capabilities as string[] | null)?.map(c => (
+                        <span key={c} className="px-2 py-0.5 rounded text-xs" style={{ background: '#1a2438', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{c}</span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>
+                    {e.last_heartbeat_at ? new Date(e.last_heartbeat_at).toLocaleString('zh-CN') : '-'}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
