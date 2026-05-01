@@ -10,7 +10,7 @@ type AgentStatus = {
   logTail: string
 }
 
-const settingsKey = 'testplatform.settings.v1'
+const settingsKey = 'meteortest.settings.v1'
 
 function shouldAutoStartAgent() {
   const raw = window.localStorage.getItem(settingsKey)

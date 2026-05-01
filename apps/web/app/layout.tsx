@@ -3,7 +3,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
-  title: "Test Platform",
+  title: "MeteorTest",
   description: "通用自动化测试平台",
 };
 

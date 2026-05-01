@@ -7,8 +7,8 @@ type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string
 type Message = { role: 'user' | 'assistant'; content: string; suggestions?: Suggestion[]; actions?: ToolResult[] }
 type Conversation = { id: string; title: string; messages: Message[]; updatedAt: number }
 
-const historyKey = 'testplatform.ai.conversations.v1'
-const settingsKey = 'testplatform.settings.v1'
+const historyKey = 'meteortest.ai.conversations.v1'
+const settingsKey = 'meteortest.settings.v1'
 const defaultAiSettings = {
   aiModel: 'deepseek-v4-pro',
   aiBaseUrl: 'https://api.deepseek.com',
@@ -352,6 +352,7 @@ export default function AiPage() {
         const stored = JSON.parse(raw) as Conversation[]
         if (Array.isArray(stored) && stored.length > 0) {
           const sorted = stored.sort((a, b) => b.updatedAt - a.updatedAt)
+          window.localStorage.setItem(historyKey, JSON.stringify(sorted.slice(0, 30)))
           queueMicrotask(() => {
             setConversations(sorted)
             setActiveId(sorted[0].id)

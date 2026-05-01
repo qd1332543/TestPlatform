@@ -21,7 +21,8 @@ type Settings = {
   density: 'comfortable' | 'compact'
 }
 
-const storageKey = 'testplatform.settings.v1'
+const storageKey = 'meteortest.settings.v1'
+const settingsUpdatedEvent = 'meteortest-settings-updated'
 
 const defaultSettings: Settings = {
   platformName: '星流测试台',
@@ -44,7 +45,7 @@ const defaultSettings: Settings = {
 
 function normalizeSettings(value: Partial<Settings>): Settings {
   const settings = { ...defaultSettings, ...value }
-  if (!settings.platformName?.trim() || settings.platformName === 'TestPlatform') {
+  if (!settings.platformName?.trim()) {
     settings.platformName = defaultSettings.platformName
   }
   if (!settings.aiModel?.trim() || settings.aiModel === 'deepseek-chat') {
@@ -107,6 +108,7 @@ export default function SettingsPage() {
     if (raw) {
       try {
         const parsed = normalizeSettings(JSON.parse(raw) as Partial<Settings>)
+        window.localStorage.setItem(storageKey, JSON.stringify(parsed))
         queueMicrotask(() => {
           setSettings(parsed)
           setSavedSettings(parsed)
@@ -134,7 +136,7 @@ export default function SettingsPage() {
   function save() {
     const normalized = normalizeSettings(settings)
     window.localStorage.setItem(storageKey, JSON.stringify(normalized))
-    window.dispatchEvent(new Event('testplatform-settings-updated'))
+    window.dispatchEvent(new Event(settingsUpdatedEvent))
     setSettings(normalized)
     setSavedSettings(normalized)
     setSavedAt(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
@@ -150,7 +152,7 @@ export default function SettingsPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'testplatform-settings.json'
+    a.download = 'meteortest-settings.json'
     a.click()
     URL.revokeObjectURL(url)
   }

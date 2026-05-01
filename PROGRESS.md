@@ -1,7 +1,7 @@
-# test-platform 开发进度
+# MeteorTest 开发进度
 
 > 参考方案：`DESIGN.md`
-> 当前判断：`iOS-Automation-Framework` 只作为测试工程和接入样板；通用 Local Agent 短期放在 `TestPlatform/agent`，成熟后再独立成仓库或包。
+> 当前判断：`iOS-Automation-Framework` 只作为测试工程和接入样板；通用 Local Agent 短期放在 `MeteorTest/agent`，成熟后再独立成仓库或包。
 
 ## 短期：职责拆分与本地闭环
 
@@ -13,7 +13,7 @@
 - [x] 明确 API / UI / 性能 suite 的命令、依赖和产物路径
 - [x] 保留 `tools/webui` 作为本地 Demo，并弱化平台职责描述
 
-### Local Agent MVP（TestPlatform/agent）
+### Local Agent MVP（MeteorTest/agent）
 
 - [x] 新增 `agent/` 目录
 - [x] 支持读取测试工程的 `test-platform.yml`
@@ -28,7 +28,7 @@
 
 ### 平台 Web MVP
 
-- [x] 创建 `test-platform` 仓库目录结构
+- [x] 创建 `MeteorTest` 仓库目录结构
 - [x] 初始化 Next.js 项目（apps/web）
 - [x] 接入 Supabase Auth
 - [x] 创建数据库表（projects / test_suites / executors / tasks / reports）
@@ -71,7 +71,7 @@
 
 ### Agent 独立化
 
-- [ ] 将 `TestPlatform/agent` 拆分为 `test-platform-agent` 独立仓库或包
+- [ ] 将 `MeteorTest/agent` 拆分为 `test-platform-agent` 独立仓库或包
 - [ ] 支持 Agent 安装、配置、版本管理和自动升级
 - [ ] 支持插件化执行器：pytest、Appium、Playwright、Jest、Newman
 - [ ] 支持多机器 Agent 注册、心跳和能力管理
