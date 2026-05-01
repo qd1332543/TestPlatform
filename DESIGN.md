@@ -118,7 +118,7 @@ test-platform
 ipa / apk / build_url
   -> 作为任务参数或 app_build 记录进入平台
 
-TestPlatform
+MeteorTest
   -> 创建任务、选择项目、套件、环境和构建产物
 
 Local Agent
@@ -130,7 +130,7 @@ iOS-Automation-Framework
 Local Agent
   -> 上传日志、截图、Allure 报告并更新任务状态
 
-TestPlatform
+MeteorTest
   -> 展示结果、趋势和 AI 分析
 ```
 
@@ -267,7 +267,7 @@ Future Cloud Farm Executor
 ### 8.2 后期标准平台架构
 
 ```text
-Test Platform
+MeteorTest
 ├── Web / Mobile UI
 ├── API Server
 ├── Task Scheduler
@@ -316,7 +316,7 @@ Local Agent / Worker
 建议新建仓库：
 
 ```text
-test-platform/
+MeteorTest/
 ├── apps/
 │   ├── web/
 │   │   ├── app/
@@ -418,7 +418,7 @@ iOS-Automation-Framework/
 - 保留测试工程职责：API/UI/性能测试、Page Object、测试数据、Allure 输出。
 - 新增平台接入协议：`test-platform.yml` 描述项目、套件、命令、环境依赖和产物目录。
 - 弱化本地 Web 控制台：`tools/webui` 只作为单项目本地调试 Demo，不作为平台中心。
-- 不在测试工程中长期放置通用 Agent。通用 Local Agent 暂时放在 `TestPlatform/agent`。
+- 不在测试工程中长期放置通用 Agent。通用 Local Agent 暂时放在 `MeteorTest/agent`。
 
 ### 11.1 新增 test-platform.yml
 
@@ -465,7 +465,7 @@ suites:
 ### 11.2 Local Agent 放在平台仓库
 
 ```text
-test-platform/agent/
+MeteorTest/agent/
 ├── agent.py
 ├── config.example.yaml
 ├── executors/
@@ -831,7 +831,7 @@ cart_api.py 里添加购物车接口是怎么调用的？
 
 目标：
 
-把 `iOS-Automation-Framework` 整理成职责单一的测试工程，并在 `TestPlatform/agent` 中跑通本地执行闭环。
+把 `iOS-Automation-Framework` 整理成职责单一的测试工程，并在 `MeteorTest/agent` 中跑通本地执行闭环。
 
 任务：
 
@@ -840,7 +840,7 @@ cart_api.py 里添加购物车接口是怎么调用的？
 - 新增 `test-platform.yml`。
 - 整理 README 中的执行说明。
 - 明确 `tools/webui` 只作为本地 Demo，不承担平台职责。
-- 在 `TestPlatform` 中新增 `agent/` 目录。
+- 在 `MeteorTest` 中新增 `agent/` 目录。
 - Agent 初期支持读取本地 JSON/SQLite 任务。
 - Agent 能调用 `iOS-Automation-Framework` 的 suite 命令并收集日志、Allure 结果。
 
@@ -868,7 +868,7 @@ cart_api.py 里添加购物车接口是怎么调用的？
 
 任务：
 
-- 将 `TestPlatform/agent` 拆为 `test-platform-agent` 独立仓库或包。
+- 将 `MeteorTest/agent` 拆为 `test-platform-agent` 独立仓库或包。
 - 支持 Agent 安装、配置、版本管理和自动升级。
 - 支持插件化执行器：pytest、Appium、Playwright、Jest、Newman、GitHub Actions。
 - 抽象 `CloudDeviceFarmExecutor`。

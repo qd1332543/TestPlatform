@@ -1,4 +1,4 @@
-# TestPlatform Local Agent
+# MeteorTest Local Agent
 
 Local Agent is the temporary platform-side executor implementation for the MVP stage.
 
@@ -47,7 +47,7 @@ Suite logs are always written locally under the configured artifact root. In Sup
 ## Relationship With iOS-Automation-Framework
 
 ```text
-TestPlatform/agent
+MeteorTest/agent
   -> reads iOS-Automation-Framework/test-platform.yml
   -> receives a task such as suite=ios_ui_smoke and app_path=/tmp/app.ipa
   -> prepares device/Appium environment

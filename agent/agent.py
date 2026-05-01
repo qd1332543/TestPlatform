@@ -164,7 +164,7 @@ def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="TestPlatform Local Agent")
+    parser = argparse.ArgumentParser(description="MeteorTest Local Agent")
     parser.add_argument("--config", default="config.yaml")
     parser.add_argument("--interval", type=int, default=10)
     args = parser.parse_args()

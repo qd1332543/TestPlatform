@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-const settingsKey = 'testplatform.settings.v1'
+const settingsKey = 'meteortest.settings.v1'
+const settingsUpdatedEvent = 'meteortest-settings-updated'
 const defaultPlatformName = '星流测试台'
 
 function normalizePlatformName(value?: string) {
   const name = value?.trim()
-  if (!name || name === 'TestPlatform') return defaultPlatformName
+  if (!name) return defaultPlatformName
   return name
 }
 
@@ -103,10 +104,10 @@ export default function Sidebar() {
 
     queueMicrotask(loadName)
     window.addEventListener('storage', loadName)
-    window.addEventListener('testplatform-settings-updated', loadName)
+    window.addEventListener(settingsUpdatedEvent, loadName)
     return () => {
       window.removeEventListener('storage', loadName)
-      window.removeEventListener('testplatform-settings-updated', loadName)
+      window.removeEventListener(settingsUpdatedEvent, loadName)
     }
   }, [])
 

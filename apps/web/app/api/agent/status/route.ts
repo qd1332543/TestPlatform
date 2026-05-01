@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const repoRoot = process.env.TEST_PLATFORM_REPO_ROOT || path.resolve(/* turbopackIgnore: true */ process.cwd(), '../..')
+const repoRoot = process.env.METEOR_TEST_REPO_ROOT || process.env.TEST_PLATFORM_REPO_ROOT || path.resolve(/* turbopackIgnore: true */ process.cwd(), '../..')
 const runtimeDir = path.join(repoRoot, '.test-platform-agent')
 const pidFile = path.join(runtimeDir, 'agent.pid')
 const logFile = path.join(runtimeDir, 'agent-web.log')
@@ -52,11 +52,11 @@ export async function POST() {
   if (current.running) return NextResponse.json({ ...current, started: false })
 
   mkdirSync(runtimeDir, { recursive: true })
-  const python = process.env.TEST_PLATFORM_AGENT_PYTHON || path.join(repoRoot, 'agent/.venv/bin/python')
+  const python = process.env.METEOR_TEST_AGENT_PYTHON || process.env.TEST_PLATFORM_AGENT_PYTHON || path.join(repoRoot, 'agent/.venv/bin/python')
   const out = openSync(logFile, 'a')
   const child = spawn(
     python,
-    ['-m', 'agent.agent', '--config', 'agent/config.yaml', '--interval', process.env.TEST_PLATFORM_AGENT_INTERVAL || '10'],
+    ['-m', 'agent.agent', '--config', 'agent/config.yaml', '--interval', process.env.METEOR_TEST_AGENT_INTERVAL || process.env.TEST_PLATFORM_AGENT_INTERVAL || '10'],
     {
       cwd: repoRoot,
       detached: true,
