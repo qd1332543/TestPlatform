@@ -4,6 +4,7 @@ pytest_executor.py - 执行 suite 命令并收集日志和 Allure 结果
 import subprocess
 import shlex
 import os
+import sys
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -15,6 +16,12 @@ class _SafeFormatDict(dict):
 
 def _format_command(command: str, values: dict) -> str:
     return command.format_map(_SafeFormatDict(values))
+
+
+def _split_command(command: str) -> list[str]:
+    if os.name == "nt":
+        return shlex.split(command, posix=False)
+    return shlex.split(command)
 
 
 def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
@@ -36,9 +43,16 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
         **parameters,
     }
     command = _format_command(suite["command"], format_values)
-    # macOS 上 python 命令不存在，替换为 python3
+    # Use the current interpreter for python commands so local agents work on
+    # Windows, macOS, and CI without depending on shell aliases.
     if command.startswith("python "):
-        command = "python3" + command[6:]
+        command = sys.executable + command[6:]
+    elif command == "python":
+        command = sys.executable
+    elif command.startswith("python3 "):
+        command = sys.executable + command[7:]
+    elif command == "python3":
+        command = sys.executable
 
     # 如果 suite 有 allure 报告且命令未显式声明 --alluredir，则注入默认目录。
     allure_dir = None
@@ -49,10 +63,10 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
 
     env = os.environ.copy()
     env.update({
-        "TEST_PLATFORM_TASK_ID": task_id,
-        "TEST_PLATFORM_OUTPUT_DIR": str(out_path),
-        "TEST_PLATFORM_ALLURE_RESULTS": allure_dir or "",
-        "TEST_PLATFORM_APP_PATH": str(parameters.get("app_path") or ""),
+        "METEORTEST_TASK_ID": task_id,
+        "METEORTEST_OUTPUT_DIR": str(out_path),
+        "METEORTEST_ALLURE_RESULTS": allure_dir or "",
+        "METEORTEST_APP_PATH": str(parameters.get("app_path") or ""),
         "APP_PATH": str(parameters.get("app_path") or ""),
         "TEST_ENV": str(parameters.get("environment") or ""),
     })
@@ -60,7 +74,7 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
     started_at = datetime.now(timezone.utc).isoformat()
     with open(log_file, "w", encoding="utf-8") as f:
         result = subprocess.run(
-            shlex.split(command),
+            _split_command(command),
             cwd=repo_path,
             stdout=f,
             stderr=subprocess.STDOUT,

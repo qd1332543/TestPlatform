@@ -1,11 +1,11 @@
 """
-contract_reader.py - 读取测试工程的 test-platform.yml
+contract_reader.py - 读取测试工程的 meteortest.yml
 """
 import yaml
 from pathlib import Path
 
 
-def load_contract(repo_path: str, contract_file: str = "test-platform.yml") -> dict:
+def load_contract(repo_path: str, contract_file: str = "meteortest.yml") -> dict:
     path = Path(repo_path) / contract_file
     if not path.exists():
         raise FileNotFoundError(f"Contract not found: {path}")

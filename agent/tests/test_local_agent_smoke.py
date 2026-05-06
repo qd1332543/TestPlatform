@@ -9,7 +9,7 @@ from agent.agent import run_agent
 def _write_sample_repo(repo_path: Path) -> None:
     tests_dir = repo_path / "tests"
     tests_dir.mkdir(parents=True)
-    (repo_path / "test-platform.yml").write_text(
+    (repo_path / "meteortest.yml").write_text(
         """
 project:
   key: sample
@@ -31,9 +31,9 @@ from pathlib import Path
 
 
 def test_agent_injects_task_environment():
-    assert os.environ["TEST_PLATFORM_TASK_ID"] == "task-1"
+    assert os.environ["METEORTEST_TASK_ID"] == "task-1"
     assert os.environ["TEST_ENV"] == "staging"
-    Path(os.environ["TEST_PLATFORM_ALLURE_RESULTS"]).mkdir(parents=True, exist_ok=True)
+    Path(os.environ["METEORTEST_ALLURE_RESULTS"]).mkdir(parents=True, exist_ok=True)
 """.strip(),
         encoding="utf-8",
     )
@@ -79,7 +79,7 @@ platform:
 repositories:
   - key: sample
     path: {repo_path.as_posix()}
-    contract: test-platform.yml
+    contract: meteortest.yml
 artifacts:
   local_output_root: {output_root.as_posix()}
 """.strip(),

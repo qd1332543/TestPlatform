@@ -3,11 +3,11 @@ agent:
   type: local_mac
   workspace: default
   heartbeat_interval_seconds: 30
-  work_dir: .test-platform-agent
+  work_dir: .meteortest-agent
 
 platform:
   mode: local
-  local_task_store: .test-platform-agent/tasks.json
+  local_task_store: .meteortest-agent/tasks.json
   supabase_url: ""
   supabase_service_role_key_env: SUPABASE_SERVICE_ROLE_KEY
 
@@ -31,9 +31,9 @@ capabilities:
 repositories:
   - key: yunlu-ios
     path: ../iOS-Automation-Framework
-    contract: test-platform.yml
+    contract: meteortest.yml
 
 artifacts:
   upload_mode: local
-  local_output_root: .test-platform-agent/artifacts
+  local_output_root: .meteortest-agent/artifacts
   supabase_bucket: test-artifacts

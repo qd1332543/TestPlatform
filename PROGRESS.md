@@ -7,7 +7,7 @@
 
 ### iOS-Automation-Framework 接入样板
 
-- [x] 新增 `test-platform.yml`
+- [x] 新增 `meteortest.yml`
 - [x] 整理 README，明确它是测试工程，不是平台本体或通用 Agent
 - [x] 固化平台接入场景下的 Allure 输出目录
 - [x] 明确 API / UI / 性能 suite 的命令、依赖和产物路径
@@ -16,7 +16,7 @@
 ### Local Agent MVP（MeteorTest/agent）
 
 - [x] 新增 `agent/` 目录
-- [x] 支持读取测试工程的 `test-platform.yml`
+- [x] 支持读取测试工程的 `meteortest.yml`
 - [x] 支持本地 JSON/SQLite 模拟任务表
 - [x] 支持执行 API suite
 - [x] 支持执行 UI suite
@@ -64,14 +64,14 @@
 
 - [x] 完善接入规范
 - [x] 支持多个 Git 仓库
-- [x] 提供示例 `test-platform.yml`
+- [x] 提供示例 `meteortest.yml`
 - [x] 支持不同测试框架和执行器能力标签
 
 ## 远期：独立 Agent 与高级执行能力
 
 ### Agent 独立化
 
-- [ ] 将 `MeteorTest/agent` 拆分为 `test-platform-agent` 独立仓库或包
+- [ ] 将 `MeteorTest/agent` 拆分为 `meteortest-agent` 独立仓库或包
 - [ ] 支持 Agent 安装、配置、版本管理和自动升级
 - [ ] 支持插件化执行器：pytest、Appium、Playwright、Jest、Newman
 - [ ] 支持多机器 Agent 注册、心跳和能力管理

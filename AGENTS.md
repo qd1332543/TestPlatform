@@ -1,0 +1,346 @@
+# AGENTS.md
+
+Guidance for AI coding agents working in this repository.
+
+MeteorTest is a general-purpose automated testing platform. It has a Next.js web console, a Python Local Agent, Supabase migrations, shared protocol types, and example test-project contracts.
+
+Use this file as the first project-specific context before editing code.
+
+## Project Map
+
+```text
+apps/web/                 Next.js web console
+agent/                    Python Local Agent implementation
+docs/                     Example meteortest.yml contract
+packages/shared/          Shared TypeScript protocol types
+supabase/migrations/      Database schema migrations
+DESIGN.md                 Product and architecture design
+PROGRESS.md               Current progress and roadmap notes
+README.md                 Human-facing setup and project overview
+```
+
+## Read First
+
+Before making non-trivial changes, read the relevant source plus:
+
+- `README.md` for setup, architecture, and validation flow.
+- `DESIGN.md` for product and protocol intent.
+- `PROGRESS.md` for current implementation status.
+- `agent/README.md` before changing Local Agent behavior.
+- `docs/meteortest.example.yml` before changing suite import or contract parsing.
+
+Do not rely only on file names. This repo contains platform code, test execution code, and protocol definitions with different ownership boundaries.
+
+## Core Architecture
+
+MeteorTest is split into three responsibilities:
+
+1. **Web Console**
+   - Lives in `apps/web`.
+   - Owns UI, API routes, Supabase client/server access, AI assistant surfaces, task creation, reports, builds, projects, settings, and executor views.
+
+2. **Local Agent**
+   - Lives in `agent`.
+   - Polls tasks, prepares artifacts, executes suite commands, captures logs, writes reports, and updates task state.
+   - It is the platform executor reference implementation, not part of any individual test repository.
+
+3. **Test Project Contract**
+   - Uses `meteortest.yml`.
+   - Test projects expose suites and commands through this file.
+   - MeteorTest should preserve compatibility with existing contract field names such as `id`, `key`, and `suite_key`.
+
+## Setup
+
+### Web
+
+```bash
+cd apps/web
+npm ci
+```
+
+For local development:
+
+```bash
+cd apps/web
+npm run dev
+```
+
+The web app expects Supabase environment variables in `apps/web/.env.local`:
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+DEEPSEEK_API_KEY optional
+```
+
+Do not commit `.env.local` or real keys.
+
+### Agent
+
+```bash
+python -m pip install -r agent/requirements.txt
+```
+
+Agent config is based on:
+
+```text
+agent/config.example.yaml
+```
+
+For local use, copy it to `agent/config.yaml` and edit local paths or Supabase settings. Do not commit local machine paths or service-role secrets.
+
+## Validation Commands
+
+Run the smallest meaningful validation for the change.
+
+### Web changes
+
+```bash
+cd apps/web
+npm run lint
+npm run build
+```
+
+Use `npm ci` rather than `npm install` when installing dependencies for verification.
+
+### Agent changes
+
+```bash
+python -m compileall agent
+python -m pytest agent/tests -q
+```
+
+### Shared protocol or cross-cutting changes
+
+Run both Web and Agent validation:
+
+```bash
+cd apps/web
+npm run lint
+npm run build
+cd ../..
+python -m compileall agent
+python -m pytest agent/tests -q
+```
+
+### CI reference
+
+GitHub Actions uses:
+
+- Node.js `22`
+- Python `3.12`
+- `npm ci`
+- `npm run lint`
+- `npm run build`
+- `python -m compileall agent`
+- `python -m pytest agent/tests -q`
+
+Keep local validation aligned with `.github/workflows/ci.yml`.
+
+## Harness Engineering Practices
+
+Treat this repository as a platform plus execution harness. Changes should improve repeatability, observability, controllability, or validation.
+
+Use these principles:
+
+1. **Make context explicit**
+   - Put durable project rules in this file, `README.md`, `DESIGN.md`, or protocol examples.
+   - Do not leave important setup knowledge only in chat.
+
+2. **Prefer reproducible commands**
+   - Add or update scripts, tests, examples, or docs when a workflow requires exact steps.
+   - Avoid one-off manual instructions when the same check will be needed again.
+
+3. **Protect contracts**
+   - Treat `meteortest.yml` as an external integration contract.
+   - Preserve backward compatibility unless the task explicitly requests a breaking protocol change.
+   - Update `docs/meteortest.example.yml`, shared types, import code, and docs together when protocol fields change.
+
+4. **Close the validation loop**
+   - For bug fixes, identify the failing path or add a focused regression test when practical.
+   - For feature work, define the observable behavior and run the relevant validation command.
+   - Report any validation you could not run and why.
+
+5. **Improve observability**
+   - Agent and task-flow changes should preserve or improve status, logs, artifacts, errors, and report metadata.
+   - Prefer structured states and explicit error messages over silent fallbacks.
+
+6. **Keep execution controlled**
+   - The Local Agent runs commands from test project contracts. Treat command execution paths, artifact downloads, and environment variables as security-sensitive.
+   - Do not add broad remote execution, credential exposure, or arbitrary filesystem access without explicit design.
+
+7. **Separate control plane from executors**
+   - Web/Supabase owns task state and metadata.
+   - Local Agent owns local execution.
+   - Test repositories own test commands and app-specific automation.
+   - Avoid moving responsibilities across these boundaries without updating design docs.
+
+## Editing Rules
+
+- Keep changes scoped to the user request.
+- Prefer existing project patterns over introducing new frameworks.
+- Do not reformat unrelated files.
+- Do not commit generated reports, local artifacts, `.env*`, `.meteortest-agent/`, or machine-specific config.
+- Do not add new dependencies unless necessary; explain why in the final response or PR description.
+- When changing database shape, add a new migration under `supabase/migrations/`; do not edit already-applied migrations unless the user explicitly asks for a history rewrite.
+- When changing API response shapes, check affected UI components, shared types, and Agent clients.
+- When changing Agent task lifecycle behavior, check local JSON mode and Supabase mode where applicable.
+
+## GitHub Workflow Rules
+
+Before creating a new work branch, sync the latest `main` first.
+
+For repositories where the active GitHub account only has fork access:
+
+```bash
+git switch main
+git fetch origin main
+git merge origin/main
+git push fork main
+git switch -c dev/v-peq/changeName
+```
+
+For repositories where the active GitHub account can push branches directly:
+
+```bash
+git switch main
+git pull origin main
+git switch -c dev/v-peq/changeName
+```
+
+Branch names should use:
+
+```text
+dev/v-peq/<lowerCamelOrSnakeName>
+```
+
+When direct pushes to `main` are not allowed:
+
+- Create a feature branch.
+- Push the branch to the fork or writable remote.
+- Create the issue and pull request in the upstream repository.
+- Do not push directly to upstream `main`.
+
+Issue and PR titles should start with one of the repository type prefixes below. Use the closest existing type instead of inventing a new prefix:
+
+- `[Feature]` for new features, improvements, refactors, maintenance, and platform capability changes.
+- `[Bug]` for defects and regressions.
+- `[Test]` for test coverage, validation, fixtures, and CI test behavior.
+- `[Documentation]` for README, architecture notes, setup guides, and agent instructions.
+- `[Security]` for dependency or security hardening changes.
+
+Use the same prefix family for the tracking issue and its PR when they describe the same work. If a change spans multiple areas, choose the dominant user-visible intent. For example, docs plus workflow guidance should usually be `[Documentation]`; protocol/runtime behavior plus docs should usually be `[Feature]`.
+
+Issue and PR descriptions should use English. Use simple section headings such as `## Summary`, `## Proposed Changes`, and `## Test Plan`.
+
+When an issue tracks the PR work, link it from the PR body with:
+
+```text
+Closes #<issue-number>
+```
+
+Do not add `Related PR: #<number>` to the issue body.
+
+Do not add `Co-Authored-By` or AI attribution to commit messages.
+
+## Security And Secrets
+
+Never commit or print real values for:
+
+- Supabase service-role keys
+- Supabase anon keys if they belong to a real non-demo project
+- DeepSeek or OpenAI API keys
+- App artifact private URLs
+- Local device identifiers that should remain private
+- Internal build URLs
+
+Use placeholder values in docs and examples.
+
+## Supabase Notes
+
+Migrations are ordered:
+
+```text
+supabase/migrations/001_init.sql
+supabase/migrations/002_app_builds.sql
+supabase/migrations/003_constraints.sql
+```
+
+When adding migrations:
+
+- Use a new numbered migration.
+- Keep schema changes compatible with existing Web and Agent code.
+- Update README setup instructions if manual migration steps change.
+- Consider Storage bucket behavior for reports and artifacts.
+
+## Local Agent Notes
+
+Before changing Agent behavior, inspect:
+
+```text
+agent/agent.py
+agent/services/
+agent/executors/
+agent/reporters/
+agent/tests/
+```
+
+Agent behavior should preserve:
+
+- executor registration or status updates
+- queued task polling
+- task locking before execution
+- artifact preparation
+- suite command execution
+- logs and report artifact capture
+- final task/report state updates
+
+Handle failures explicitly. A failed suite, missing artifact, contract parse error, and platform update error should be distinguishable in logs or state when practical.
+
+## Web Notes
+
+Before changing Web behavior, inspect the related page/component/API route under:
+
+```text
+apps/web/app/
+apps/web/components/
+apps/web/lib/
+```
+
+Supabase access is split between client and server helpers:
+
+```text
+apps/web/lib/supabase/client.ts
+apps/web/lib/supabase/server.ts
+```
+
+Keep UI text and workflows consistent with the Chinese product name:
+
+```text
+星流测试台
+```
+
+Keep `MeteorTest` as the engineering/product English name.
+
+## AI Assistant Notes
+
+The AI assistant should operate through platform context and tools rather than guessing.
+
+When changing AI assistant behavior:
+
+- Keep project/task/report operations auditable.
+- Avoid exposing secrets or large raw logs unnecessarily.
+- Prefer task IDs, project IDs, and summarized failure context over dumping full logs.
+- Preserve user confirmation for actions with side effects when appropriate.
+
+## Final Response Expectations
+
+When finishing a task, report:
+
+- What changed.
+- Which files were touched.
+- Which validation commands ran.
+- Any validation that could not run.
+- Any compatibility or migration risk.
+
+Keep the response concise, but do not hide skipped checks or unresolved risks.

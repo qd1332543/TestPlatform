@@ -5,7 +5,7 @@ Local Agent is the temporary platform-side executor implementation for the MVP s
 It is responsible for:
 
 - Registering executor capabilities.
-- Reading a test repository contract such as `test-platform.yml`.
+- Reading a test repository contract such as `meteortest.yml`.
 - Polling queued tasks from a local JSON/SQLite queue in the short term.
 - Polling Supabase `tasks` in the medium term.
 - Locking tasks before execution.
@@ -34,7 +34,7 @@ Runtime code now covers the MVP loop for local JSON tasks and Supabase-backed ta
 
 When a task includes `app_build_id` in Supabase mode, the agent downloads the matching `app_builds.artifact_url` into the task artifact directory and exposes it to the suite command through:
 
-- `TEST_PLATFORM_APP_PATH`
+- `METEORTEST_APP_PATH`
 - `APP_PATH`
 - `{app_path}` command template variable
 
@@ -48,11 +48,11 @@ Suite logs are always written locally under the configured artifact root. In Sup
 
 ```text
 MeteorTest/agent
-  -> reads iOS-Automation-Framework/test-platform.yml
+  -> reads iOS-Automation-Framework/meteortest.yml
   -> receives a task such as suite=ios_ui_smoke and app_path=/tmp/app.ipa
   -> prepares device/Appium environment
   -> runs the suite command in iOS-Automation-Framework
   -> uploads logs and Allure results
 ```
 
-The long-term direction is to split this directory into an independent `test-platform-agent` repository or package after the protocol stabilizes.
+The long-term direction is to split this directory into an independent `meteortest-agent` repository or package after the protocol stabilizes.

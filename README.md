@@ -13,7 +13,7 @@
 
 MeteorTest 是一个通用自动化测试平台，用来管理多个测试项目、导入测试套件、创建测试任务、调度本地执行器、收集测试报告，并通过 AI 辅助分析失败原因和测试结果。
 
-当前产品中文名是 **星流测试台**。`MeteorTest` 是工程和产品英文名，`test-platform.yml` 仍作为测试工程接入协议文件名保留，避免破坏既有自动化项目的接入方式。
+当前产品中文名是 **星流测试台**。`MeteorTest` 是工程和产品英文名，`meteortest.yml` 仍作为测试工程接入协议文件名保留，避免破坏既有自动化项目的接入方式。
 
 ## 目录
 
@@ -50,22 +50,25 @@ MeteorTest 由 **流星** 发起和维护。
 
 MeteorTest 的设计思路是：平台做控制面和数据层，真实执行留在本地 Local Agent；测试工程只暴露一个标准协议文件，平台不侵入业务测试代码。
 
-```text
-测试工程        MeteorTest 平台              Local Agent
-  |                 |                           |
-  | test-platform.yml                           |
-  |---------------> | 导入项目 / 套件           |
-  |                 | 创建任务 queued           |
-  |                 | <----------------------- 轮询任务
-  |                 |                           | 执行 pytest / Appium / Locust
-  |                 | <----------------------- 回传日志 / 报告 / 状态
-  |                 | AI 分析失败原因           |
+```mermaid
+sequenceDiagram
+    participant Repo as 测试工程
+    participant Platform as MeteorTest 平台
+    participant Agent as Local Agent
+
+    Repo->>Platform: 提供 meteortest.yml
+    Platform->>Platform: 导入项目 / 套件
+    Platform->>Platform: 创建任务 queued
+    Agent->>Platform: 轮询任务
+    Agent->>Repo: 执行 pytest / Appium / Locust
+    Agent->>Platform: 回传日志 / 报告 / 状态
+    Platform->>Platform: AI 分析失败原因
 ```
 
 ## 核心能力
 
 - 多项目管理：每个被测项目可绑定一个或多个自动化测试仓库。
-- 测试套件管理：通过 `test-platform.yml` 导入 API、UI、性能等 suite。
+- 测试套件管理：通过 `meteortest.yml` 导入 API、UI、性能等 suite。
 - 构建产物管理：登记 `.ipa`、`.apk`、`.app` 或其他 build URL。
 - 任务调度：从 Web 页面或 AI 助手创建任务，Agent 轮询并执行。
 - 执行器管理：展示 Local Agent 在线状态、能力标签、心跳和一键启动入口。
@@ -98,7 +101,7 @@ MeteorTest 的设计思路是：平台做控制面和数据层，真实执行留
  Auth / DB / Storage      DeepSeek            local spawn/status
          |                    |                    |
          |                    |                    |
-  projects / suites     context + tools      .test-platform-agent
+  projects / suites     context + tools      .meteortest-agent
   builds / tasks
   reports / analyses
          |
@@ -107,7 +110,7 @@ MeteorTest 的设计思路是：平台做控制面和数据层，真实执行留
                          |
        +-----------------+-----------------+
        |                 |                 |
-  test-platform.yml   app artifacts     test command
+  meteortest.yml   app artifacts     test command
   suite metadata      ipa/apk/app       pytest/Appium/Locust
 ```
 
@@ -115,7 +118,7 @@ MeteorTest 的设计思路是：平台做控制面和数据层，真实执行留
 
 - `MeteorTest`：平台中心，负责任务、数据、报告、AI、执行器状态。
 - `Local Agent`：执行器，负责领取任务、准备环境、跑命令、回传结果。
-- 测试工程：只负责测试代码和 `test-platform.yml`，例如 `iOS-Automation-Framework`。
+- 测试工程：只负责测试代码和 `meteortest.yml`，例如 `iOS-Automation-Framework`。
 - App 包：被测对象，例如 `.ipa`、`.apk`、内部构建链接。
 
 ## 项目结构
@@ -192,10 +195,10 @@ http://127.0.0.1:3000
 
 ## 接入测试项目
 
-测试项目根目录需要提供 `test-platform.yml`。示例见：
+测试项目根目录需要提供 `meteortest.yml`。示例见：
 
 ```text
-docs/test-platform.example.yml
+docs/meteortest.example.yml
 ```
 
 最小结构：
@@ -239,17 +242,17 @@ cp config.example.yaml config.yaml
 ```yaml
 platform:
   mode: local        # local 或 supabase
-  local_task_store: .test-platform-agent/tasks.json
+  local_task_store: .meteortest-agent/tasks.json
   supabase_url: https://your-project.supabase.co
   supabase_service_role_key_env: SUPABASE_SERVICE_ROLE_KEY
 
 repositories:
   - key: yunlu-ios
     path: ../iOS-Automation-Framework
-    contract: test-platform.yml
+    contract: meteortest.yml
 
 artifacts:
-  local_output_root: .test-platform-agent/artifacts
+  local_output_root: .meteortest-agent/artifacts
   supabase_bucket: test-artifacts
 ```
 
@@ -289,7 +292,7 @@ Web 执行器页面也提供 Local Agent 状态查看和一键启动入口。设
 1. 在 Supabase 执行迁移。
 2. 启动 Web。
 3. 创建 Project，例如 `yunlu-ios`。
-4. 进入项目详情，粘贴测试工程的 `test-platform.yml` 并导入 suites。
+4. 进入项目详情，粘贴测试工程的 `meteortest.yml` 并导入 suites。
 5. 在 Builds 页面登记 `.ipa` / `.apk` / `.app` 的 URL。
 6. 打开执行器页面，确认 Local Agent 已启动。
 7. 在 Tasks 页面或 AI 助手中创建任务，选择项目、suite、环境和构建产物。
