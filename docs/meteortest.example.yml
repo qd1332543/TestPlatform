@@ -1,5 +1,5 @@
-# test-platform.yml - 测试工程接入规范示例
-# 将此文件放在测试仓库根目录，命名为 test-platform.yml
+# meteortest.yml - 测试工程接入规范示例
+# 将此文件放在测试仓库根目录，命名为 meteortest.yml
 
 project:
   key: yunlu-ios          # 唯一标识，与平台 projects.key 一致

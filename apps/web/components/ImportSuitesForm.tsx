@@ -73,7 +73,7 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
           <textarea
             className="w-full rounded-lg px-3 py-2.5 text-xs font-mono h-36 resize-none outline-none"
             style={{ background: '#0A0F1E', border: '1px solid var(--border)', color: '#94A3B8', caretColor: '#3B82F6' }}
-            placeholder="粘贴 test-platform.yml 内容..."
+            placeholder="粘贴 meteortest.yml 内容..."
             value={yml}
             onChange={e => setYml(e.target.value)}
           />

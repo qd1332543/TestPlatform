@@ -47,7 +47,7 @@ iOS-Automation-Framework
 平台本体建议新建独立仓库，例如：
 
 ```text
-test-platform
+meteortest
   -> 项目管理
   -> 任务调度
   -> 用户权限
@@ -108,7 +108,7 @@ test-platform
 | 自动化测试工程 | 存放怎么测的代码和配置 | `iOS-Automation-Framework`、Android UI 测试仓库 |
 | 执行器 / Local Agent | 领取平台任务并在真实环境中运行测试 | 本地 Mac Agent、GitHub Actions Executor、云真机 Executor |
 
-`iOS-Automation-Framework` 不是被测 App，也不应该长期作为通用执行器。它的核心职责是提供测试套件、测试脚本、业务断言、Page Object、测试数据和 `test-platform.yml` 接入描述。
+`iOS-Automation-Framework` 不是被测 App，也不应该长期作为通用执行器。它的核心职责是提供测试套件、测试脚本、业务断言、Page Object、测试数据和 `meteortest.yml` 接入描述。
 
 平台可以直接管理 `.ipa` / `.apk` 包，但如果没有对应测试套件，只能做安装、启动、崩溃检测、基础 smoke 或探索性测试。完整业务回归仍需要自动化测试工程提供稳定脚本和断言。
 
@@ -395,7 +395,7 @@ MeteorTest/
 - MVP 阶段不需要维护多个仓库和版本兼容。
 - 方便一个人快速跑通“创建任务 -> 执行测试 -> 回传报告”的闭环。
 
-中长期如果出现多机器安装、独立版本发布、自动升级、多执行器插件化等需求，再拆分为独立仓库或独立包，例如 `test-platform-agent`。
+中长期如果出现多机器安装、独立版本发布、自动升级、多执行器插件化等需求，再拆分为独立仓库或独立包，例如 `meteortest-agent`。
 
 ---
 
@@ -410,17 +410,17 @@ iOS-Automation-Framework/
 ├── Performance/
 ├── Reports/
 ├── tools/webui/
-└── test-platform.yml
+└── meteortest.yml
 ```
 
 改造目标：
 
 - 保留测试工程职责：API/UI/性能测试、Page Object、测试数据、Allure 输出。
-- 新增平台接入协议：`test-platform.yml` 描述项目、套件、命令、环境依赖和产物目录。
+- 新增平台接入协议：`meteortest.yml` 描述项目、套件、命令、环境依赖和产物目录。
 - 弱化本地 Web 控制台：`tools/webui` 只作为单项目本地调试 Demo，不作为平台中心。
 - 不在测试工程中长期放置通用 Agent。通用 Local Agent 暂时放在 `MeteorTest/agent`。
 
-### 11.1 新增 test-platform.yml
+### 11.1 新增 meteortest.yml
 
 用于描述该测试项目如何被平台识别和执行。
 
@@ -481,7 +481,7 @@ MeteorTest/agent/
 
 Agent 职责：
 
-- 读取本地 `test-platform.yml`。
+- 读取本地 `meteortest.yml`。
 - 注册当前执行器能力。
 - 定时发送心跳。
 - 轮询平台待执行任务。
@@ -649,7 +649,7 @@ locust -f Performance/locust_scripts/locustfile.py --headless
 
 - 新建项目。
 - 导入测试仓库。
-- 同步 `test-platform.yml`。
+- 同步 `meteortest.yml`。
 - 查看套件。
 - 创建任务。
 
@@ -837,7 +837,7 @@ cart_api.py 里添加购物车接口是怎么调用的？
 
 - 明确 API/UI/性能测试入口。
 - 固化 Allure 输出目录。
-- 新增 `test-platform.yml`。
+- 新增 `meteortest.yml`。
 - 整理 README 中的执行说明。
 - 明确 `tools/webui` 只作为本地 Demo，不承担平台职责。
 - 在 `MeteorTest` 中新增 `agent/` 目录。
@@ -868,7 +868,7 @@ cart_api.py 里添加购物车接口是怎么调用的？
 
 任务：
 
-- 将 `MeteorTest/agent` 拆为 `test-platform-agent` 独立仓库或包。
+- 将 `MeteorTest/agent` 拆为 `meteortest-agent` 独立仓库或包。
 - 支持 Agent 安装、配置、版本管理和自动升级。
 - 支持插件化执行器：pytest、Appium、Playwright、Jest、Newman、GitHub Actions。
 - 抽象 `CloudDeviceFarmExecutor`。
@@ -886,7 +886,7 @@ cart_api.py 里添加购物车接口是怎么调用的？
 
 | 风险 | 等级 | 应对 |
 |---|---|---|
-| 当前项目和平台耦合过深 | 高 | 平台只识别 `test-platform.yml`，不要写死云鹿逻辑 |
+| 当前项目和平台耦合过深 | 高 | 平台只识别 `meteortest.yml`，不要写死云鹿逻辑 |
 | Serverless 无法承载长任务 | 高 | 使用本地 Agent 或 Worker 执行测试 |
 | iOS UI 环境复杂 | 高 | 第一阶段只支持本地 Mac Agent |
 | AI 误触发测试 | 中 | 必须参数确认，且只允许白名单套件 |
@@ -902,7 +902,7 @@ cart_api.py 里添加购物车接口是怎么调用的？
 
 第一优先级：
 
-1. 当前项目新增 `test-platform.yml`。
+1. 当前项目新增 `meteortest.yml`。
 2. 当前项目新增本地 Agent。
 3. 用本地 JSON/SQLite 跑通任务闭环。
 4. 新建平台仓库。
