@@ -186,6 +186,63 @@ Use these principles:
 - When changing API response shapes, check affected UI components, shared types, and Agent clients.
 - When changing Agent task lifecycle behavior, check local JSON mode and Supabase mode where applicable.
 
+## GitHub Workflow Rules
+
+Before creating a new work branch, sync the latest `main` first.
+
+For repositories where the active GitHub account only has fork access:
+
+```bash
+git switch main
+git fetch origin main
+git merge origin/main
+git push fork main
+git switch -c dev/v-peq/changeName
+```
+
+For repositories where the active GitHub account can push branches directly:
+
+```bash
+git switch main
+git pull origin main
+git switch -c dev/v-peq/changeName
+```
+
+Branch names should use:
+
+```text
+dev/v-peq/<lowerCamelOrSnakeName>
+```
+
+When direct pushes to `main` are not allowed:
+
+- Create a feature branch.
+- Push the branch to the fork or writable remote.
+- Create the issue and pull request in the upstream repository.
+- Do not push directly to upstream `main`.
+
+Issue and PR titles should start with one of the repository type prefixes below. Use the closest existing type instead of inventing a new prefix:
+
+- `[Feature]` for new features, improvements, refactors, maintenance, and platform capability changes.
+- `[Bug]` for defects and regressions.
+- `[Test]` for test coverage, validation, fixtures, and CI test behavior.
+- `[Documentation]` for README, architecture notes, setup guides, and agent instructions.
+- `[Security]` for dependency or security hardening changes.
+
+Use the same prefix family for the tracking issue and its PR when they describe the same work. If a change spans multiple areas, choose the dominant user-visible intent. For example, docs plus workflow guidance should usually be `[Documentation]`; protocol/runtime behavior plus docs should usually be `[Feature]`.
+
+Issue and PR descriptions should use English. Use simple section headings such as `## Summary`, `## Proposed Changes`, and `## Test Plan`.
+
+When an issue tracks the PR work, link it from the PR body with:
+
+```text
+Closes #<issue-number>
+```
+
+Do not add `Related PR: #<number>` to the issue body.
+
+Do not add `Co-Authored-By` or AI attribution to commit messages.
+
 ## Security And Secrets
 
 Never commit or print real values for:

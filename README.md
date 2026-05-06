@@ -50,16 +50,19 @@ MeteorTest 由 **流星** 发起和维护。
 
 MeteorTest 的设计思路是：平台做控制面和数据层，真实执行留在本地 Local Agent；测试工程只暴露一个标准协议文件，平台不侵入业务测试代码。
 
-```text
-测试工程        MeteorTest 平台              Local Agent
-  |                 |                           |
-  | meteortest.yml                           |
-  |---------------> | 导入项目 / 套件           |
-  |                 | 创建任务 queued           |
-  |                 | <----------------------- 轮询任务
-  |                 |                           | 执行 pytest / Appium / Locust
-  |                 | <----------------------- 回传日志 / 报告 / 状态
-  |                 | AI 分析失败原因           |
+```mermaid
+sequenceDiagram
+    participant Repo as 测试工程
+    participant Platform as MeteorTest 平台
+    participant Agent as Local Agent
+
+    Repo->>Platform: 提供 meteortest.yml
+    Platform->>Platform: 导入项目 / 套件
+    Platform->>Platform: 创建任务 queued
+    Agent->>Platform: 轮询任务
+    Agent->>Repo: 执行 pytest / Appium / Locust
+    Agent->>Platform: 回传日志 / 报告 / 状态
+    Platform->>Platform: AI 分析失败原因
 ```
 
 ## 核心能力
