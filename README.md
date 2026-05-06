@@ -78,61 +78,106 @@ sequenceDiagram
 
 ## 功能矩阵
 
-| 模块 | 当前能力 | 状态 |
-|---|---|---|
-| Dashboard | 平台概览、关键数据入口 | 已接入 |
-| 项目中心 | 创建项目、查看项目、导入 suites | 已接入 |
-| 任务中心 | 创建任务、查看状态、关联套件和环境 | 已接入 |
-| 报告中心 | 查看执行日志、报告产物和结果摘要 | 已接入 |
-| 构建产物 | 管理 App 包和构建 URL | 已接入 |
-| 执行器 | 查看 Local Agent 状态、一键启动 Agent | 已接入 |
-| AI 助手 | 聊天历史、工具调用、快捷建议、任务/项目操作 | 已接入 |
-| 设置页 | 平台名、AI 模型、默认参数、启动策略 | 已接入 |
+当前 MVP 的主线不是堆功能点，而是跑通一条完整的测试闭环：
+
+```mermaid
+flowchart LR
+    Project[项目中心<br/>项目 / suites 导入]
+    Build[构建产物<br/>ipa / apk / app / URL]
+    Task[任务中心<br/>创建任务 / 选择环境]
+    Agent[执行器<br/>Local Agent 领取并执行]
+    Report[报告中心<br/>日志 / Allure / 结果摘要]
+    AI[AI 助手<br/>失败分析 / 任务查询]
+
+    Project --> Task
+    Build --> Task
+    Task --> Agent
+    Agent --> Report
+    Report --> AI
+```
+
+围绕这条闭环，当前已接入的能力包括：
+
+- **项目中心**：创建项目、查看项目、导入 `meteortest.yml` suites。
+- **构建产物**：管理 `.ipa`、`.apk`、`.app` 和构建 URL。
+- **任务中心**：创建任务、查看状态、关联套件、环境和构建产物。
+- **执行器**：查看 Local Agent 状态、能力标签、心跳和一键启动入口。
+- **报告中心**：查看执行日志、Allure 产物、执行摘要和任务结果。
+- **AI 助手**：支持任务创建、任务详情查询、结果分析和上下文问答。
+
+辅助管理能力：
+
+- **Dashboard**：平台概览和关键数据入口。
+- **设置页**：平台名称、AI 模型、默认环境、通知策略和 Agent 启动策略。
 
 ## 系统架构
 
-```text
-                    MeteorTest Web Console
-                           Next.js
-                              |
-         +--------------------+--------------------+
-         |                    |                    |
-      Supabase             AI API              Agent API
- Auth / DB / Storage      DeepSeek            local spawn/status
-         |                    |                    |
-         |                    |                    |
-  projects / suites     context + tools      .meteortest-agent
-  builds / tasks
-  reports / analyses
-         |
-         |
-                  Local Agent (Python)
-                         |
-       +-----------------+-----------------+
-       |                 |                 |
-  meteortest.yml   app artifacts     test command
-  suite metadata      ipa/apk/app       pytest/Appium/Locust
+```mermaid
+flowchart TB
+    Web[MeteorTest Web Console<br/>Next.js]
+
+    subgraph Platform[平台控制面]
+        Supabase[Supabase<br/>Auth / DB / Storage]
+        AI[AI API<br/>DeepSeek / context + tools]
+        AgentAPI[Agent API<br/>local spawn / status]
+    end
+
+    subgraph Data[平台数据]
+        Projects[projects / suites]
+        Builds[builds / tasks]
+        Reports[reports / analyses]
+    end
+
+    subgraph Executor[本地执行层]
+        LocalAgent[Local Agent<br/>Python]
+        Contract[meteortest.yml<br/>suite metadata]
+        Artifacts[app artifacts<br/>ipa / apk / app]
+        Command[test command<br/>pytest / Appium / Locust]
+    end
+
+    Web --> Supabase
+    Web --> AI
+    Web --> AgentAPI
+    Supabase --> Projects
+    Supabase --> Builds
+    Supabase --> Reports
+    Builds --> LocalAgent
+    AgentAPI --> LocalAgent
+    LocalAgent --> Contract
+    LocalAgent --> Artifacts
+    LocalAgent --> Command
+    LocalAgent --> Reports
 ```
 
 职责边界：
 
 - `MeteorTest`：平台中心，负责任务、数据、报告、AI、执行器状态。
 - `Local Agent`：执行器，负责领取任务、准备环境、跑命令、回传结果。
-- 测试工程：只负责测试代码和 `meteortest.yml`，例如 `iOS-Automation-Framework`。
+- 测试工程：只负责测试代码和 `meteortest.yml`，例如 [`iOS-Automation-Framework`](https://github.com/qd1332543/iOS-Automation-Framework)。
 - App 包：被测对象，例如 `.ipa`、`.apk`、内部构建链接。
 
 ## 项目结构
 
 ```text
 MeteorTest/
-├── apps/web/                 # Next.js Web 管理台
-├── agent/                    # MVP Local Agent
-├── docs/                     # 示例接入协议
-├── packages/shared/          # 共享类型定义
-├── supabase/migrations/      # 数据库迁移 SQL
-├── DESIGN.md                 # 产品和架构设计
-└── PROGRESS.md               # 开发进度
+├── apps/web/
+├── agent/
+├── docs/
+├── packages/shared/
+├── supabase/migrations/
+├── DESIGN.md
+└── PROGRESS.md
 ```
+
+按职责看：
+
+- `apps/web/`：Next.js Web 管理台，包含页面、组件、API routes 和 Supabase 访问。
+- `agent/`：Python Local Agent，负责轮询任务、执行 suite、收集日志和回传报告。
+- `docs/`：测试工程接入示例，重点是 `meteortest.yml` 协议文件。
+- `packages/shared/`：平台和前端复用的共享类型定义。
+- `supabase/migrations/`：数据库迁移 SQL，按编号顺序执行。
+- `DESIGN.md`：产品边界、架构设计和长期方向。
+- `PROGRESS.md`：当前实现进度和后续计划。
 
 ## 本地启动 Web
 
@@ -358,9 +403,12 @@ MVP 阶段按低成本原则设计：
 
 ## 路线规划
 
-| 阶段 | 目标 |
-|---|---|
-| MVP | 跑通项目、套件、任务、Agent、报告、AI 分析闭环 |
-| Beta | 增强执行器稳定性、任务重试、报告聚合、权限控制 |
-| Team | 支持团队协作、审计日志、通知集成、更多执行资源 |
-| Cloud | 引入远程执行器、云真机、分布式调度和插件化能力 |
+```mermaid
+flowchart LR
+    MVP[MVP<br/>项目 / 套件 / 任务 / Agent / 报告 / AI 分析闭环]
+    Beta[Beta<br/>执行器稳定性 / 任务重试 / 报告聚合 / 权限控制]
+    Team[Team<br/>团队协作 / 审计日志 / 通知集成 / 更多执行资源]
+    Cloud[Cloud<br/>远程执行器 / 云真机 / 分布式调度 / 插件化]
+
+    MVP --> Beta --> Team --> Cloud
+```
