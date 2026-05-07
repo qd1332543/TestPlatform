@@ -1,7 +1,7 @@
 # MeteorTest
 
 <p align="center">
-  <strong>面向多项目、多套件、本地执行器和 AI 分析的自动化测试平台</strong>
+  <strong>An automation testing platform for multiple projects, suites, local executors, and AI-assisted analysis</strong>
 </p>
 
 <p align="center">
@@ -9,85 +9,92 @@
   <img alt="Supabase" src="https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
   <img alt="Python" src="https://img.shields.io/badge/Python-Local_Agent-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img alt="AI" src="https://img.shields.io/badge/AI-DeepSeek-4B7BFF?style=for-the-badge" />
+  <br />
+  <a href="https://github.com/qd1332543/iOS-Automation-Framework"><img alt="Related iOS Framework" src="https://img.shields.io/badge/Related-iOS%20Framework-555555" /></a>
+  <a href="https://github.com/qd1332543/MeteorTest/issues"><img alt="Issues" src="https://img.shields.io/badge/Links-Issues-1F6FEB" /></a>
+  <a href="#roadmap"><img alt="Roadmap" src="https://img.shields.io/badge/Links-Roadmap-8957E5" /></a>
+  <br />
+  <a href="README.md"><img alt="Docs English" src="https://img.shields.io/badge/Docs-English-black" /></a>
+  <a href="README.zh-CN.md"><img alt="Docs 中文" src="https://img.shields.io/badge/Docs-%E4%B8%AD%E6%96%87-red" /></a>
 </p>
 
-MeteorTest 是一个通用自动化测试平台，用来管理多个测试项目、导入测试套件、创建测试任务、调度本地执行器、收集测试报告，并通过 AI 辅助分析失败原因和测试结果。
+MeteorTest is a general-purpose automation testing platform for managing multiple test projects, importing test suites, creating test tasks, scheduling local executors, collecting reports, and using AI to assist with result and failure analysis.
 
-当前产品中文名是 **星流测试台**。`MeteorTest` 是工程和产品英文名，`meteortest.yml` 仍作为测试工程接入协议文件名保留，避免破坏既有自动化项目的接入方式。
+`MeteorTest` is the product and engineering name. `meteortest.yml` is the test-project integration contract used by automation repositories.
 
-## 目录
+## Table of Contents
 
-- [作者](#作者)
-- [设计初衷](#设计初衷)
-- [核心能力](#核心能力)
-- [功能矩阵](#功能矩阵)
-- [系统架构](#系统架构)
-- [项目结构](#项目结构)
-- [本地启动 Web](#本地启动-web)
-- [接入测试项目](#接入测试项目)
-- [运行 Local Agent](#运行-local-agent)
-- [推荐验证流程](#推荐验证流程)
-- [验证和 CI](#验证和-ci)
-- [成本说明](#成本说明)
-- [路线规划](#路线规划)
+- [Maintainer](#maintainer)
+- [Background](#background)
+- [Core Capabilities](#core-capabilities)
+- [Capability Overview](#capability-overview)
+- [System Architecture](#system-architecture)
+- [Project Structure](#project-structure)
+- [Start the Web Console Locally](#start-the-web-console-locally)
+- [Connect a Test Project](#connect-a-test-project)
+- [Run the Local Agent](#run-the-local-agent)
+- [Recommended Validation Flow](#recommended-validation-flow)
+- [Validation and CI](#validation-and-ci)
+- [Cost Notes](#cost-notes)
+- [Roadmap](#roadmap)
 
-## 作者
+## Maintainer
 
-MeteorTest 由 **流星** 发起和维护。
+MeteorTest is initiated and maintained by **Meteor**.
 
-作者长期关注客户端工程质量、自动化测试、iOS 工程体系、测试平台化和 AI 辅助研发。这个项目的目标不是做一个只展示数据的后台页面，而是把测试工程、测试任务、执行器、报告和 AI 分析串成一个可以真实落地的闭环。
+The project focuses on client-side engineering quality, automation testing, iOS engineering systems, test platform engineering, and AI-assisted development. The goal is not to build a dashboard that only displays data, but to connect test projects, tasks, executors, reports, and AI analysis into a practical execution loop.
 
-## 设计初衷
+## Background
 
-很多自动化测试项目一开始都能跑，但后续会遇到几个典型问题：
+Many automation projects can run successfully at the beginning, but later run into recurring problems:
 
-- 测试脚本散落在不同仓库，缺少统一入口。
-- 测试任务靠人工命令触发，执行记录和报告难以追踪。
-- 构建产物、测试环境、测试套件之间没有结构化关联。
-- 本地 Mac、真机、模拟器等执行资源无法被平台感知。
-- 失败日志越来越多，但真正定位问题仍然靠人工翻日志。
-- AI 能分析问题，但如果不能读取平台上下文、不能创建任务、不能查看结果，就只能停留在聊天层面。
+- Test scripts are scattered across repositories without a unified entry point.
+- Test tasks are triggered manually, making execution history and reports hard to track.
+- App artifacts, environments, and test suites are not linked through structured data.
+- Local Macs, devices, and simulators are not visible to a central platform.
+- Failure logs keep growing, while root-cause analysis still depends on manual log reading.
+- AI can help analyze issues, but without platform context, task creation, and report access, it remains limited to chat.
 
-MeteorTest 的设计思路是：平台做控制面和数据层，真实执行留在本地 Local Agent；测试工程只暴露一个标准协议文件，平台不侵入业务测试代码。
+MeteorTest uses the platform as the control plane and data layer, while actual test execution stays in a local Local Agent. Test projects expose a standard contract file, and the platform avoids coupling itself to project-specific test code.
 
 ```mermaid
 sequenceDiagram
-    participant Repo as 测试工程
-    participant Platform as MeteorTest 平台
+    participant Repo as Test Project
+    participant Platform as MeteorTest Platform
     participant Agent as Local Agent
 
-    Repo->>Platform: 提供 meteortest.yml
-    Platform->>Platform: 导入项目 / 套件
-    Platform->>Platform: 创建任务 queued
-    Agent->>Platform: 轮询任务
-    Agent->>Repo: 执行 pytest / Appium / Locust
-    Agent->>Platform: 回传日志 / 报告 / 状态
-    Platform->>Platform: AI 分析失败原因
+    Repo->>Platform: Provide meteortest.yml
+    Platform->>Platform: Import project / suites
+    Platform->>Platform: Create queued task
+    Agent->>Platform: Poll tasks
+    Agent->>Repo: Run pytest / Appium / Locust
+    Agent->>Platform: Upload logs / reports / status
+    Platform->>Platform: Analyze failures with AI
 ```
 
-## 核心能力
+## Core Capabilities
 
-- 多项目管理：每个被测项目可绑定一个或多个自动化测试仓库。
-- 测试套件管理：通过 `meteortest.yml` 导入 API、UI、性能等 suite。
-- 构建产物管理：登记 `.ipa`、`.apk`、`.app` 或其他 build URL。
-- 任务调度：从 Web 页面或 AI 助手创建任务，Agent 轮询并执行。
-- 执行器管理：展示 Local Agent 在线状态、能力标签、心跳和一键启动入口。
-- 报告中心：记录日志、Allure 产物、执行摘要和任务状态。
-- AI 助手：支持上下文问答、项目创建、任务创建、任务详情查询和结果分析。
-- 设置中心：支持平台名称、AI 模型、默认环境、通知策略和 Agent 启动策略配置。
+- Project management: bind each product or app to one or more automation repositories.
+- Suite management: import API, UI, performance, and other suites from `meteortest.yml`.
+- Build artifact management: register `.ipa`, `.apk`, `.app`, or other build URLs.
+- Task scheduling: create tasks from the Web console or AI assistant; agents poll and execute them.
+- Executor management: view Local Agent status, capability tags, heartbeats, and launch entry points.
+- Report center: record logs, Allure artifacts, execution summaries, and task status.
+- AI assistant: support contextual Q&A, project creation, task creation, task detail lookup, and result analysis.
+- Settings: configure platform name, AI model, default environment, notification strategy, and Agent launch behavior.
 
-## 功能矩阵
+## Capability Overview
 
-当前 MVP 的主线不是堆功能点，而是跑通一条完整的测试闭环：
+The MVP is organized around one complete testing loop rather than a flat list of screens:
 
 ```mermaid
 flowchart LR
-    Project[项目中心<br/>项目 / suites 导入]
-    Build[构建产物<br/>ipa / apk / app / URL]
-    Task[任务中心<br/>创建任务 / 选择环境]
-    Agent[执行器<br/>Local Agent 领取并执行]
-    Report[报告中心<br/>日志 / Allure / 结果摘要]
-    AI[AI 助手<br/>失败分析 / 任务查询]
+    Project[Project Center<br/>Projects / suite import]
+    Build[Build Artifacts<br/>ipa / apk / app / URL]
+    Task[Task Center<br/>Create task / select environment]
+    Agent[Executor<br/>Local Agent claims and runs tasks]
+    Report[Report Center<br/>Logs / Allure / summaries]
+    AI[AI Assistant<br/>Failure analysis / task lookup]
 
     Project --> Task
     Build --> Task
@@ -96,39 +103,39 @@ flowchart LR
     Report --> AI
 ```
 
-围绕这条闭环，当前已接入的能力包括：
+Current capabilities around this loop:
 
-- **项目中心**：创建项目、查看项目、导入 `meteortest.yml` suites。
-- **构建产物**：管理 `.ipa`、`.apk`、`.app` 和构建 URL。
-- **任务中心**：创建任务、查看状态、关联套件、环境和构建产物。
-- **执行器**：查看 Local Agent 状态、能力标签、心跳和一键启动入口。
-- **报告中心**：查看执行日志、Allure 产物、执行摘要和任务结果。
-- **AI 助手**：支持任务创建、任务详情查询、结果分析和上下文问答。
+- **Project Center**: create projects, view project details, and import `meteortest.yml` suites.
+- **Build Artifacts**: manage `.ipa`, `.apk`, `.app`, and build URLs.
+- **Task Center**: create tasks and link suites, environments, and build artifacts.
+- **Executors**: view Local Agent status, capability tags, heartbeats, and launch entry points.
+- **Report Center**: view execution logs, Allure artifacts, summaries, and task results.
+- **AI Assistant**: create tasks, query task details, analyze results, and answer contextual questions.
 
-辅助管理能力：
+Supporting management capabilities:
 
-- **Dashboard**：平台概览和关键数据入口。
-- **设置页**：平台名称、AI 模型、默认环境、通知策略和 Agent 启动策略。
+- **Dashboard**: platform overview and key entry points.
+- **Settings**: platform name, AI model, default environment, notification strategy, and Agent launch behavior.
 
-## 系统架构
+## System Architecture
 
 ```mermaid
 flowchart TB
     Web[MeteorTest Web Console<br/>Next.js]
 
-    subgraph Platform[平台控制面]
+    subgraph Platform[Platform control plane]
         Supabase[Supabase<br/>Auth / DB / Storage]
         AI[AI API<br/>DeepSeek / context + tools]
         AgentAPI[Agent API<br/>local spawn / status]
     end
 
-    subgraph Data[平台数据]
+    subgraph Data[Platform data]
         Projects[projects / suites]
         Builds[builds / tasks]
         Reports[reports / analyses]
     end
 
-    subgraph Executor[本地执行层]
+    subgraph Executor[Local execution layer]
         LocalAgent[Local Agent<br/>Python]
         Contract[meteortest.yml<br/>suite metadata]
         Artifacts[app artifacts<br/>ipa / apk / app]
@@ -149,14 +156,14 @@ flowchart TB
     LocalAgent --> Reports
 ```
 
-职责边界：
+Responsibility boundaries:
 
-- `MeteorTest`：平台中心，负责任务、数据、报告、AI、执行器状态。
-- `Local Agent`：执行器，负责领取任务、准备环境、跑命令、回传结果。
-- 测试工程：只负责测试代码和 `meteortest.yml`，例如 [`iOS-Automation-Framework`](https://github.com/qd1332543/iOS-Automation-Framework)。
-- App 包：被测对象，例如 `.ipa`、`.apk`、内部构建链接。
+- `MeteorTest`: the platform center for tasks, data, reports, AI, and executor status.
+- `Local Agent`: the executor that claims tasks, prepares artifacts, runs commands, and writes results back.
+- Test projects: own test code and `meteortest.yml`, for example [`iOS-Automation-Framework`](https://github.com/qd1332543/iOS-Automation-Framework).
+- App artifacts: the tested targets, such as `.ipa`, `.apk`, `.app`, or internal build links.
 
-## 项目结构
+## Project Structure
 
 ```text
 MeteorTest/
@@ -169,28 +176,28 @@ MeteorTest/
 └── PROGRESS.md
 ```
 
-按职责看：
+By responsibility:
 
-- `apps/web/`：Next.js Web 管理台，包含页面、组件、API routes 和 Supabase 访问。
-- `agent/`：Python Local Agent，负责轮询任务、执行 suite、收集日志和回传报告。
-- `docs/`：测试工程接入示例，重点是 `meteortest.yml` 协议文件。
-- `packages/shared/`：平台和前端复用的共享类型定义。
-- `supabase/migrations/`：数据库迁移 SQL，按编号顺序执行。
-- `DESIGN.md`：产品边界、架构设计和长期方向。
-- `PROGRESS.md`：当前实现进度和后续计划。
+- `apps/web/`: Next.js Web console, including pages, components, API routes, and Supabase access.
+- `agent/`: Python Local Agent for polling tasks, running suites, collecting logs, and reporting results.
+- `docs/`: test-project integration examples, especially the `meteortest.yml` contract.
+- `packages/shared/`: shared TypeScript protocol types.
+- `supabase/migrations/`: ordered database migration SQL files.
+- `DESIGN.md`: product boundaries, architecture design, and long-term direction.
+- `PROGRESS.md`: current implementation progress and planned work.
 
-## 本地启动 Web
+## Start the Web Console Locally
 
-### 1. 安装依赖
+### 1. Install dependencies
 
 ```bash
 cd apps/web
 npm install
 ```
 
-### 2. 创建 Supabase 项目
+### 2. Create a Supabase project
 
-在 Supabase 控制台创建一个新项目，然后在 SQL Editor 中按顺序执行：
+Create a new project in the Supabase console, then run these migrations in order in the SQL Editor:
 
 ```text
 supabase/migrations/001_init.sql
@@ -198,22 +205,22 @@ supabase/migrations/002_app_builds.sql
 supabase/migrations/003_constraints.sql
 ```
 
-如需 Agent 上传日志和 Allure 压缩包，创建一个 Storage bucket，例如：
+If the Agent needs to upload logs and zipped Allure results, create a Storage bucket, for example:
 
 ```text
 test-artifacts
 ```
 
-MVP 阶段可以先使用 public bucket，方便 Web 页面直接打开报告文件。生产环境应改成私有 bucket + 签名 URL。
+During the MVP stage, a public bucket can make report links easier to open from the Web console. For production use, switch to a private bucket with signed URLs.
 
-### 3. 配置环境变量
+### 3. Configure environment variables
 
 ```bash
 cd apps/web
 cp .env.local.example .env.local
 ```
 
-填入：
+Fill in:
 
 ```text
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
@@ -221,41 +228,41 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 DEEPSEEK_API_KEY=your-deepseek-api-key
 ```
 
-`DEEPSEEK_API_KEY` 是可选项。没有它时，AI 助手不可用，但项目、任务、报告和执行器页面仍可开发调试。
+`DEEPSEEK_API_KEY` is optional. Without it, the AI assistant is unavailable, but projects, tasks, reports, and executor pages can still be developed and tested.
 
-### 4. 启动 Web
+### 4. Start the Web console
 
 ```bash
 cd apps/web
 npm run dev
 ```
 
-访问：
+Open:
 
 ```text
 http://127.0.0.1:3000
 ```
 
-注意：如果没有真实 Supabase 配置，页面会因为无法连接数据库而不可完整使用。填好 `.env.local` 后重启 `npm run dev`。
+If real Supabase settings are missing, the page cannot fully connect to the database. After updating `.env.local`, restart `npm run dev`.
 
-## 接入测试项目
+## Connect a Test Project
 
-测试项目根目录需要提供 `meteortest.yml`。示例见：
+A test project should provide `meteortest.yml` at its repository root. See:
 
 ```text
 docs/meteortest.example.yml
 ```
 
-最小结构：
+Minimum structure:
 
 ```yaml
 project:
   key: yunlu-ios
-  name: 云鹿商城 iOS
+  name: Yunlu Mall iOS
 
 suites:
   - id: api_smoke
-    name: API 冒烟测试
+    name: API smoke test
     type: api
     command: python -m pytest API_Automation/cases -v --alluredir=Reports/platform/{task_id}/allure-results
     requires:
@@ -265,28 +272,28 @@ suites:
       allure: true
 ```
 
-平台导入 suite 时兼容 `id`、`key`、`suite_key` 三种字段。
+Suite import supports `id`, `key`, and `suite_key` as compatible suite identifiers.
 
-## 运行 Local Agent
+## Run the Local Agent
 
-### 1. 安装 Agent 依赖
+### 1. Install Agent dependencies
 
 ```bash
 python -m pip install -r agent/requirements.txt
 ```
 
-### 2. 准备配置
+### 2. Prepare configuration
 
 ```bash
 cd agent
 cp config.example.yaml config.yaml
 ```
 
-配置重点：
+Important fields:
 
 ```yaml
 platform:
-  mode: local        # local 或 supabase
+  mode: local        # local or supabase
   local_task_store: .meteortest-agent/tasks.json
   supabase_url: https://your-project.supabase.co
   supabase_service_role_key_env: SUPABASE_SERVICE_ROLE_KEY
@@ -301,58 +308,58 @@ artifacts:
   supabase_bucket: test-artifacts
 ```
 
-Supabase 模式需要设置：
+Supabase mode requires:
 
 ```bash
 export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 export SUPABASE_ARTIFACT_BUCKET=test-artifacts
 ```
 
-Windows PowerShell：
+Windows PowerShell:
 
 ```powershell
 $env:SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
 $env:SUPABASE_ARTIFACT_BUCKET="test-artifacts"
 ```
 
-### 3. 启动 Agent
+### 3. Start the Agent
 
 ```bash
 python -m agent.agent --config agent/config.yaml --interval 10
 ```
 
-Agent 会：
+The Agent will:
 
-- 注册或更新 executor。
-- 轮询 queued 任务。
-- 锁定任务并置为 running。
-- 下载任务关联的 app build。
-- 执行 suite command。
-- 写回 tasks、reports、ai_analyses。
+- Register or update the executor.
+- Poll queued tasks.
+- Lock tasks and move them to running.
+- Download the app build attached to a task.
+- Run the suite command.
+- Write back tasks, reports, and AI analysis records.
 
-Web 执行器页面也提供 Local Agent 状态查看和一键启动入口。设置页中的启动策略可以控制进入执行器页面时是否自动启动 Agent。
+The Web executor page also shows Local Agent status and provides a launch entry point. The Settings page can control whether the Agent starts automatically when the executor page is opened.
 
-## 推荐验证流程
+## Recommended Validation Flow
 
-1. 在 Supabase 执行迁移。
-2. 启动 Web。
-3. 创建 Project，例如 `yunlu-ios`。
-4. 进入项目详情，粘贴测试工程的 `meteortest.yml` 并导入 suites。
-5. 在 Builds 页面登记 `.ipa` / `.apk` / `.app` 的 URL。
-6. 打开执行器页面，确认 Local Agent 已启动。
-7. 在 Tasks 页面或 AI 助手中创建任务，选择项目、suite、环境和构建产物。
-8. 等待 Agent 执行。
-9. 在任务详情查看状态、日志、Allure 产物和 AI 分析。
+1. Run Supabase migrations.
+2. Start the Web console.
+3. Create a project, for example `yunlu-ios`.
+4. Open the project detail page, paste the test project's `meteortest.yml`, and import suites.
+5. Register an `.ipa`, `.apk`, `.app`, or build URL on the Builds page.
+6. Open the Executors page and confirm the Local Agent is running.
+7. Create a task from the Tasks page or AI assistant, selecting project, suite, environment, and build artifact.
+8. Wait for the Agent to execute it.
+9. Open task details to inspect status, logs, Allure artifacts, and AI analysis.
 
-## 验证和 CI
+## Validation and CI
 
-本仓库包含 GitHub Actions CI：
+This repository includes GitHub Actions CI:
 
 ```text
 .github/workflows/ci.yml
 ```
 
-PR 会自动运行：
+Pull requests run:
 
 ```bash
 cd apps/web
@@ -361,7 +368,7 @@ npm run lint
 npm run build
 ```
 
-以及：
+And:
 
 ```bash
 python -m pip install -r agent/requirements.txt
@@ -369,7 +376,7 @@ python -m compileall agent
 python -m pytest agent/tests -q
 ```
 
-本地手动验证：
+Local manual validation:
 
 ```bash
 python -m pytest agent/tests -q
@@ -379,36 +386,36 @@ npm run lint
 npm run build
 ```
 
-## 成本说明
+## Cost Notes
 
-MVP 阶段按低成本原则设计：
+The MVP is designed with low operating cost in mind:
 
-- Web 可以部署在 Vercel 免费额度内。
-- 数据库和 Storage 可以先使用 Supabase 免费额度。
-- iOS UI 自动化优先使用本地 Mac Agent，不依赖云真机。
-- AI 能力按量调用，建议只对 failed / timeout 任务触发。
+- The Web console can be deployed within Vercel's free tier.
+- Database and Storage can start on Supabase's free tier.
+- iOS UI automation should prefer a local Mac Agent first, without depending on cloud devices.
+- AI usage is pay-as-you-go; triggering analysis only for failed or timeout tasks is recommended.
 
-需要关注的成本来源：
+Cost areas to watch:
 
-- 测试报告和日志的 Storage 体积。
-- AI 分析的调用次数和日志长度。
-- 云真机、专用 CI Runner、团队级 Vercel/Supabase 套餐。
+- Storage size for reports and logs.
+- Number of AI analysis calls and the amount of log text sent for analysis.
+- Cloud devices, dedicated CI runners, and team-level Vercel or Supabase plans.
 
-成本控制建议：
+Cost control suggestions:
 
-- 数据库只保存报告索引，不保存大文件正文。
-- 日志上传前截断或压缩，AI 分析只取失败片段。
-- 定期清理旧报告和临时构建产物。
-- 等本地 Agent 闭环稳定后，再考虑云真机和高级调度。
+- Store report indexes in the database instead of large file bodies.
+- Truncate or compress logs before upload, and send only relevant failure snippets to AI analysis.
+- Clean up old reports and temporary build artifacts regularly.
+- Consider cloud devices and advanced scheduling only after the local Agent loop is stable.
 
-## 路线规划
+## Roadmap
 
 ```mermaid
 flowchart LR
-    MVP[MVP<br/>项目 / 套件 / 任务 / Agent / 报告 / AI 分析闭环]
-    Beta[Beta<br/>执行器稳定性 / 任务重试 / 报告聚合 / 权限控制]
-    Team[Team<br/>团队协作 / 审计日志 / 通知集成 / 更多执行资源]
-    Cloud[Cloud<br/>远程执行器 / 云真机 / 分布式调度 / 插件化]
+    MVP[MVP<br/>Projects / suites / tasks / Agent / reports / AI analysis loop]
+    Beta[Beta<br/>Executor stability / retries / report aggregation / permissions]
+    Team[Team<br/>Collaboration / audit logs / notifications / more execution resources]
+    Cloud[Cloud<br/>Remote executors / cloud devices / distributed scheduling / plugins]
 
     MVP --> Beta --> Team --> Cloud
 ```

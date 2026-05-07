@@ -16,14 +16,15 @@ packages/shared/          Shared TypeScript protocol types
 supabase/migrations/      Database schema migrations
 DESIGN.md                 Product and architecture design
 PROGRESS.md               Current progress and roadmap notes
-README.md                 Human-facing setup and project overview
+README.md                 English setup and project overview
+README.zh-CN.md           Simplified Chinese mirror of README.md
 ```
 
 ## Read First
 
 Before making non-trivial changes, read the relevant source plus:
 
-- `README.md` for setup, architecture, and validation flow.
+- `README.md` and `README.zh-CN.md` for setup, architecture, and validation flow.
 - `DESIGN.md` for product and protocol intent.
 - `PROGRESS.md` for current implementation status.
 - `agent/README.md` before changing Local Agent behavior.
@@ -185,6 +186,7 @@ Use these principles:
 - When changing database shape, add a new migration under `supabase/migrations/`; do not edit already-applied migrations unless the user explicitly asks for a history rewrite.
 - When changing API response shapes, check affected UI components, shared types, and Agent clients.
 - When changing Agent task lifecycle behavior, check local JSON mode and Supabase mode where applicable.
+- Keep `README.md` and `README.zh-CN.md` aligned. `README.md` is the English primary README, and `README.zh-CN.md` is the Simplified Chinese mirror. When updating either file, keep structure, claims, setup steps, limitations, roadmap, diagrams, and validation instructions equivalent. If a Chinese phrasing does not translate well, adjust the Chinese text too instead of letting the two versions diverge.
 
 ## GitHub Workflow Rules
 
