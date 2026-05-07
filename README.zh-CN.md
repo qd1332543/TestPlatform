@@ -10,8 +10,8 @@
   <img alt="Python" src="https://img.shields.io/badge/Python-Local_Agent-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img alt="AI" src="https://img.shields.io/badge/AI-DeepSeek-4B7BFF?style=for-the-badge" />
   <br />
-  <a href="https://github.com/qd1332543/iOS-Automation-Framework"><img alt="Related iOS Framework" src="https://img.shields.io/badge/Related-iOS%20Framework-555555" /></a>
-  <a href="https://github.com/qd1332543/MeteorTest/issues"><img alt="Issues" src="https://img.shields.io/badge/Links-Issues-1F6FEB" /></a>
+  <a href="https://github.com/JunchenMeteor/iOS-Automation-Framework"><img alt="Related iOS Framework" src="https://img.shields.io/badge/Related-iOS%20Framework-555555" /></a>
+  <a href="https://github.com/JunchenMeteor/MeteorTest/issues"><img alt="Issues" src="https://img.shields.io/badge/Links-Issues-1F6FEB" /></a>
   <a href="#路线规划"><img alt="Roadmap" src="https://img.shields.io/badge/Links-Roadmap-8957E5" /></a>
   <br />
   <a href="README.md"><img alt="Docs English" src="https://img.shields.io/badge/Docs-English-black" /></a>
@@ -160,7 +160,7 @@ flowchart TB
 
 - `MeteorTest`：平台中心，负责任务、数据、报告、AI 和执行器状态。
 - `Local Agent`：执行器，负责领取任务、准备构建产物、执行命令并回写结果。
-- 测试项目：负责测试代码和 `meteortest.yml`，例如 [`iOS-Automation-Framework`](https://github.com/qd1332543/iOS-Automation-Framework)。
+- 测试项目：负责测试代码和 `meteortest.yml`，例如 [`iOS-Automation-Framework`](https://github.com/JunchenMeteor/iOS-Automation-Framework)。
 - App 构建产物：被测对象，例如 `.ipa`、`.apk`、`.app` 或内部构建链接。
 
 ## 项目结构

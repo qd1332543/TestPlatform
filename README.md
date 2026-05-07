@@ -10,8 +10,8 @@
   <img alt="Python" src="https://img.shields.io/badge/Python-Local_Agent-3776AB?style=for-the-badge&logo=python&logoColor=white" />
   <img alt="AI" src="https://img.shields.io/badge/AI-DeepSeek-4B7BFF?style=for-the-badge" />
   <br />
-  <a href="https://github.com/qd1332543/iOS-Automation-Framework"><img alt="Related iOS Framework" src="https://img.shields.io/badge/Related-iOS%20Framework-555555" /></a>
-  <a href="https://github.com/qd1332543/MeteorTest/issues"><img alt="Issues" src="https://img.shields.io/badge/Links-Issues-1F6FEB" /></a>
+  <a href="https://github.com/JunchenMeteor/iOS-Automation-Framework"><img alt="Related iOS Framework" src="https://img.shields.io/badge/Related-iOS%20Framework-555555" /></a>
+  <a href="https://github.com/JunchenMeteor/MeteorTest/issues"><img alt="Issues" src="https://img.shields.io/badge/Links-Issues-1F6FEB" /></a>
   <a href="#roadmap"><img alt="Roadmap" src="https://img.shields.io/badge/Links-Roadmap-8957E5" /></a>
   <br />
   <a href="README.md"><img alt="Docs English" src="https://img.shields.io/badge/Docs-English-black" /></a>
@@ -160,7 +160,7 @@ Responsibility boundaries:
 
 - `MeteorTest`: the platform center for tasks, data, reports, AI, and executor status.
 - `Local Agent`: the executor that claims tasks, prepares artifacts, runs commands, and writes results back.
-- Test projects: own test code and `meteortest.yml`, for example [`iOS-Automation-Framework`](https://github.com/qd1332543/iOS-Automation-Framework).
+- Test projects: own test code and `meteortest.yml`, for example [`iOS-Automation-Framework`](https://github.com/JunchenMeteor/iOS-Automation-Framework).
 - App artifacts: the tested targets, such as `.ipa`, `.apk`, `.app`, or internal build links.
 
 ## Project Structure
