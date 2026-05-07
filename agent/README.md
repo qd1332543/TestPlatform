@@ -16,6 +16,17 @@ It is responsible for:
 
 It is not owned by individual test repositories. Test repositories only expose suite metadata and executable commands.
 
+## Test Repository Runtime
+
+The Agent should not force suite commands to run with the Agent's own Python interpreter. When a command starts with `python` or `python3`, the executor resolves the test runtime in this order:
+
+1. `parameters.python_executable` from the task.
+2. `METEORTEST_TEST_PYTHON` from the Agent environment.
+3. `.venv` or `venv` inside the test repository.
+4. The original command token if no project runtime is found.
+
+This keeps platform dependencies separate from pytest/Appium/Locust dependencies owned by the test project.
+
 ## MVP Layout
 
 ```text

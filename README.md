@@ -274,6 +274,15 @@ suites:
 
 Suite import supports `id`, `key`, and `suite_key` as compatible suite identifiers.
 
+When a suite command starts with `python` or `python3`, the Local Agent treats the test repository as the runtime owner. It resolves the Python executable in this order:
+
+1. `parameters.python_executable` from the task.
+2. `METEORTEST_TEST_PYTHON` from the Agent environment.
+3. `.venv` or `venv` inside the test repository.
+4. The original `python` or `python3` command if no project-specific runtime is found.
+
+This keeps platform execution isolated from the Agent's own Python environment. For Windows test repositories, prefer a project-local virtual environment so pytest plugins such as `pytest-xdist`, `pytest-rerunfailures`, and `allure-pytest` are resolved consistently.
+
 ## Run the Local Agent
 
 ### 1. Install Agent dependencies
