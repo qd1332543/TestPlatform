@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 
 from agent.agent import run_agent
-from agent.executors.pytest_executor import _prepare_command
+from agent.executors.pytest_executor import _prepare_command, _repo_python_candidates
 
 
 def _write_sample_repo(repo_path: Path) -> None:
@@ -116,7 +116,7 @@ artifacts:
 
 def test_python_command_prefers_test_repo_virtualenv(tmp_path):
     repo_path = tmp_path / "sample-repo"
-    python_path = repo_path / ".venv" / "Scripts" / "python.exe"
+    python_path = _repo_python_candidates(str(repo_path))[0]
     python_path.parent.mkdir(parents=True)
     python_path.write_text("", encoding="utf-8")
 
