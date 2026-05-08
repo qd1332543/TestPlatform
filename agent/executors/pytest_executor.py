@@ -4,7 +4,6 @@ pytest_executor.py - 执行 suite 命令并收集日志和 Allure 结果
 import subprocess
 import shlex
 import os
-import sys
 from pathlib import Path
 from datetime import datetime, timezone
 
@@ -22,6 +21,40 @@ def _split_command(command: str) -> list[str]:
     if os.name == "nt":
         return shlex.split(command, posix=False)
     return shlex.split(command)
+
+
+def _repo_python_candidates(repo_path: str) -> list[Path]:
+    repo = Path(repo_path)
+    if os.name == "nt":
+        return [
+            repo / ".venv" / "Scripts" / "python.exe",
+            repo / "venv" / "Scripts" / "python.exe",
+        ]
+    return [
+        repo / ".venv" / "bin" / "python",
+        repo / "venv" / "bin" / "python",
+    ]
+
+
+def _resolve_python_executable(repo_path: str, parameters: dict) -> str | None:
+    configured = parameters.get("python_executable") or os.environ.get("METEORTEST_TEST_PYTHON")
+    if configured:
+        return str(configured)
+    for candidate in _repo_python_candidates(repo_path):
+        if candidate.exists():
+            return str(candidate)
+    return None
+
+
+def _prepare_command(command: str, repo_path: str, parameters: dict) -> list[str]:
+    tokens = _split_command(command)
+    if not tokens:
+        return tokens
+    if tokens[0] in {"python", "python3"}:
+        python_executable = _resolve_python_executable(repo_path, parameters)
+        if python_executable:
+            tokens[0] = python_executable
+    return tokens
 
 
 def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
@@ -43,16 +76,6 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
         **parameters,
     }
     command = _format_command(suite["command"], format_values)
-    # Use the current interpreter for python commands so local agents work on
-    # Windows, macOS, and CI without depending on shell aliases.
-    if command.startswith("python "):
-        command = sys.executable + command[6:]
-    elif command == "python":
-        command = sys.executable
-    elif command.startswith("python3 "):
-        command = sys.executable + command[7:]
-    elif command == "python3":
-        command = sys.executable
 
     # 如果 suite 有 allure 报告且命令未显式声明 --alluredir，则注入默认目录。
     allure_dir = None
@@ -60,6 +83,8 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
         allure_dir = str(out_path / "allure-results")
         if "--alluredir" not in command:
             command = f"{command} --alluredir={allure_dir}"
+
+    command_tokens = _prepare_command(command, repo_path, parameters)
 
     env = os.environ.copy()
     env.update({
@@ -74,7 +99,7 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
     started_at = datetime.now(timezone.utc).isoformat()
     with open(log_file, "w", encoding="utf-8") as f:
         result = subprocess.run(
-            _split_command(command),
+            command_tokens,
             cwd=repo_path,
             stdout=f,
             stderr=subprocess.STDOUT,

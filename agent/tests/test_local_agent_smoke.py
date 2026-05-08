@@ -1,9 +1,11 @@
 import json
+import sys
 import threading
 import time
 from pathlib import Path
 
 from agent.agent import run_agent
+from agent.executors.pytest_executor import _prepare_command, _repo_python_candidates
 
 
 def _write_sample_repo(repo_path: Path) -> None:
@@ -55,7 +57,7 @@ def test_local_agent_executes_task_and_writes_report(tmp_path):
                     "suite_id": "smoke",
                     "environment": "staging",
                     "status": "queued",
-                    "parameters": {},
+                    "parameters": {"python_executable": sys.executable},
                     "created_at": "2026-04-30T00:00:00Z",
                     "started_at": None,
                     "finished_at": None,
@@ -110,3 +112,28 @@ artifacts:
     assert log_path.exists()
     assert "1 passed" in log_path.read_text(encoding="utf-8")
     assert Path(task["report"]["allure_results_path"]).exists()
+
+
+def test_python_command_prefers_test_repo_virtualenv(tmp_path):
+    repo_path = tmp_path / "sample-repo"
+    python_path = _repo_python_candidates(str(repo_path))[0]
+    python_path.parent.mkdir(parents=True)
+    python_path.write_text("", encoding="utf-8")
+
+    command = _prepare_command("python -m pytest tests", str(repo_path), {})
+
+    assert command[0] == str(python_path)
+    assert command[1:] == ["-m", "pytest", "tests"]
+
+
+def test_python_command_can_be_configured_per_task(tmp_path):
+    repo_path = tmp_path / "sample-repo"
+    repo_path.mkdir()
+
+    command = _prepare_command(
+        "python -m pytest tests",
+        str(repo_path),
+        {"python_executable": r"C:\Python313\python.exe"},
+    )
+
+    assert command[0] == r"C:\Python313\python.exe"

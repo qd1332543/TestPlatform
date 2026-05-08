@@ -274,6 +274,15 @@ suites:
 
 导入 suite 时兼容 `id`、`key`、`suite_key` 三种 suite 标识字段。
 
+当 suite command 以 `python` 或 `python3` 开头时，Local Agent 会把测试仓库视为运行时所有者，并按以下顺序解析 Python 可执行文件：
+
+1. 任务中的 `parameters.python_executable`。
+2. Agent 环境变量 `METEORTEST_TEST_PYTHON`。
+3. 测试仓库内的 `.venv` 或 `venv`。
+4. 如果没有找到项目专属运行时，则保留原始 `python` 或 `python3` 命令。
+
+这样可以避免平台 Agent 自己的 Python 环境污染测试仓库。Windows 测试仓库建议使用项目内虚拟环境，确保 `pytest-xdist`、`pytest-rerunfailures`、`allure-pytest` 等插件解析一致。
+
 ## 运行 Local Agent
 
 ### 1. 安装 Agent 依赖
