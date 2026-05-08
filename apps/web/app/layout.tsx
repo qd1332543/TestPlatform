@@ -11,9 +11,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh" className="h-full">
       <body className="h-full text-white" style={{ background: 'var(--bg-base)' }}>
-        <div className="flex h-full">
+        <div className="app-shell flex h-full">
           <Sidebar />
-          <main className="flex-1 overflow-auto p-6 min-w-0">{children}</main>
+          <main className="app-main flex-1 overflow-auto p-6 min-w-0">{children}</main>
         </div>
       </body>
     </html>

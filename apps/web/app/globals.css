@@ -1,31 +1,96 @@
 @import "tailwindcss";
 
 :root {
-  --bg-base: #0A0F1E;
-  --bg-sidebar: #060B16;
-  --bg-card: #111827;
-  --bg-card-hover: #1a2438;
-  --border: #1E2D45;
-  --border-light: #334155;
-  --accent: #3B82F6;
-  --accent-2: #6366F1;
+  --bg-base: #0C0F10;
+  --bg-sidebar: rgba(9, 12, 13, 0.88);
+  --bg-card: rgba(23, 29, 32, 0.82);
+  --bg-card-hover: rgba(34, 43, 46, 0.88);
+  --border: rgba(214, 228, 223, 0.11);
+  --border-light: rgba(214, 228, 223, 0.18);
+  --accent: #74D6B3;
+  --accent-2: #F2C76E;
+  --accent-3: #9DB7FF;
   --text-primary: #FFFFFF;
-  --text-secondary: #94A3B8;
-  --text-muted: #4B5563;
+  --text-secondary: #A9B4B0;
+  --text-muted: #6F7B77;
+  --surface-faint: rgba(255, 255, 255, 0.025);
+  --surface-soft: rgba(255, 255, 255, 0.045);
+  --shadow-elevated: 0 24px 80px rgba(0, 0, 0, 0.32);
+}
+
+html {
+  background: var(--bg-base);
 }
 
 body {
-  background: var(--bg-base);
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(145deg, rgba(116, 214, 179, 0.08), transparent 34%),
+    linear-gradient(315deg, rgba(242, 199, 110, 0.055), transparent 38%),
+    var(--bg-base);
+  background-size: 48px 48px, 48px 48px, auto, auto, auto;
   color: var(--text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  letter-spacing: 0;
 }
 
 ::selection {
-  background: #3B82F640;
-  color: #fff;
+  background: rgba(116, 214, 179, 0.32);
+  color: #06100C;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-main {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 240px);
+}
+
+.glass-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-elevated);
+  backdrop-filter: blur(18px);
+}
+
+.brand-orbit {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border: 1px solid rgba(116, 214, 179, 0.46);
+  border-radius: 50%;
+  background: linear-gradient(145deg, rgba(116, 214, 179, 0.16), rgba(242, 199, 110, 0.08));
+}
+
+.brand-orbit::after {
+  position: absolute;
+  content: "";
+  width: 8px;
+  height: 8px;
+  right: 5px;
+  top: 6px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 18px rgba(242, 199, 110, 0.36);
+}
+
+.panel-heading {
+  color: var(--text-primary);
+  font-weight: 650;
+}
+
+.kicker {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0;
 }
 
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1E2D45; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #334155; }
+::-webkit-scrollbar-thumb { background: rgba(214, 228, 223, 0.18); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(214, 228, 223, 0.28); }

@@ -113,19 +113,22 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`${collapsed ? 'w-14' : 'w-52'} flex flex-col py-5 shrink-0 transition-all duration-200 border-r`}
+      className={`${collapsed ? 'w-16' : 'w-60'} flex flex-col py-5 shrink-0 transition-all duration-200 border-r backdrop-blur`}
       style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border)' }}
     >
-      <div className="flex items-center justify-between px-3 mb-6 h-9">
+      <div className="flex items-center justify-between px-3 mb-7 h-10">
         {!collapsed && (
-          <div className="overflow-hidden">
-            <div className="text-white font-bold text-sm tracking-wide whitespace-nowrap truncate">{platformName}</div>
+          <div className="flex items-center gap-3 overflow-hidden">
+            <span className="brand-orbit" />
+            <div className="min-w-0">
+              <div className="text-white font-bold text-sm tracking-wide whitespace-nowrap truncate">{platformName}</div>
             <div className="text-xs whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>自动化测试平台</div>
+            </div>
           </div>
         )}
         <button
           onClick={() => setCollapsed(c => !c)}
-          className="w-7 h-7 flex items-center justify-center rounded-md transition-colors shrink-0 ml-auto"
+          className="w-8 h-8 flex items-center justify-center rounded-full transition-colors shrink-0 ml-auto"
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
@@ -145,10 +148,10 @@ export default function Sidebar() {
 
       <div className="px-2 mb-4">
         <Link href={aiItem.href} title={collapsed ? aiItem.label : undefined}
-          className={`flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-sm font-semibold transition-all ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${collapsed ? 'justify-center' : ''}`}
           style={isActive(aiItem.href)
-            ? { background: 'linear-gradient(135deg, #3B82F6, #6366F1)', color: '#fff', boxShadow: '0 4px 15px #3B82F640' }
-            : { background: '#0D1829', color: '#60A5FA', border: '1px solid #1E3A5F' }
+            ? { background: 'linear-gradient(135deg, rgba(116, 214, 179, 0.22), rgba(242, 199, 110, 0.12))', color: '#fff', border: '1px solid rgba(116, 214, 179, 0.42)', boxShadow: '0 16px 42px rgba(0,0,0,0.22)' }
+            : { background: 'rgba(116, 214, 179, 0.08)', color: 'var(--accent)', border: '1px solid rgba(116, 214, 179, 0.22)' }
           }
         >
           <span className="shrink-0">{aiItem.icon}</span>
@@ -161,9 +164,9 @@ export default function Sidebar() {
       <nav className="flex flex-col gap-0.5 px-2 flex-1">
         {navItems.map(({ href, label, icon }) => (
           <Link key={href} href={href} title={collapsed ? label : undefined}
-            className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
             style={isActive(href)
-              ? { background: 'var(--bg-card)', color: '#fff', fontWeight: 500 }
+              ? { background: 'var(--surface-soft)', color: '#fff', fontWeight: 600, border: '1px solid var(--border)' }
               : { color: 'var(--text-secondary)' }
             }
           >
@@ -175,9 +178,9 @@ export default function Sidebar() {
 
       <div className="px-2 mt-4 pt-1">
         <Link href="/settings" title={collapsed ? '设置' : undefined}
-          className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
+          className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
           style={isActive('/settings')
-            ? { background: 'var(--bg-card)', color: '#fff', fontWeight: 500 }
+            ? { background: 'var(--surface-soft)', color: '#fff', fontWeight: 600, border: '1px solid var(--border)' }
             : { color: 'var(--text-muted)' }
           }
         >
