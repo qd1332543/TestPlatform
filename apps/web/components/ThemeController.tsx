@@ -5,7 +5,7 @@ import { useEffect } from 'react'
 const settingsKey = 'meteortest.settings.v1'
 const settingsUpdatedEvent = 'meteortest-settings-updated'
 const defaultTheme = 'meteor'
-const validThemes = new Set(['meteor', 'indigo', 'forest', 'aurora'])
+const validThemes = new Set(['meteor', 'indigo', 'dune', 'aurora', 'parchment', 'sky', 'glacier', 'sakura'])
 
 function resolveTheme() {
   const raw = window.localStorage.getItem(settingsKey)

@@ -23,6 +23,13 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     .order('created_at', { ascending: false }).limit(50)
   if (status) query = query.eq('status', status)
   const { data: tasks } = await query
+  const taskRows = (tasks ?? []) as TaskRow[]
+  const statusCounts = {
+    queued: taskRows.filter(task => task.status === 'queued').length,
+    running: taskRows.filter(task => task.status === 'running').length,
+    succeeded: taskRows.filter(task => task.status === 'succeeded').length,
+    failed: taskRows.filter(task => task.status === 'failed' || task.status === 'timeout').length,
+  }
 
   const filters = [
     { label: t.filters.all, value: '' },
@@ -35,7 +42,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="page-shell space-y-6">
-      <div className="page-header">
+      <div className="console-hero rounded-xl p-5 page-header">
         <div>
           <h1 className="page-title">{t.pages.tasks.title}</h1>
           <p className="page-subtitle">{t.pages.tasks.subtitle}</p>
@@ -46,7 +53,21 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         </Link>
       </div>
 
-      <div className="flex gap-2">
+      <div className="grid gap-4 md:grid-cols-4">
+        {[
+          { label: t.status.queued, value: statusCounts.queued, className: 'status-queued' },
+          { label: t.status.running, value: statusCounts.running, className: 'status-running' },
+          { label: t.status.succeeded, value: statusCounts.succeeded, className: 'status-succeeded' },
+          { label: t.status.failed, value: statusCounts.failed, className: 'status-failed' },
+        ].map(item => (
+          <div key={item.label} className="metric-card rounded-xl p-4">
+            <div className={`status-badge ${item.className} px-2 py-0.5`}>{item.label}</div>
+            <div className="metric-value mt-3">{item.value}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
         {filters.map(f => {
           const active = status === f.value || (!status && !f.value)
           return (
@@ -59,7 +80,12 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="data-panel rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div className="section-title">{t.pages.tasks.title}</div>
+          <div className="section-subtitle">{t.pages.tasks.subtitle}</div>
+        </div>
+        <div className="overflow-x-auto">
+        <table className="console-table">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {[t.common.project, t.common.suite, t.common.environment, t.common.status, t.common.executor, t.common.time, t.common.actions].map(h => (
@@ -68,9 +94,9 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             </tr>
           </thead>
           <tbody>
-            {!tasks?.length ? (
+            {!taskRows.length ? (
               <tr><td colSpan={7} className="px-5 py-10 text-center" style={{ color: 'var(--text-muted)' }}>{t.pages.tasks.empty}</td></tr>
-            ) : (tasks as TaskRow[]).map((task) => {
+            ) : taskRows.map((task) => {
               const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
               return (
                 <tr key={task.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -90,6 +116,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

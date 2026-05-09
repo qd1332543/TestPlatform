@@ -302,7 +302,7 @@ export default function AiPage() {
   const { locale, dictionary: t } = useLocale()
   const templates = t.ai.templates.map(template => ({
     ...template,
-    icon: TemplateIcons[template.id as keyof typeof TemplateIcons],
+    icon: TemplateIcons[template.id as keyof typeof TemplateIcons] ?? TemplateIcons.report,
   }))
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
@@ -447,8 +447,34 @@ export default function AiPage() {
   }
 
   return (
-    <div className="flex h-full w-full gap-4 min-w-0">
-      <aside className="data-panel hidden lg:flex w-64 shrink-0 flex-col rounded-xl overflow-hidden">
+    <div className="page-shell flex h-full min-h-0 flex-col gap-4">
+      <section className="console-hero rounded-xl p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
+              style={{ background: 'var(--accent)', color: '#06100C' }}>✦</div>
+            <div>
+              <h1 className="page-title">{t.ai.title}</h1>
+              <p className="page-subtitle">{t.ai.subtitle}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {templates.slice(0, 3).map(template => (
+              <button
+                key={template.id}
+                type="button"
+                onClick={() => applyTemplate(template.text)}
+                className="chip-action rounded-lg px-3 py-2 text-xs font-semibold"
+              >
+                {template.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
+      <aside className="data-panel hidden xl:flex shrink-0 flex-col rounded-xl overflow-hidden">
         <div className="p-3" style={{ borderBottom: '1px solid var(--border)' }}>
           <button
             onClick={createConversation}
@@ -457,7 +483,7 @@ export default function AiPage() {
             + {t.ai.newConversation}
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        <div className="quiet-scrollbar flex-1 overflow-y-auto p-2 space-y-1">
           {conversations.map(c => (
             <div key={c.id} className="group flex items-center gap-1">
               <button
@@ -488,25 +514,21 @@ export default function AiPage() {
         </div>
       </aside>
 
-      <div className="flex flex-col h-full w-full max-w-3xl mx-auto min-w-0">
-      {/* Header */}
-      <div className="mb-5 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-lg"
-          style={{ background: 'var(--accent)', color: '#06100C', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 24%, transparent)' }}>✦</div>
-        <div>
-          <h1 className="text-xl font-bold text-white leading-tight">{t.ai.title}</h1>
-          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{t.ai.subtitle}</p>
-        </div>
+      <div className="data-panel flex min-h-0 flex-col rounded-xl p-4">
+      <div className="mb-4 flex items-center gap-3">
         <button
           onClick={createConversation}
-          className="primary-action lg:hidden ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold"
+          className="primary-action xl:hidden px-3 py-1.5 rounded-lg text-xs font-semibold"
         >
           {t.ai.newConversation}
         </button>
+        <div className="ml-auto text-xs" style={{ color: 'var(--text-muted)' }}>
+          {messages.length ? t.ai.messageCount(messages.length) : t.ai.emptyMessages}
+        </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 min-h-0 pb-2" style={{ scrollbarWidth: 'thin', scrollbarColor: '#1E2D45 transparent' }}>
+      <div className="quiet-scrollbar flex-1 overflow-y-auto space-y-4 min-h-0 pb-2">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center select-none">
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
@@ -564,42 +586,6 @@ export default function AiPage() {
       </div>
 
       {/* Templates */}
-      <div className="mt-3 grid grid-cols-3 gap-3">
-        {templates.map(t => {
-          const parts = parseTemplate(t.text)
-          return (
-            <button key={t.label} onClick={() => applyTemplate(t.text)}
-              className="flex flex-col items-start px-4 py-4 rounded-2xl text-left transition-all duration-200"
-              style={{
-                background: 'var(--bg-card)',
-                border: '1px solid var(--border)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'var(--border-light)'
-                e.currentTarget.style.boxShadow = 'var(--shadow-elevated)'
-                e.currentTarget.style.transform = 'translateY(-2px)'
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.borderColor = 'var(--border)'
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)'
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
-            >
-              <div className="mb-2">{t.icon}</div>
-              <div className="text-sm font-semibold text-white mb-1">{t.label}</div>
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                {parts.map((p, i) =>
-                  p.type === 'param'
-                    ? <span key={i} style={{ color: 'var(--accent)' }}>[{p.value}]</span>
-                    : <span key={i}>{p.value}</span>
-                )}
-              </p>
-            </button>
-          )
-        })}
-      </div>
-
       {/* Input */}
       <div className="mt-3">
         <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5 transition-all"
@@ -631,6 +617,39 @@ export default function AiPage() {
           {t.ai.footer} · <kbd className="px-1 py-0.5 rounded font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>Tab</kbd> {t.ai.switchParams}
         </p>
       </div>
+      </div>
+
+      <aside className="quiet-scrollbar data-panel hidden xl:block rounded-xl p-4 overflow-y-auto">
+        <div className="section-title">{t.ai.greeting}</div>
+        <div className="section-subtitle mt-1">{t.ai.greetingHint}</div>
+        <div className="mt-4 space-y-3">
+          {templates.map(template => {
+            const parts = parseTemplate(template.text)
+            return (
+              <button
+                key={template.label}
+                onClick={() => applyTemplate(template.text)}
+                className="resource-card w-full rounded-xl px-4 py-4 text-left transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="shrink-0">{template.icon}</div>
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-white">{template.label}</div>
+                    <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>{template.desc}</div>
+                  </div>
+                </div>
+                <p className="mt-3 text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  {parts.map((part, index) =>
+                    part.type === 'param'
+                      ? <span key={index} style={{ color: 'var(--accent)' }}>[{part.value}]</span>
+                      : <span key={index}>{part.value}</span>
+                  )}
+                </p>
+              </button>
+            )
+          })}
+        </div>
+      </aside>
       </div>
     </div>
   )

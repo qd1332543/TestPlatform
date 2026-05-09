@@ -34,6 +34,8 @@ export default async function Dashboard() {
   const total = tasks?.length ?? 0
   const succeeded = tasks?.filter(t => t.status === 'succeeded').length ?? 0
   const failed = tasks?.filter(t => t.status === 'failed').length ?? 0
+  const running = tasks?.filter(t => t.status === 'running').length ?? 0
+  const queued = tasks?.filter(t => t.status === 'queued').length ?? 0
   const successRate = total > 0 ? Math.round((succeeded / total) * 100) + '%' : '-'
   const durations = tasks?.filter(t => t.started_at && t.finished_at)
     .map(t => new Date(t.finished_at).getTime() - new Date(t.started_at).getTime())
@@ -52,10 +54,10 @@ export default async function Dashboard() {
   ]
 
   return (
-    <div className="space-y-6 w-full max-w-7xl">
-      <section className="glass-panel rounded-2xl p-6 overflow-hidden">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_420px]">
-          <div className="space-y-5">
+    <div className="page-shell space-y-6">
+      <section className="console-hero rounded-xl p-6 overflow-hidden">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="space-y-6">
             <div>
               <div className="kicker mb-2">{copy.dashboard.kicker}</div>
               <h1 className="text-3xl font-bold text-white">{copy.dashboard.title}</h1>
@@ -64,21 +66,32 @@ export default async function Dashboard() {
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link href="/tasks/new" className="px-4 py-2.5 rounded-full text-sm font-semibold transition-opacity hover:opacity-90"
-                style={{ background: 'var(--accent)', color: '#06100C' }}>{copy.dashboard.newTask}</Link>
-              <Link href="/ai" className="px-4 py-2.5 rounded-full text-sm transition-colors"
-                style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>{copy.dashboard.openAi}</Link>
-              <Link href="/executors" className="px-4 py-2.5 rounded-full text-sm transition-colors"
-                style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>{copy.dashboard.checkExecutors}</Link>
+              <Link href="/ai" className="primary-action px-4 py-2.5 rounded-lg text-sm font-semibold">{copy.dashboard.openAi}</Link>
+              <Link href="/tasks/new" className="secondary-action px-4 py-2.5 rounded-lg text-sm">{copy.dashboard.newTask}</Link>
+              <Link href="/executors" className="secondary-action px-4 py-2.5 rounded-lg text-sm">{copy.dashboard.checkExecutors}</Link>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                { label: copy.status.running, value: running, className: 'status-running' },
+                { label: copy.status.queued, value: queued, className: 'status-queued' },
+                { label: copy.status.failed, value: failed, className: 'status-failed' },
+                { label: copy.status.succeeded, value: succeeded, className: 'status-succeeded' },
+              ].map(item => (
+                <div key={item.label} className="rounded-lg px-4 py-3" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                  <div className={`status-badge ${item.className} px-2 py-0.5`}>{item.label}</div>
+                  <div className="mt-3 text-2xl font-bold text-white">{item.value}</div>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="rounded-2xl p-4" style={{ background: 'rgba(255,255,255,0.035)', border: '1px solid var(--border)' }}>
-            <div className="text-xs uppercase tracking-wide mb-3" style={{ color: 'var(--text-muted)' }}>{copy.dashboard.executionFlow}</div>
+          <div className="rounded-xl p-4" style={{ background: 'rgba(0,0,0,0.16)', border: '1px solid var(--border)' }}>
+            <div className="section-title mb-1">{copy.dashboard.executionFlow}</div>
+            <div className="section-subtitle mb-4">{copy.dashboard.aiSubtitle}</div>
             <div className="space-y-3">
               {copy.dashboard.flow.map((step, index) => (
-                <div key={step} className="flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: 'rgba(12,15,16,0.46)', border: '1px solid var(--border)' }}>
-                  <span className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold" style={{ color: '#06100C', background: index === 4 ? 'var(--accent-2)' : 'var(--accent)' }}>
+                <div key={step} className="flex items-center gap-3 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-faint)', border: '1px solid var(--border)' }}>
+                  <span className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold" style={{ color: '#06100C', background: index === 4 ? 'var(--accent-2)' : 'var(--accent)' }}>
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <span className="text-sm text-white">{step}</span>
@@ -90,50 +103,40 @@ export default async function Dashboard() {
       </section>
 
       {/* AI entry */}
-      <Link href="/ai" className="flex items-center gap-4 rounded-2xl p-5 transition-all group glass-panel">
-        <div className="w-12 h-12 rounded-full flex items-center justify-center text-2xl shrink-0"
-          style={{ background: 'linear-gradient(145deg, rgba(116,214,179,0.28), rgba(242,199,110,0.14))', border: '1px solid rgba(116,214,179,0.42)' }}>✦</div>
-        <div className="flex-1">
-          <div className="font-semibold text-white text-base">{copy.dashboard.aiTitle}</div>
-          <div className="text-sm mt-0.5" style={{ color: 'var(--accent)' }}>{copy.dashboard.aiSubtitle}</div>
-        </div>
-        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ color: 'var(--accent)' }} className="group-hover:translate-x-1 transition-transform">
-          <path d="M4 10h12M12 6l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </Link>
-
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map(({ label, value, icon, color }) => (
-          <div key={label} className="glass-panel rounded-2xl p-5">
+          <div key={label} className="metric-card rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{label}</span>
+              <span className="metric-label">{label}</span>
               <span className="text-xs font-mono" style={{ color }}>{icon}</span>
             </div>
-            <div className="text-3xl font-bold" style={{ color }}>{value}</div>
+            <div className="metric-value" style={{ color }}>{value}</div>
           </div>
         ))}
       </div>
 
       {/* Quick actions */}
-      <div className="flex gap-3">
-        <Link href="/tasks/new" className="px-4 py-2 rounded-full text-sm font-medium transition-opacity hover:opacity-90"
-          style={{ background: 'var(--accent)', color: '#06100C' }}>{copy.dashboard.quick.newTask}</Link>
-        <Link href="/tasks?status=failed" className="px-4 py-2 rounded-full text-sm transition-colors"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>{copy.dashboard.quick.failed}</Link>
-        <Link href="/reports" className="px-4 py-2 rounded-full text-sm transition-colors"
-          style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}>{copy.dashboard.quick.reports}</Link>
+      <div className="flex flex-wrap gap-3">
+        <Link href="/tasks/new" className="primary-action px-4 py-2 rounded-lg text-sm font-medium">{copy.dashboard.quick.newTask}</Link>
+        <Link href="/tasks?status=failed" className="secondary-action px-4 py-2 rounded-lg text-sm">{copy.dashboard.quick.failed}</Link>
+        <Link href="/reports" className="secondary-action px-4 py-2 rounded-lg text-sm">{copy.dashboard.quick.reports}</Link>
       </div>
 
       {/* Recent tasks */}
-      <div className="glass-panel rounded-2xl overflow-hidden">
-        <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-          <span className="text-sm font-semibold text-white">{copy.dashboard.recentTasks}</span>
+      <div className="data-panel rounded-xl overflow-hidden">
+        <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+          <div>
+            <div className="section-title">{copy.dashboard.recentTasks}</div>
+            <div className="section-subtitle">{copy.pages.tasks.subtitle}</div>
+          </div>
+          <Link href="/tasks" className="link-action text-sm">{copy.common.detailsArrow}</Link>
         </div>
         {!recentTasks?.length ? (
           <div className="px-5 py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{copy.dashboard.emptyTasks}</div>
         ) : (
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="console-table">
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
                 {[copy.common.project, copy.common.suite, copy.common.environment, copy.common.status, copy.common.time].map(h => (
@@ -159,6 +162,7 @@ export default async function Dashboard() {
               })}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

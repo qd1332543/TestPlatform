@@ -39,10 +39,11 @@ export default async function ReportsPage() {
   const succeededCount = reports.filter(r => r.status === 'succeeded').length
   const failedCount = reports.filter(r => r.status === 'failed' || r.status === 'timeout').length
   const analyzedCount = reports.filter(r => firstItem(r.ai_analyses)).length
+  const missingReportCount = reports.filter(r => !firstItem(r.reports)).length
 
   return (
     <div className="page-shell space-y-6">
-      <div className="page-header">
+      <div className="console-hero rounded-xl p-5 page-header">
         <div>
           <h1 className="page-title">{t.pages.reports.title}</h1>
           <p className="page-subtitle">{t.pages.reports.subtitle}</p>
@@ -53,12 +54,27 @@ export default async function ReportsPage() {
         </div>
       </div>
 
+      <div className="grid gap-4 md:grid-cols-4">
+        {[
+          { label: t.reports.resultCount, value: totalReports, className: 'status-queued' },
+          { label: t.reports.succeeded, value: succeededCount, className: 'status-succeeded' },
+          { label: t.reports.failed, value: failedCount, className: 'status-failed' },
+          { label: t.reports.analyzed, value: analyzedCount, className: 'status-running' },
+        ].map(item => (
+          <div key={item.label} className="metric-card rounded-xl p-4">
+            <div className={`status-badge ${item.className} px-2 py-0.5`}>{item.label}</div>
+            <div className="metric-value mt-3">{item.value}</div>
+          </div>
+        ))}
+      </div>
+
       {!reports.length ? (
         <div className="data-panel rounded-xl">
           <div className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{t.pages.reports.empty}</div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-4">
           {reports.map(report => {
             const taskReport = firstItem(report.reports)
             const analysis = firstItem(report.ai_analyses)
@@ -131,6 +147,30 @@ export default async function ReportsPage() {
               </div>
             )
           })}
+          </div>
+          <aside className="data-panel rounded-xl p-5 h-fit space-y-5">
+            <div>
+              <div className="section-title">{t.reports.aiAnalysis}</div>
+              <div className="section-subtitle mt-1">{t.pages.reports.subtitle}</div>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <span style={{ color: 'var(--text-muted)' }}>{t.reports.noReport}</span>
+                <span className="text-lg font-bold text-white">{missingReportCount}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span style={{ color: 'var(--text-muted)' }}>{t.reports.analyzed}</span>
+                <span className="text-lg font-bold text-white">{analyzedCount}</span>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <span style={{ color: 'var(--text-muted)' }}>{t.reports.failed}</span>
+                <span className="text-lg font-bold text-white">{failedCount}</span>
+              </div>
+            </div>
+            <Link href="/ai" className="primary-action inline-flex w-full justify-center rounded-lg px-4 py-2 text-sm font-semibold">
+              {t.common.aiAssistant}
+            </Link>
+          </aside>
         </div>
       )}
     </div>

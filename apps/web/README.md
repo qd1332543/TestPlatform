@@ -84,8 +84,12 @@ Current theme options:
 
 - `meteor`: 星流墨色, the default dark mint/gold console.
 - `indigo`: 靛蓝瓷, a cooler indigo console.
-- `forest`: 森林墨, a low-saturation green console.
+- `dune`: 沙丘, a warm dark brown and amber console.
 - `aurora`: 极光终端, a stronger terminal-inspired dark theme.
+- `parchment`: 牛皮纸, a light paper-like theme for documents and reports.
+- `sky`: 晴空蓝, a bright blue theme for daytime use.
+- `glacier`: 冰湖银, a calm silver-blue theme with low-contrast controls.
+- `sakura`: 樱花雾, a soft light pink theme.
 
 Theme is stored in `meteortest.settings.v1` and applied through `ThemeController`.
 

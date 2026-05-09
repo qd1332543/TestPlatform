@@ -6,7 +6,7 @@ import { useLocale } from '@/lib/useLocale'
 
 type Settings = {
   platformName: string
-  theme: 'meteor' | 'indigo' | 'forest' | 'aurora'
+  theme: 'meteor' | 'indigo' | 'dune' | 'aurora' | 'parchment' | 'sky' | 'glacier' | 'sakura'
   defaultEnvironment: 'dev' | 'staging' | 'prod'
   taskTimeout: number
   maxParallelTasks: number
@@ -49,7 +49,7 @@ const defaultSettings: Settings = {
 
 function normalizeSettings(value: Partial<Settings>): Settings {
   const settings = { ...defaultSettings, ...value }
-  if (!['meteor', 'indigo', 'forest', 'aurora'].includes(settings.theme)) {
+  if (!['meteor', 'indigo', 'dune', 'aurora', 'parchment', 'sky', 'glacier', 'sakura'].includes(settings.theme)) {
     settings.theme = defaultSettings.theme
   }
   if (!settings.platformName?.trim()) {
@@ -78,13 +78,9 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (che
       aria-pressed={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className="relative h-7 w-12 rounded-full transition-colors shrink-0"
-      style={{ background: checked ? 'var(--accent)' : 'var(--surface-soft)', border: '1px solid var(--border)' }}
+      className="toggle-control"
     >
-      <span
-        className="absolute top-1 h-5 w-5 rounded-full transition-transform"
-        style={{ left: 4, transform: checked ? 'translateX(20px)' : 'translateX(0)', background: checked ? '#06100C' : 'var(--text-muted)' }}
-      />
+      <span className="toggle-thumb" />
     </button>
   )
 }
@@ -211,12 +207,7 @@ export default function SettingsPage() {
 
       {(dirty || savedAt) && (
         <div
-          className="rounded-lg px-4 py-3 text-sm"
-          style={{
-            background: dirty ? '#2A1A0A' : '#0D2818',
-            border: `1px solid ${dirty ? '#7C2D12' : '#14532D'}`,
-            color: dirty ? '#F97316' : '#22C55E',
-          }}
+          className={`notice-banner rounded-lg px-4 py-3 text-sm ${dirty ? 'is-dirty' : 'is-saved'}`}
         >
           {dirty ? t.settings.dirty : t.settings.saved(savedAt ?? t.settings.savedFallback)}
         </div>
@@ -391,8 +382,12 @@ export default function SettingsPage() {
                 {[
                   { value: 'meteor' as const, ...t.settings.themes.meteor },
                   { value: 'indigo' as const, ...t.settings.themes.indigo },
-                  { value: 'forest' as const, ...t.settings.themes.forest },
+                  { value: 'dune' as const, ...t.settings.themes.dune },
                   { value: 'aurora' as const, ...t.settings.themes.aurora },
+                  { value: 'parchment' as const, ...t.settings.themes.parchment },
+                  { value: 'sky' as const, ...t.settings.themes.sky },
+                  { value: 'glacier' as const, ...t.settings.themes.glacier },
+                  { value: 'sakura' as const, ...t.settings.themes.sakura },
                 ].map(option => (
                   <button
                     key={option.value}
