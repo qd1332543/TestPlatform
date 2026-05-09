@@ -98,6 +98,16 @@ Initial target locales:
 - `zh-CN`
 - `en`
 
+The foundation lives in:
+
+```text
+content/i18n.ts
+lib/i18n.ts
+lib/useLocale.ts
+```
+
+Locale normalization must use the shared `supportedLocales` list. Avoid one-off binary checks in components or API routes.
+
 The first i18n pass should cover navigation, page titles, settings, forms, empty states, AI templates, and common validation messages.
 
 ## Validation

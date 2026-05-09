@@ -54,6 +54,13 @@ MeteorTest is split into three responsibilities:
 
 The web console should feel like a restrained operations console, with visual inspiration from `JunchenMeteor/junchen-meteor` but without turning product pages into marketing pages.
 
+- Treat the target product direction as an **engineering testing console**, not a decorative dashboard or a generic admin template.
+- Combine three reference families deliberately:
+  - CI / DevOps consoles for task status, execution history, failure details, logs, and run detail layouts.
+  - Test reporting / QA platforms for project, suite, case, report, failure-analysis, executor, and device dimensions.
+  - AI workspaces for actionable AI entry points: project import, suite import, task creation, report inspection, failure analysis, and next-step suggestions.
+- Do not simply copy one product family. MeteorTest should present a testing control plane, local executor scheduling, report center, and AI operations surface as one coherent workflow.
+- Concrete page direction: the homepage should show what happened today, Projects should emphasize integration status, Tasks should emphasize the execution queue, Reports should emphasize failure reason and next action, and AI should feel like an operation command surface rather than a plain chat page.
 - Use the theme token system in `apps/web/app/globals.css` instead of hard-coded page colors.
 - Keep page structure consistent: page header, primary action, filters, data panel, status badges, and forms should use the shared semantic classes where possible.
 - Theme selection lives in Settings and is stored in `meteortest.settings.v1`.
@@ -66,6 +73,7 @@ MeteorTest should add full Web UI internationalization in a future pass, followi
 
 - Keep locale copy in typed content modules instead of scattering bilingual string literals across components.
 - Start with `zh-CN` and `en`.
+- Define supported locales through a shared `supportedLocales` list and normalize unknown values through a generic helper. Do not hard-code binary language checks such as `value === 'en' ? 'en' : 'zh-CN'`.
 - Prefer route-aware or provider-based locale state, then persist the selected language in the same Settings model.
 - Page metadata, navigation labels, settings labels, AI templates, empty states, validation messages, and docs links should all use the locale source.
 - When i18n is implemented, update README files, `DESIGN.md`, `PROGRESS.md`, and this file in the same PR.
