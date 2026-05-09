@@ -6,8 +6,7 @@ import Link from 'next/link'
 
 type ProjectForm = { key: string; name: string; repo_url: string; description: string }
 
-const inputCls = "w-full rounded-lg px-3 py-2.5 text-sm text-white outline-none transition-colors focus:border-blue-500"
-const inputStyle = { background: '#0A0F1E', border: '1px solid var(--border)' }
+const inputCls = "field-input px-3 py-2.5 text-sm"
 
 const fields: { key: keyof ProjectForm; label: string; placeholder: string; required?: boolean }[] = [
   { key: 'name', label: '项目名称', placeholder: '云鹿商城', required: true },
@@ -51,13 +50,12 @@ export default function NewProjectPage() {
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <form onSubmit={handleSubmit} className="rounded-xl p-6 space-y-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <form onSubmit={handleSubmit} className="data-panel rounded-xl p-6 space-y-5">
           {fields.map(({ key, label, placeholder, required }) => (
             <div key={key}>
               <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'var(--text-secondary)' }}>{label}</label>
               <input
                 className={inputCls}
-                style={inputStyle}
                 placeholder={placeholder}
                 value={form[key]}
                 onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
@@ -67,20 +65,19 @@ export default function NewProjectPage() {
           ))}
           {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#FCA5A5', background: '#2A0F0F', border: '1px solid #7F1D1D' }}>{error}</p>}
           <button type="submit" disabled={loading}
-            className="w-full py-2.5 rounded-lg text-sm font-medium text-white hover:opacity-90 disabled:opacity-50 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>
+            className="primary-action w-full py-2.5 rounded-lg text-sm font-semibold disabled:opacity-50">
             {loading ? '创建中...' : '创建项目'}
           </button>
         </form>
 
-        <aside className="rounded-xl p-5 space-y-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <aside className="data-panel rounded-xl p-5 space-y-4">
           <div>
             <div className="text-sm font-semibold text-white">填写建议</div>
             <p className="text-sm mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               项目标识建议使用稳定、短小、可读的英文 key。仓库地址和描述不是强制项，但补全后更利于 AI 助手理解项目上下文。
             </p>
           </div>
-          <div className="rounded-lg p-4" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+          <div className="panel-inner rounded-lg p-4">
             <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>后续流程</div>
             <div className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
               <div>1. 导入 test-platform.yml</div>

@@ -64,11 +64,11 @@ export default async function BuildsPage() {
   const webBuilds = buildList.filter(b => b.platform === 'web').length
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex items-end justify-between gap-4">
+    <div className="page-shell space-y-6">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white">构建产物</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>管理应用构建版本，并查看它们对应的测试任务结果</p>
+          <h1 className="page-title">构建产物</h1>
+          <p className="page-subtitle">管理应用构建版本，并查看它们对应的测试任务结果</p>
         </div>
         <div className="grid grid-cols-4 gap-2 text-right text-xs" style={{ color: 'var(--text-muted)' }}>
           <div>总数 {totalBuilds}</div>
@@ -79,13 +79,12 @@ export default async function BuildsPage() {
       </div>
 
       {!buildList.length ? (
-        <div className="rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="data-panel rounded-xl">
           <div className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
             暂无构建产物。先在右上角登记一个 App 包，再在任务中心关联它。
             <div className="mt-4">
               <Link href="/builds/new"
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-opacity inline-flex"
-                style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>
+                className="primary-action px-4 py-2 rounded-lg text-sm font-semibold inline-flex">
                 + 登记构建
               </Link>
             </div>
@@ -95,8 +94,7 @@ export default async function BuildsPage() {
         <div className="space-y-4">
           <div className="flex justify-end">
             <Link href="/builds/new"
-              className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-opacity"
-              style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>
+              className="primary-action px-4 py-2 rounded-lg text-sm font-semibold">
               + 登记构建
             </Link>
           </div>
@@ -104,7 +102,7 @@ export default async function BuildsPage() {
             const ps = platformStyle[b.platform?.toLowerCase()] ?? platformStyle.ios
             const relatedTasks = taskMap[b.id] ?? []
             return (
-              <div key={b.id} className="rounded-xl p-5 space-y-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div key={b.id} className="data-panel rounded-xl p-5 space-y-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
@@ -118,10 +116,10 @@ export default async function BuildsPage() {
                       登记时间 {new Date(b.created_at).toLocaleString('zh-CN')}
                     </div>
                   </div>
-                  <a href={b.artifact_url} target="_blank" className="text-sm font-medium shrink-0" style={{ color: '#3B82F6' }}>下载产物 →</a>
+                  <a href={b.artifact_url} target="_blank" className="link-action text-sm shrink-0">下载产物 →</a>
                 </div>
 
-                <div className="rounded-lg p-4" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+                <div className="panel-inner rounded-lg p-4">
                   <div className="flex items-center justify-between gap-4 mb-3">
                     <div className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>关联任务</div>
                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{relatedTasks.length} 条</div>
@@ -131,12 +129,12 @@ export default async function BuildsPage() {
                       {relatedTasks.slice(0, 4).map(task => {
                         const s = statusStyle[task.status] ?? statusStyle.queued
                         return (
-                          <Link key={task.id} href={`/tasks/${task.id}`} className="flex items-center justify-between gap-4 rounded-lg px-3 py-2 transition-colors" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border)' }}>
+                          <Link key={task.id} href={`/tasks/${task.id}`} className="soft-panel flex items-center justify-between gap-4 rounded-lg px-3 py-2 transition-colors">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{relationName(task.projects) ?? '-'}</div>
                               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'} · {new Date(task.created_at).toLocaleString('zh-CN')}</div>
                             </div>
-                            <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium shrink-0" style={{ background: s.bg, color: s.color }}>{s.label}</span>
+                            <span className={`status-badge status-${task.status} px-2 py-0.5 shrink-0`}>{s.label}</span>
                           </Link>
                         )
                       })}

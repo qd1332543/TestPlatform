@@ -40,15 +40,14 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   ]
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex items-center justify-between">
+    <div className="page-shell space-y-6">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white">任务中心</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>查看和管理测试任务</p>
+          <h1 className="page-title">任务中心</h1>
+          <p className="page-subtitle">查看和管理测试任务</p>
         </div>
         <Link href="/tasks/new"
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-opacity"
-          style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>
+          className="primary-action px-4 py-2 rounded-lg text-sm font-semibold">
           + 新建任务
         </Link>
       </div>
@@ -59,17 +58,13 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
           return (
             <Link key={f.value}
               href={f.value ? `/tasks?status=${f.value}` : '/tasks'}
-              className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-              style={active
-                ? { background: 'linear-gradient(135deg, #3B82F6, #6366F1)', color: '#fff' }
-                : { background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }
-              }
+              className={`chip-action px-3 py-1.5 rounded-lg text-xs font-medium ${active ? 'is-active' : ''}`}
             >{f.label}</Link>
           )
         })}
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="data-panel rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -89,12 +84,12 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                   <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{relationName(t.test_suites) ?? '-'}</td>
                   <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{t.environment}</td>
                   <td className="px-5 py-3">
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: s.bg, color: s.color }}>{s.label}</span>
+                    <span className={`status-badge status-${t.status} px-2 py-0.5`}>{s.label}</span>
                   </td>
                   <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{relationName(t.executors) ?? '-'}</td>
                   <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{new Date(t.created_at).toLocaleString('zh-CN')}</td>
                   <td className="px-5 py-3">
-                    <Link href={`/tasks/${t.id}`} className="text-sm font-medium" style={{ color: '#3B82F6' }}>详情 →</Link>
+                    <Link href={`/tasks/${t.id}`} className="link-action text-sm">详情 →</Link>
                   </td>
                 </tr>
               )

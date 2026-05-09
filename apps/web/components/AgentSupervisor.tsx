@@ -57,7 +57,7 @@ export default function AgentSupervisor() {
   const running = status?.running
 
   return (
-    <div className="rounded-xl p-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+    <div className="data-panel rounded-xl p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Local Agent 控制台</div>
@@ -75,8 +75,7 @@ export default function AgentSupervisor() {
           type="button"
           onClick={() => load(true)}
           disabled={loading}
-          className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-40"
-          style={{ background: running ? '#0D1829' : 'linear-gradient(135deg, #3B82F6, #6366F1)', color: running ? '#60A5FA' : '#fff', border: running ? '1px solid #1E3A5F' : 'none' }}
+          className={`${running ? 'secondary-action' : 'primary-action'} px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40`}
         >
           {running ? 'Agent 运行中 · 刷新' : '一键启动 Agent'}
         </button>
@@ -89,7 +88,7 @@ export default function AgentSupervisor() {
       )}
 
       {status?.logTail && !running && (
-        <pre className="mt-3 max-h-32 overflow-auto rounded-lg p-3 text-xs whitespace-pre-wrap" style={{ background: '#0A0F1E', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+        <pre className="panel-inner mt-3 max-h-32 overflow-auto rounded-lg p-3 text-xs whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
           {status.logTail}
         </pre>
       )}

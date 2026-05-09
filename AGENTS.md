@@ -50,6 +50,26 @@ MeteorTest is split into three responsibilities:
    - Test projects expose suites and commands through this file.
    - MeteorTest should preserve compatibility with existing contract field names such as `id`, `key`, and `suite_key`.
 
+## Web UI Direction
+
+The web console should feel like a restrained operations console, with visual inspiration from `JunchenMeteor/junchen-meteor` but without turning product pages into marketing pages.
+
+- Use the theme token system in `apps/web/app/globals.css` instead of hard-coded page colors.
+- Keep page structure consistent: page header, primary action, filters, data panel, status badges, and forms should use the shared semantic classes where possible.
+- Theme selection lives in Settings and is stored in `meteortest.settings.v1`.
+- Current supported themes are `meteor`, `indigo`, `forest`, and `aurora`.
+- New pages should support theme changes automatically by using CSS variables such as `--bg-card`, `--border`, `--accent`, `--text-secondary`, and shared classes like `data-panel`, `primary-action`, `secondary-action`, `chip-action`, `field-input`, `status-badge`, and `link-action`.
+
+## Internationalization Direction
+
+MeteorTest should add full Web UI internationalization in a future pass, following the content-configuration approach used by `JunchenMeteor/junchen-meteor`.
+
+- Keep locale copy in typed content modules instead of scattering bilingual string literals across components.
+- Start with `zh-CN` and `en`.
+- Prefer route-aware or provider-based locale state, then persist the selected language in the same Settings model.
+- Page metadata, navigation labels, settings labels, AI templates, empty states, validation messages, and docs links should all use the locale source.
+- When i18n is implemented, update README files, `DESIGN.md`, `PROGRESS.md`, and this file in the same PR.
+
 ## Setup
 
 ### Web
