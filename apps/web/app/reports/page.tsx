@@ -47,11 +47,11 @@ export default async function ReportsPage() {
   const analyzedCount = reports.filter(r => firstItem(r.ai_analyses)).length
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex items-end justify-between gap-4">
+    <div className="page-shell space-y-6">
+      <div className="page-header">
         <div>
-          <h1 className="text-2xl font-bold text-white">报告中心</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>查看测试结果、日志链接和 AI 分析结论</p>
+          <h1 className="page-title">报告中心</h1>
+          <p className="page-subtitle">查看测试结果、日志链接和 AI 分析结论</p>
         </div>
         <div className="text-xs text-right" style={{ color: 'var(--text-muted)' }}>
           <div>结果 {totalReports}</div>
@@ -60,7 +60,7 @@ export default async function ReportsPage() {
       </div>
 
       {!reports.length ? (
-        <div className="rounded-xl" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <div className="data-panel rounded-xl">
           <div className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>暂无报告。先创建任务并等待执行器回传结果。</div>
         </div>
       ) : (
@@ -70,11 +70,11 @@ export default async function ReportsPage() {
             const taskReport = firstItem(report.reports)
             const analysis = firstItem(report.ai_analyses)
             return (
-              <div key={report.id} className="rounded-xl p-5 space-y-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+              <div key={report.id} className="data-panel rounded-xl p-5 space-y-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: s.bg, color: s.color }}>{s.label}</span>
+                      <span className={`status-badge status-${report.status} px-2 py-0.5`}>{s.label}</span>
                       <span className="text-sm text-white font-medium">{relationName(report.projects) ?? '-'}</span>
                       <span className="text-sm" style={{ color: 'var(--text-muted)' }}>·</span>
                       <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{relationName(report.test_suites) ?? '-'}</span>
@@ -90,20 +90,20 @@ export default async function ReportsPage() {
                       </div>
                     )}
                   </div>
-                  <Link href={`/tasks/${report.id}`} className="text-sm font-medium shrink-0" style={{ color: '#3B82F6' }}>
+                  <Link href={`/tasks/${report.id}`} className="link-action text-sm shrink-0">
                     查看任务详情 →
                   </Link>
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
-                  <div className="rounded-lg p-4" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+                  <div className="panel-inner rounded-lg p-4">
                     <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>测试结果</div>
                     {taskReport ? (
                       <div className="space-y-2">
                         {taskReport.summary && <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{taskReport.summary}</div>}
                         <div className="flex flex-wrap gap-4 text-sm">
-                          {taskReport.log_url && <a href={taskReport.log_url} target="_blank" className="font-medium" style={{ color: '#60A5FA' }}>查看日志</a>}
-                          {taskReport.allure_url && <a href={taskReport.allure_url} target="_blank" className="font-medium" style={{ color: '#60A5FA' }}>Allure 报告</a>}
+                          {taskReport.log_url && <a href={taskReport.log_url} target="_blank" className="link-action">查看日志</a>}
+                          {taskReport.allure_url && <a href={taskReport.allure_url} target="_blank" className="link-action">Allure 报告</a>}
                         </div>
                       </div>
                     ) : (
@@ -111,7 +111,7 @@ export default async function ReportsPage() {
                     )}
                   </div>
 
-                  <div className="rounded-lg p-4" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+                  <div className="panel-inner rounded-lg p-4">
                     <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>AI 分析</div>
                     {analysis ? (
                       <div className="space-y-2 text-sm">
@@ -122,9 +122,9 @@ export default async function ReportsPage() {
                           <div className="pt-1">
                             <div className="flex items-center gap-2">
                               <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--border)' }}>
-                                <div className="h-1.5 rounded-full" style={{ width: `${(analysis.flaky_probability * 100).toFixed(0)}%`, background: 'linear-gradient(90deg, #3B82F6, #6366F1)' }} />
+                                <div className="h-1.5 rounded-full" style={{ width: `${(analysis.flaky_probability * 100).toFixed(0)}%`, background: 'var(--accent)' }} />
                               </div>
-                              <span className="text-xs font-medium" style={{ color: '#60A5FA' }}>{(analysis.flaky_probability * 100).toFixed(0)}%</span>
+                              <span className="text-xs font-medium" style={{ color: 'var(--accent)' }}>{(analysis.flaky_probability * 100).toFixed(0)}%</span>
                             </div>
                           </div>
                         )}

@@ -13,8 +13,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   if (!project) notFound()
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex items-center justify-between">
+    <div className="page-shell space-y-6">
+      <div className="page-header">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Link href="/projects" className="text-sm transition-colors" style={{ color: 'var(--text-muted)' }}>项目中心</Link>
@@ -24,21 +24,20 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <h1 className="text-2xl font-bold text-white">{project.name}</h1>
         </div>
         <Link href={`/tasks/new?project_id=${project.id}`}
-          className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 transition-opacity"
-          style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>
+          className="primary-action px-4 py-2 rounded-lg text-sm font-semibold">
           + 创建任务
         </Link>
       </div>
 
-      <div className="rounded-xl p-5 space-y-3" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="data-panel rounded-xl p-5 space-y-3">
         <div className="flex items-center gap-3">
           <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>标识</span>
-          <span className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: '#0D1829', color: '#60A5FA', border: '1px solid #1E3A5F' }}>{project.key}</span>
+          <span className="code-pill px-2 py-0.5 text-xs font-mono">{project.key}</span>
         </div>
         {project.repo_url && (
           <div className="flex items-center gap-3">
             <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>仓库</span>
-            <a href={project.repo_url} target="_blank" className="text-sm transition-colors" style={{ color: '#3B82F6' }}>{project.repo_url}</a>
+            <a href={project.repo_url} target="_blank" className="link-action text-sm">{project.repo_url}</a>
           </div>
         )}
         {project.description && (
@@ -49,7 +48,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         )}
       </div>
 
-      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="data-panel rounded-xl overflow-hidden">
         <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
           <span className="text-sm font-semibold text-white">测试套件</span>
         </div>
@@ -69,7 +68,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="px-5 py-3 font-medium text-white">{s.name}</td>
                   <td className="px-5 py-3">
-                    <span className="px-2 py-0.5 rounded text-xs" style={{ background: '#1a2438', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{s.type}</span>
+                    <span className="meta-pill px-2 py-0.5 text-xs">{s.type}</span>
                   </td>
                   <td className="px-5 py-3 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{s.command}</td>
                 </tr>

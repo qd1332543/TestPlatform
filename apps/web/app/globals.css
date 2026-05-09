@@ -16,6 +16,69 @@
   --surface-faint: rgba(255, 255, 255, 0.025);
   --surface-soft: rgba(255, 255, 255, 0.045);
   --shadow-elevated: 0 24px 80px rgba(0, 0, 0, 0.32);
+  --status-queued-bg: rgba(157, 183, 255, 0.12);
+  --status-queued-text: #9DB7FF;
+  --status-running-bg: rgba(116, 214, 179, 0.13);
+  --status-running-text: #74D6B3;
+  --status-success-bg: rgba(116, 214, 179, 0.12);
+  --status-success-text: #7BE3A7;
+  --status-failed-bg: rgba(255, 143, 112, 0.13);
+  --status-failed-text: #FF8F70;
+  --status-warning-bg: rgba(242, 199, 110, 0.14);
+  --status-warning-text: #F2C76E;
+}
+
+[data-theme="indigo"] {
+  --bg-base: #0B1029;
+  --bg-sidebar: rgba(11, 16, 41, 0.9);
+  --bg-card: rgba(31, 46, 98, 0.86);
+  --bg-card-hover: rgba(42, 59, 118, 0.9);
+  --border: rgba(214, 224, 255, 0.15);
+  --border-light: rgba(214, 224, 255, 0.24);
+  --accent: #8DD7FF;
+  --accent-2: #F1D18A;
+  --accent-3: #B59CFF;
+  --text-primary: #F7F8FF;
+  --text-secondary: #AAB7E6;
+  --text-muted: #737FA8;
+  --surface-faint: rgba(255, 255, 255, 0.028);
+  --surface-soft: rgba(141, 215, 255, 0.1);
+  --shadow-elevated: 0 24px 80px rgba(3, 7, 28, 0.42);
+}
+
+[data-theme="forest"] {
+  --bg-base: #07110C;
+  --bg-sidebar: rgba(7, 17, 12, 0.9);
+  --bg-card: rgba(27, 61, 38, 0.84);
+  --bg-card-hover: rgba(35, 76, 47, 0.9);
+  --border: rgba(219, 238, 210, 0.13);
+  --border-light: rgba(219, 238, 210, 0.22);
+  --accent: #7BD88F;
+  --accent-2: #D6B96E;
+  --accent-3: #8CC5A4;
+  --text-primary: #EEF8EB;
+  --text-secondary: #9FB79B;
+  --text-muted: #667B63;
+  --surface-faint: rgba(255, 255, 255, 0.022);
+  --surface-soft: rgba(123, 216, 143, 0.09);
+}
+
+[data-theme="aurora"] {
+  --bg-base: #080A12;
+  --bg-sidebar: rgba(8, 10, 18, 0.92);
+  --bg-card: rgba(18, 25, 38, 0.86);
+  --bg-card-hover: rgba(27, 38, 58, 0.92);
+  --border: rgba(171, 255, 223, 0.14);
+  --border-light: rgba(171, 255, 223, 0.24);
+  --accent: #5FFFD2;
+  --accent-2: #F6C85F;
+  --accent-3: #B49CFF;
+  --text-primary: #F4FFFB;
+  --text-secondary: #A9BDB8;
+  --text-muted: #6F837F;
+  --surface-faint: rgba(255, 255, 255, 0.025);
+  --surface-soft: rgba(95, 255, 210, 0.08);
+  --shadow-elevated: 0 24px 90px rgba(0, 0, 0, 0.48);
 }
 
 html {
@@ -27,8 +90,8 @@ body {
   background:
     linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-    linear-gradient(145deg, rgba(116, 214, 179, 0.08), transparent 34%),
-    linear-gradient(315deg, rgba(242, 199, 110, 0.055), transparent 38%),
+    radial-gradient(circle at 84% 12%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 30rem),
+    radial-gradient(circle at 12% 28%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 26rem),
     var(--bg-base);
   background-size: 48px 48px, 48px 48px, auto, auto, auto;
   color: var(--text-primary);
@@ -54,6 +117,163 @@ body {
   border: 1px solid var(--border);
   box-shadow: var(--shadow-elevated);
   backdrop-filter: blur(18px);
+}
+
+.page-shell {
+  width: 100%;
+  max-width: 1280px;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.page-title {
+  color: var(--text-primary);
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 4px;
+}
+
+.data-panel,
+.soft-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-elevated);
+  backdrop-filter: blur(18px);
+}
+
+.soft-panel {
+  background: color-mix(in srgb, var(--bg-card) 78%, transparent);
+}
+
+.panel-inner {
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid var(--border);
+}
+
+.primary-action {
+  background: var(--accent);
+  color: #06100C;
+  border: 1px solid color-mix(in srgb, var(--accent) 68%, transparent);
+}
+
+.secondary-action,
+.chip-action {
+  background: var(--surface-soft);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.primary-action,
+.secondary-action,
+.chip-action {
+  transition: opacity 150ms ease, border-color 150ms ease, background 150ms ease, color 150ms ease;
+}
+
+.primary-action:hover,
+.secondary-action:hover,
+.chip-action:hover {
+  opacity: 0.9;
+  border-color: var(--border-light);
+}
+
+.chip-action.is-active {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  color: var(--text-primary);
+  border-color: color-mix(in srgb, var(--accent) 42%, transparent);
+}
+
+.link-action {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text-secondary);
+}
+
+.code-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+}
+
+.field-input {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 150ms ease, background 150ms ease;
+}
+
+.field-input:focus {
+  border-color: color-mix(in srgb, var(--accent) 58%, transparent);
+  background: rgba(0, 0, 0, 0.26);
+}
+
+.field-input option {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.status-queued,
+.status-cancelled,
+.status-offline {
+  background: var(--status-queued-bg);
+  color: var(--status-queued-text);
+}
+
+.status-running,
+.status-online {
+  background: var(--status-running-bg);
+  color: var(--status-running-text);
+}
+
+.status-succeeded {
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+.status-failed {
+  background: var(--status-failed-bg);
+  color: var(--status-failed-text);
+}
+
+.status-timeout,
+.status-busy {
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+table tr:last-child {
+  border-bottom: 0 !important;
 }
 
 .brand-orbit {

@@ -479,12 +479,11 @@ export default function AiPage() {
 
   return (
     <div className="flex h-full w-full gap-4 min-w-0">
-      <aside className="hidden lg:flex w-64 shrink-0 flex-col rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <aside className="data-panel hidden lg:flex w-64 shrink-0 flex-col rounded-xl overflow-hidden">
         <div className="p-3" style={{ borderBottom: '1px solid var(--border)' }}>
           <button
             onClick={createConversation}
-            className="w-full px-3 py-2 rounded-lg text-sm font-medium text-white transition-opacity hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}
+            className="primary-action w-full px-3 py-2 rounded-lg text-sm font-semibold"
           >
             + 新对话
           </button>
@@ -497,7 +496,7 @@ export default function AiPage() {
                 onClick={() => selectConversation(c)}
                 className="min-w-0 flex-1 rounded-lg px-3 py-2 text-left transition-colors"
                 style={activeId === c.id
-                  ? { background: '#0D1829', border: '1px solid #1E3A5F' }
+                  ? { background: 'var(--surface-soft)', border: '1px solid var(--border-light)' }
                   : { border: '1px solid transparent' }
                 }
               >
@@ -523,16 +522,15 @@ export default function AiPage() {
       <div className="flex flex-col h-full w-full max-w-3xl mx-auto min-w-0">
       {/* Header */}
       <div className="mb-5 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg"
-          style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)', boxShadow: '0 4px 20px #3B82F640' }}>✦</div>
+        <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-lg"
+          style={{ background: 'var(--accent)', color: '#06100C', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 24%, transparent)' }}>✦</div>
         <div>
           <h1 className="text-xl font-bold text-white leading-tight">AI 助手</h1>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>DeepSeek · 创建项目 / 创建任务 / 查询套件 / 分析报告</p>
         </div>
         <button
           onClick={createConversation}
-          className="lg:hidden ml-auto px-3 py-1.5 rounded-lg text-xs font-medium text-white"
-          style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}
+          className="primary-action lg:hidden ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold"
         >
           新对话
         </button>
@@ -543,7 +541,7 @@ export default function AiPage() {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center select-none">
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
-              style={{ background: 'linear-gradient(135deg, #0D1829, #111827)', border: '1px solid var(--border)' }}>✦</div>
+              style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', color: 'var(--accent)' }}>✦</div>
             <div>
               <p className="font-semibold text-base text-white">你好，我是 AI 助手</p>
               <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>选择下方模板快速开始，或直接输入问题</p>
@@ -553,13 +551,13 @@ export default function AiPage() {
         {messages.map((m, i) => (
           <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'assistant' && (
-              <div className="w-7 h-7 rounded-xl flex items-center justify-center text-white text-xs shrink-0 mt-0.5"
-                style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>✦</div>
+              <div className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0 mt-0.5"
+                style={{ background: 'var(--accent)', color: '#06100C' }}>✦</div>
             )}
             <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm leading-relaxed ${m.role === 'user' ? 'rounded-tr-sm whitespace-pre-wrap' : 'rounded-tl-sm'}`}
               style={m.role === 'user'
-                ? { background: 'linear-gradient(135deg, #3B82F6, #6366F1)', color: '#fff' }
-                : { background: 'var(--bg-card)', color: '#CBD5E1', border: '1px solid var(--border)' }
+                ? { background: 'var(--accent)', color: '#06100C' }
+                : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
               }>
               <ActionCards actions={m.actions} />
               {m.content && <MessageContent content={m.content} hasActions={Boolean(m.actions?.length)} />}
@@ -570,8 +568,7 @@ export default function AiPage() {
                       key={suggestion.prompt}
                       type="button"
                       onClick={() => applySuggestion(suggestion.prompt)}
-                      className="rounded-lg px-3 py-1.5 text-xs font-medium text-left transition-colors"
-                      style={{ background: '#0D1829', color: '#60A5FA', border: '1px solid #1E3A5F' }}
+                      className="chip-action rounded-lg px-3 py-1.5 text-xs font-medium text-left transition-colors"
                     >
                       {suggestion.label}
                     </button>
@@ -583,12 +580,12 @@ export default function AiPage() {
         ))}
         {loading && (
           <div className="flex gap-2 justify-start">
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center text-white text-xs shrink-0 mt-0.5"
-              style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>✦</div>
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0 mt-0.5"
+              style={{ background: 'var(--accent)', color: '#06100C' }}>✦</div>
             <div className="px-4 py-3 rounded-2xl rounded-tl-sm" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
               <div className="flex gap-1 items-center h-4">
                 {[0, 150, 300].map(d => (
-                  <span key={d} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: '#3B82F6', animationDelay: `${d}ms` }} />
+                  <span key={d} className="w-1.5 h-1.5 rounded-full animate-bounce" style={{ background: 'var(--accent)', animationDelay: `${d}ms` }} />
                 ))}
               </div>
             </div>
@@ -610,8 +607,8 @@ export default function AiPage() {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.borderColor = '#3B82F6'
-                e.currentTarget.style.boxShadow = '0 8px 24px rgba(59,130,246,0.2)'
+                e.currentTarget.style.borderColor = 'var(--border-light)'
+                e.currentTarget.style.boxShadow = 'var(--shadow-elevated)'
                 e.currentTarget.style.transform = 'translateY(-2px)'
               }}
               onMouseLeave={e => {
@@ -625,7 +622,7 @@ export default function AiPage() {
               <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
                 {parts.map((p, i) =>
                   p.type === 'param'
-                    ? <span key={i} style={{ color: '#60A5FA' }}>[{p.value}]</span>
+                    ? <span key={i} style={{ color: 'var(--accent)' }}>[{p.value}]</span>
                     : <span key={i}>{p.value}</span>
                 )}
               </p>
@@ -647,7 +644,7 @@ export default function AiPage() {
           <input
             ref={inputRef}
             className="flex-1 text-sm text-white outline-none bg-transparent py-0.5"
-            style={{ caretColor: '#3B82F6' }}
+            style={{ caretColor: 'var(--accent)' }}
             placeholder="可以描述任务或提问任何问题..."
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -657,7 +654,7 @@ export default function AiPage() {
           {/* 发送按钮 — 圆形 */}
           <button onClick={handleSend} disabled={loading || !input.trim()}
             className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
-            style={{ background: input.trim() ? 'linear-gradient(135deg, #3B82F6, #6366F1)' : '#1E2D45' }}>
+            style={{ background: input.trim() ? 'var(--accent)' : 'var(--surface-soft)' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 11V3M3 7l4-4 4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>

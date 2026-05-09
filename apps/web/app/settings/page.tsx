@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 type Settings = {
   platformName: string
+  theme: 'meteor' | 'indigo' | 'forest' | 'aurora'
   defaultEnvironment: 'dev' | 'staging' | 'prod'
   taskTimeout: number
   maxParallelTasks: number
@@ -26,6 +27,7 @@ const settingsUpdatedEvent = 'meteortest-settings-updated'
 
 const defaultSettings: Settings = {
   platformName: '星流测试台',
+  theme: 'meteor',
   defaultEnvironment: 'dev',
   taskTimeout: 1800,
   maxParallelTasks: 4,
@@ -45,6 +47,9 @@ const defaultSettings: Settings = {
 
 function normalizeSettings(value: Partial<Settings>): Settings {
   const settings = { ...defaultSettings, ...value }
+  if (!['meteor', 'indigo', 'forest', 'aurora'].includes(settings.theme)) {
+    settings.theme = defaultSettings.theme
+  }
   if (!settings.platformName?.trim()) {
     settings.platformName = defaultSettings.platformName
   }
@@ -54,8 +59,15 @@ function normalizeSettings(value: Partial<Settings>): Settings {
   return settings
 }
 
-const inputClass = 'w-full rounded-lg px-3 py-2.5 text-sm text-white outline-none transition-colors focus:border-blue-500'
-const inputStyle = { background: '#0A0F1E', border: '1px solid var(--border)' }
+const inputClass = 'field-input px-3 py-2.5 text-sm'
+
+function applyTheme(theme: Settings['theme']) {
+  if (theme === 'meteor') {
+    document.documentElement.removeAttribute('data-theme')
+  } else {
+    document.documentElement.dataset.theme = theme
+  }
+}
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
   return (
@@ -65,11 +77,11 @@ function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (che
       aria-label={label}
       onClick={() => onChange(!checked)}
       className="relative h-7 w-12 rounded-full transition-colors shrink-0"
-      style={{ background: checked ? 'linear-gradient(135deg, #3B82F6, #6366F1)' : '#1a2438' }}
+      style={{ background: checked ? 'var(--accent)' : 'var(--surface-soft)', border: '1px solid var(--border)' }}
     >
       <span
-        className="absolute top-1 h-5 w-5 rounded-full bg-white transition-transform"
-        style={{ left: 4, transform: checked ? 'translateX(20px)' : 'translateX(0)' }}
+        className="absolute top-1 h-5 w-5 rounded-full transition-transform"
+        style={{ left: 4, transform: checked ? 'translateX(20px)' : 'translateX(0)', background: checked ? '#06100C' : 'var(--text-muted)' }}
       />
     </button>
   )
@@ -87,7 +99,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 function Panel({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-xl p-5 space-y-5" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+    <section className="data-panel rounded-xl p-5 space-y-5">
       <div>
         <h2 className="text-base font-semibold text-white">{title}</h2>
         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{description}</p>
@@ -130,12 +142,14 @@ export default function SettingsPage() {
 
   function update<K extends keyof Settings>(key: K, value: Settings[K]) {
     setSettings(prev => ({ ...prev, [key]: value }))
+    if (key === 'theme') applyTheme(value as Settings['theme'])
     setSavedAt(null)
   }
 
   function save() {
     const normalized = normalizeSettings(settings)
     window.localStorage.setItem(storageKey, JSON.stringify(normalized))
+    applyTheme(normalized.theme)
     window.dispatchEvent(new Event(settingsUpdatedEvent))
     setSettings(normalized)
     setSavedSettings(normalized)
@@ -144,6 +158,7 @@ export default function SettingsPage() {
 
   function reset() {
     setSettings(defaultSettings)
+    applyTheme(defaultSettings.theme)
     setSavedAt(null)
   }
 
@@ -160,7 +175,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 w-full max-w-6xl">
       <div className="sticky -top-6 z-20 -mx-6 flex flex-col gap-4 px-6 py-4 backdrop-blur md:flex-row md:items-end md:justify-between"
-        style={{ background: 'rgba(10, 15, 30, 0.88)' }}>
+        style={{ background: 'color-mix(in srgb, var(--bg-base) 92%, transparent)', borderBottom: '1px solid var(--border)' }}>
         <div>
           <h1 className="text-2xl font-bold text-white">设置</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>配置平台默认行为、AI 助手和通知策略</p>
@@ -169,16 +184,14 @@ export default function SettingsPage() {
           <button
             type="button"
             onClick={exportJson}
-            className="px-4 py-2 rounded-lg text-sm transition-colors"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+            className="secondary-action px-4 py-2 rounded-lg text-sm transition-colors"
           >
             导出配置
           </button>
           <button
             type="button"
             onClick={reset}
-            className="px-4 py-2 rounded-lg text-sm transition-colors"
-            style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+            className="secondary-action px-4 py-2 rounded-lg text-sm transition-colors"
           >
             恢复默认
           </button>
@@ -186,8 +199,7 @@ export default function SettingsPage() {
             type="button"
             onClick={save}
             disabled={!loaded || !dirty}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-            style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}
+            className="primary-action px-4 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           >
             保存设置
           </button>
@@ -214,7 +226,6 @@ export default function SettingsPage() {
               <Field label="平台名称">
                 <input
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.platformName}
                   onChange={e => update('platformName', e.target.value)}
                 />
@@ -222,11 +233,10 @@ export default function SettingsPage() {
               <Field label="默认环境">
                 <select
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.defaultEnvironment}
                   onChange={e => update('defaultEnvironment', e.target.value as Settings['defaultEnvironment'])}
                 >
-                  {['dev', 'staging', 'prod'].map(env => <option key={env} value={env} style={{ background: '#111827' }}>{env}</option>)}
+                  {['dev', 'staging', 'prod'].map(env => <option key={env} value={env}>{env}</option>)}
                 </select>
               </Field>
               <Field label="任务超时" hint="单位：秒">
@@ -235,7 +245,6 @@ export default function SettingsPage() {
                   min={60}
                   step={60}
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.taskTimeout}
                   onChange={e => update('taskTimeout', Number(e.target.value))}
                 />
@@ -246,7 +255,6 @@ export default function SettingsPage() {
                   min={1}
                   max={32}
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.maxParallelTasks}
                   onChange={e => update('maxParallelTasks', Number(e.target.value))}
                 />
@@ -257,7 +265,6 @@ export default function SettingsPage() {
                   min={0}
                   max={5}
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.retryCount}
                   onChange={e => update('retryCount', Number(e.target.value))}
                 />
@@ -268,7 +275,6 @@ export default function SettingsPage() {
                   min={1}
                   max={365}
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.reportRetentionDays}
                   onChange={e => update('reportRetentionDays', Number(e.target.value))}
                 />
@@ -277,7 +283,7 @@ export default function SettingsPage() {
           </Panel>
 
           <Panel title="Local Agent" description="配置本机执行器的启动策略。">
-            <div className="flex items-center justify-between gap-4 rounded-lg px-4 py-3" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+            <div className="panel-inner flex items-center justify-between gap-4 rounded-lg px-4 py-3">
               <div>
                 <div className="text-sm font-medium text-white">打开执行器页自动启动</div>
                 <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>进入执行器页面时自动拉起 Local Agent，确保新任务能被及时领取。</div>
@@ -291,19 +297,17 @@ export default function SettingsPage() {
               <Field label="服务商">
                 <select
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.aiProvider}
                   onChange={e => update('aiProvider', e.target.value as Settings['aiProvider'])}
                 >
-                  <option value="deepseek" style={{ background: '#111827' }}>DeepSeek</option>
-                  <option value="openai" style={{ background: '#111827' }}>OpenAI</option>
-                  <option value="custom" style={{ background: '#111827' }}>自定义</option>
+                  <option value="deepseek">DeepSeek</option>
+                  <option value="openai">OpenAI</option>
+                  <option value="custom">自定义</option>
                 </select>
               </Field>
               <Field label="模型">
                 <input
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.aiModel}
                   onChange={e => update('aiModel', e.target.value)}
                 />
@@ -311,13 +315,12 @@ export default function SettingsPage() {
               <Field label="接口地址">
                 <input
                   className={inputClass}
-                  style={inputStyle}
                   value={settings.aiBaseUrl}
                   onChange={e => update('aiBaseUrl', e.target.value)}
                 />
               </Field>
             </div>
-            <div className="flex items-center justify-between gap-4 rounded-lg px-4 py-3" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+            <div className="panel-inner flex items-center justify-between gap-4 rounded-lg px-4 py-3">
               <div>
                 <div className="text-sm font-medium text-white">失败任务自动分析</div>
                 <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>任务失败后允许 AI 自动生成摘要和排查建议。</div>
@@ -331,7 +334,6 @@ export default function SettingsPage() {
               <Field label="Webhook URL">
                 <input
                   className={inputClass}
-                  style={inputStyle}
                   placeholder="https://example.com/webhook"
                   value={settings.webhookUrl}
                   onChange={e => update('webhookUrl', e.target.value)}
@@ -340,7 +342,6 @@ export default function SettingsPage() {
               <Field label="邮件收件人" hint="多个地址用英文逗号分隔">
                 <input
                   className={inputClass}
-                  style={inputStyle}
                   placeholder="qa@example.com, dev@example.com"
                   value={settings.emailRecipients}
                   onChange={e => update('emailRecipients', e.target.value)}
@@ -352,7 +353,7 @@ export default function SettingsPage() {
                 { key: 'notifyOnFailure' as const, title: '失败通知', desc: '任务失败或超时时发送通知。' },
                 { key: 'notifyOnRecovery' as const, title: '恢复通知', desc: '失败后首次成功时发送恢复通知。' },
               ].map(item => (
-                <div key={item.key} className="flex items-center justify-between gap-4 rounded-lg px-4 py-3" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+                <div key={item.key} className="panel-inner flex items-center justify-between gap-4 rounded-lg px-4 py-3">
                   <div>
                     <div className="text-sm font-medium text-white">{item.title}</div>
                     <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{item.desc}</div>
@@ -365,7 +366,28 @@ export default function SettingsPage() {
         </div>
 
         <aside className="space-y-5">
-          <Panel title="显示偏好" description="控制页面信息密度。">
+          <Panel title="显示偏好" description="控制页面信息密度和控制台主题。">
+            <div>
+              <div className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>主题</div>
+              <div className="grid gap-2">
+                {[
+                  { value: 'meteor' as const, label: '星流墨色', desc: '默认主题，黑底、薄荷绿和金色点缀。' },
+                  { value: 'indigo' as const, label: '靛蓝瓷', desc: '更冷静的蓝紫控制台。' },
+                  { value: 'forest' as const, label: '森林墨', desc: '低饱和绿色，适合长时间查看。' },
+                  { value: 'aurora' as const, label: '极光终端', desc: '更强科技感，但仍保留操作台克制感。' },
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => update('theme', option.value)}
+                    className={`rounded-lg px-3 py-2.5 text-left transition-colors ${settings.theme === option.value ? 'chip-action is-active' : 'chip-action'}`}
+                  >
+                    <span className="block text-sm font-semibold">{option.label}</span>
+                    <span className="block text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{option.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {[
                 { value: 'comfortable' as const, label: '舒适' },
@@ -375,11 +397,7 @@ export default function SettingsPage() {
                   key={option.value}
                   type="button"
                   onClick={() => update('density', option.value)}
-                  className="h-10 rounded-lg text-sm font-medium transition-colors"
-                  style={settings.density === option.value
-                    ? { background: 'linear-gradient(135deg, #3B82F6, #6366F1)', color: '#fff' }
-                    : { background: '#0A0F1E', border: '1px solid var(--border)', color: 'var(--text-secondary)' }
-                  }
+                  className={`h-10 rounded-lg text-sm font-medium transition-colors ${settings.density === option.value ? 'chip-action is-active' : 'chip-action'}`}
                 >
                   {option.label}
                 </button>

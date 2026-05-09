@@ -147,7 +147,7 @@ export default async function Dashboard() {
                     <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{relationName(t.test_suites) ?? '-'}</td>
                     <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{t.environment}</td>
                     <td className="px-5 py-3">
-                      <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: s.bg, color: s.color }}>{s.label}</span>
+                      <span className={`status-badge status-${t.status} px-2 py-0.5`}>{s.label}</span>
                     </td>
                     <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{new Date(t.created_at).toLocaleString('zh-CN')}</td>
                   </tr>

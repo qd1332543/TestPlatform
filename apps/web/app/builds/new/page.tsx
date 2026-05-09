@@ -21,14 +21,14 @@ export default async function NewBuildPage() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <NewBuildForm projects={projects ?? []} />
-        <aside className="rounded-xl p-5 space-y-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <aside className="data-panel rounded-xl p-5 space-y-4">
           <div>
             <div className="text-sm font-semibold text-white">建议填写内容</div>
             <p className="text-sm mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               版本号、Build 号和 artifact_url 是核心字段。Bundle ID、Package Name 和 Git Commit 便于后续排查和回溯。
             </p>
           </div>
-          <div className="rounded-lg p-4" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+          <div className="panel-inner rounded-lg p-4">
             <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>使用场景</div>
             <div className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
               <div>1. 回归测试前登记版本</div>

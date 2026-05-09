@@ -25,14 +25,14 @@ export default async function NewTaskPage() {
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <NewTaskForm projects={projects ?? []} builds={builds ?? []} />
-        <aside className="rounded-xl p-5 space-y-4" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+        <aside className="data-panel rounded-xl p-5 space-y-4">
           <div>
             <div className="text-sm font-semibold text-white">任务创建逻辑</div>
             <p className="text-sm mt-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               先选项目，再选该项目下的测试套件。构建产物是可选项，但如果要复现移动端或 Web 版本问题，建议同时关联。
             </p>
           </div>
-          <div className="rounded-lg p-4" style={{ background: '#0A0F1E', border: '1px solid var(--border)' }}>
+          <div className="panel-inner rounded-lg p-4">
             <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>建议顺序</div>
             <div className="space-y-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
               <div>1. 任务名由 AI 或手动指定</div>

@@ -37,17 +37,13 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+    <div className="data-panel rounded-xl overflow-hidden">
       <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
         <span className="text-sm font-semibold text-white">导入测试套件</span>
         <div className="flex gap-1">
           {(['paste', 'file'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className="px-3 py-1 rounded-lg text-xs font-medium transition-all"
-              style={tab === t
-                ? { background: 'linear-gradient(135deg, #3B82F6, #6366F1)', color: '#fff' }
-                : { background: 'var(--bg-base)', color: 'var(--text-muted)', border: '1px solid var(--border)' }
-              }>
+              className={`chip-action px-3 py-1 rounded-lg text-xs font-medium ${tab === t ? 'is-active' : ''}`}>
               {t === 'paste' ? '粘贴内容' : '上传文件'}
             </button>
           ))}
@@ -72,7 +68,7 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
         ) : (
           <textarea
             className="w-full rounded-lg px-3 py-2.5 text-xs font-mono h-36 resize-none outline-none"
-            style={{ background: '#0A0F1E', border: '1px solid var(--border)', color: '#94A3B8', caretColor: '#3B82F6' }}
+            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'var(--text-secondary)', caretColor: 'var(--accent)' }}
             placeholder="粘贴 meteortest.yml 内容..."
             value={yml}
             onChange={e => setYml(e.target.value)}
@@ -80,8 +76,7 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
         )}
         <div className="flex items-center gap-3">
           <button onClick={handleImport} disabled={!yml.trim()}
-            className="px-4 py-2 rounded-lg text-sm font-medium text-white hover:opacity-90 disabled:opacity-40 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #3B82F6, #6366F1)' }}>
+            className="primary-action px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40">
             导入
           </button>
           {status && <span className="text-sm" style={{ color: status.startsWith('✓') ? '#22C55E' : '#EF4444' }}>{status}</span>}

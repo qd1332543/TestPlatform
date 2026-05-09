@@ -14,13 +14,13 @@ export default async function ExecutorsPage() {
     .order('status')
 
   return (
-    <div className="space-y-6 w-full">
+    <div className="page-shell space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">执行器</h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>启动 Local Agent，管理自动化测试执行节点</p>
+        <h1 className="page-title">执行器</h1>
+        <p className="page-subtitle">启动 Local Agent，管理自动化测试执行节点</p>
       </div>
       <AgentSupervisor />
-      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
+      <div className="data-panel rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -38,10 +38,10 @@ export default async function ExecutorsPage() {
                 <tr key={e.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="px-5 py-3 font-medium text-white">{e.name}</td>
                   <td className="px-5 py-3">
-                    <span className="px-2 py-0.5 rounded text-xs font-mono" style={{ background: '#0D1829', color: '#60A5FA', border: '1px solid #1E3A5F' }}>{e.type}</span>
+                    <span className="code-pill px-2 py-0.5 text-xs font-mono">{e.type}</span>
                   </td>
                   <td className="px-5 py-3">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium" style={{ background: s.bg, color: s.color }}>
+                    <span className={`status-badge status-${e.status} gap-1.5 px-2 py-0.5`}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
                       {s.label}
                     </span>
@@ -49,7 +49,7 @@ export default async function ExecutorsPage() {
                   <td className="px-5 py-3">
                     <div className="flex flex-wrap gap-1">
                       {(e.capabilities as string[] | null)?.map(c => (
-                        <span key={c} className="px-2 py-0.5 rounded text-xs" style={{ background: '#1a2438', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{c}</span>
+                        <span key={c} className="meta-pill px-2 py-0.5 text-xs">{c}</span>
                       ))}
                     </div>
                   </td>
