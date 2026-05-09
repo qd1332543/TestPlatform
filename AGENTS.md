@@ -104,6 +104,8 @@ For public Web preview work:
 - Do not expose the Local Agent or local executor endpoints directly to the public internet.
 - Connected execution must use a private Agent polling the backend with scoped credentials.
 - Update README files and `PROGRESS.md` in the same PR when deployment behavior or boundaries change.
+- Follow the public preview deployment runbook in `apps/web/README.md` before opening a live public URL. Do not skip directly to connected execution.
+- For Vercel deployment, follow `docs/vercel-public-preview.md` and `docs/vercel-public-preview.zh-CN.md`.
 
 ### Agent
 
