@@ -352,6 +352,28 @@ The Web executor page also shows Local Agent status and provides a launch entry 
 
 Do not expose the Local Agent directly on the public internet. For public Web access, the Agent should run privately and poll the platform backend with scoped credentials.
 
+## Public Web Preview Deployment
+
+MeteorTest Web needs an application host that can run Next.js server routes. GitHub Pages is not enough for this app because routes such as `/api/tasks`, `/api/projects`, and `/api/ai/chat` require a server runtime.
+
+Follow this order:
+
+1. Choose a host such as Vercel, Netlify, Cloudflare Workers/Pages with a server runtime, or a controlled server.
+2. Create an isolated preview Supabase project or schema and run the migrations in `supabase/migrations/`.
+3. Configure provider-managed environment variables for `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and optional `DEEPSEEK_API_KEY`.
+4. Keep Local Agent paths and machine-local runtime variables out of the public Web deployment.
+5. Deploy `apps/web` with Node.js 22, `npm ci`, and `npm run build`.
+6. Smoke-check all public routes and confirm no secrets, local paths, or Local Agent endpoints are exposed.
+7. Treat private Agent polling and public connected execution as later steps after safety and access controls are reviewed.
+
+The detailed runbook lives in `apps/web/README.md`.
+
+For Vercel-specific deployment steps, see:
+
+```text
+docs/vercel-public-preview.md
+```
+
 ## Recommended Validation Flow
 
 1. Run Supabase migrations.

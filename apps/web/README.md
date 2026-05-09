@@ -44,6 +44,38 @@ Public preview is for viewing and validating the Web console surface first:
 
 For a safe preview setup, start with empty data or demo data, then enable connected execution only after the backend policies, storage access, and Agent trust boundary are reviewed.
 
+## Public Preview Deployment Runbook
+
+Use this order when opening MeteorTest Web on the public internet:
+
+1. Choose an application host that supports Next.js server routes, such as Vercel, Netlify, Cloudflare Workers/Pages with a server runtime, or a controlled server. Do not use GitHub Pages for MeteorTest Web because it cannot run `/api/*` routes.
+2. Create a dedicated preview Supabase project or a clearly isolated preview schema. Run the migrations from `supabase/migrations/` and use demo or empty data first.
+3. Configure deployment-provider environment variables:
+
+   ```text
+   NEXT_PUBLIC_SUPABASE_URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   SUPABASE_SERVICE_ROLE_KEY
+   DEEPSEEK_API_KEY optional
+   ```
+
+4. Keep `METEORTEST_REPO_ROOT`, `METEORTEST_AGENT_PYTHON`, `METEORTEST_AGENT_INTERVAL`, local repository paths, and local Agent config out of the public Web deployment unless a reviewed execution-safety design exists.
+5. Deploy `apps/web` with Node.js 22, `npm ci`, and `npm run build`.
+6. Smoke-check the public URL:
+
+   - Dashboard loads.
+   - Projects, tasks, reports, builds, executors, and settings routes load.
+   - API routes do not print secrets or local machine paths.
+   - Executor controls do not expose a public Local Agent endpoint.
+   - AI assistant returns a clear unavailable state if `DEEPSEEK_API_KEY` is not configured.
+
+7. Only after the Web preview is stable, decide whether a private Local Agent should poll the preview backend with scoped credentials. Do not expose a machine-local Agent endpoint directly to public traffic.
+
+For a detailed Vercel-specific walkthrough, see:
+
+- `docs/vercel-public-preview.md`
+- `docs/vercel-public-preview.zh-CN.md`
+
 ## UI Direction
 
 The console should be visually consistent across pages. Use shared CSS variables and semantic classes from `app/globals.css` instead of hard-coded page colors.

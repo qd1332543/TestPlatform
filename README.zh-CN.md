@@ -352,6 +352,28 @@ Web 执行器页面也会展示 Local Agent 状态，并提供启动入口。设
 
 不要把 Local Agent 直接暴露到公网。需要公网访问 Web 时，Agent 应在私有机器或可信 runner 上运行，并通过受控凭据轮询平台后端。
 
+## 公网 Web 预览部署
+
+MeteorTest Web 需要能运行 Next.js 服务端路由的应用托管平台。GitHub Pages 不适合这个应用，因为 `/api/tasks`、`/api/projects`、`/api/ai/chat` 等路由需要服务端运行时。
+
+按以下顺序操作：
+
+1. 选择 Vercel、Netlify、带服务端运行时的 Cloudflare Workers/Pages，或受控服务器。
+2. 创建隔离的预览 Supabase 项目或 schema，并执行 `supabase/migrations/` 里的迁移。
+3. 在部署平台配置受保护环境变量：`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`，以及可选的 `DEEPSEEK_API_KEY`。
+4. 不要把 Local Agent 路径和本机运行时变量放进公网 Web 部署。
+5. 使用 Node.js 22、`npm ci`、`npm run build` 部署 `apps/web`。
+6. 对公网路由做 smoke check，确认没有暴露密钥、本机路径或 Local Agent 端点。
+7. 私有 Agent 轮询和公网联网执行属于后续步骤，必须先完成安全和访问控制评审。
+
+详细 runbook 见 `apps/web/README.md`。
+
+Vercel 专项部署步骤见：
+
+```text
+docs/vercel-public-preview.zh-CN.md
+```
+
 ## 推荐验证流程
 
 1. 执行 Supabase 迁移。
