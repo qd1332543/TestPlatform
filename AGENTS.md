@@ -94,7 +94,16 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 DEEPSEEK_API_KEY optional
 ```
 
-Do not commit `.env.local` or real keys.
+Use `apps/web/.env.local.example` as the committed template. Do not commit `.env.local` or real keys.
+
+For public Web preview work:
+
+- Configure environment variables in the deployment provider, not in committed files.
+- Treat `NEXT_PUBLIC_*` variables as browser-visible.
+- Keep `SUPABASE_SERVICE_ROLE_KEY`, `DEEPSEEK_API_KEY`, local repository paths, and Agent runtime settings server-only or private.
+- Do not expose the Local Agent or local executor endpoints directly to the public internet.
+- Connected execution must use a private Agent polling the backend with scoped credentials.
+- Update README files and `PROGRESS.md` in the same PR when deployment behavior or boundaries change.
 
 ### Agent
 

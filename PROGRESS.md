@@ -74,6 +74,8 @@
 
 - [x] 侧栏支持从设置读取自定义平台名称
 - [x] 设置页主题选择写入本地设置并全站生效
+- [x] Phase 11 公网 Web 预览准备：补齐 `.env.local.example`，明确部署环境变量、密钥边界和 Local Agent 不直接公网暴露
+- [ ] Phase 12 Public Connected Demo：基于独立预览后端和私有 Agent 打通可操作 Demo
 - [ ] 参考 `junchen-meteor` 的内容配置方式，建设 `zh-CN` / `en` 多语言文案层
 - [ ] 导航、设置、AI 模板、空状态、表单提示和页面标题接入多语言
 - [ ] README / DESIGN / PROGRESS 保持中英文文档同步
