@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useLocale } from '@/lib/useLocale'
 
 const settingsKey = 'meteortest.settings.v1'
 const settingsUpdatedEvent = 'meteortest-settings-updated'
@@ -71,21 +72,21 @@ const Icons = {
   ),
 }
 
-const aiItem = { href: '/ai', label: 'AI 助手', icon: Icons.ai }
-const navItems = [
-  { href: '/', label: 'Dashboard', icon: Icons.dashboard },
-  { href: '/projects', label: '项目中心', icon: Icons.projects },
-  { href: '/tasks', label: '任务中心', icon: Icons.tasks },
-  { href: '/reports', label: '报告中心', icon: Icons.reports },
-  { href: '/builds', label: '构建产物', icon: Icons.builds },
-  { href: '/executors', label: '执行器', icon: Icons.executors },
-]
-
 export default function Sidebar() {
   const pathname = usePathname()
+  const { dictionary: t } = useLocale()
   const [collapsed, setCollapsed] = useState(false)
   const [platformName, setPlatformName] = useState(defaultPlatformName)
   const isActive = (href: string) => href === '/' ? pathname === '/' : pathname.startsWith(href)
+  const aiItem = { href: '/ai', label: t.common.aiAssistant, icon: Icons.ai }
+  const navItems = [
+    { href: '/', label: t.common.dashboard, icon: Icons.dashboard },
+    { href: '/projects', label: t.common.projects, icon: Icons.projects },
+    { href: '/tasks', label: t.common.tasks, icon: Icons.tasks },
+    { href: '/reports', label: t.common.reports, icon: Icons.reports },
+    { href: '/builds', label: t.common.builds, icon: Icons.builds },
+    { href: '/executors', label: t.common.executors, icon: Icons.executors },
+  ]
 
   useEffect(() => {
     const loadName = () => {
@@ -122,7 +123,7 @@ export default function Sidebar() {
             <span className="brand-orbit" />
             <div className="min-w-0">
               <div className="text-white font-bold text-sm tracking-wide whitespace-nowrap truncate">{platformName}</div>
-            <div className="text-xs whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>自动化测试平台</div>
+            <div className="text-xs whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{t.common.automationPlatform}</div>
             </div>
           </div>
         )}
@@ -132,7 +133,7 @@ export default function Sidebar() {
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
-          title={collapsed ? '展开' : '收起'}
+          title={collapsed ? t.common.expand : t.common.collapse}
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
             <rect x="1" y="1" width="16" height="16" rx="3" stroke="currentColor" strokeWidth="1.2"/>
@@ -159,7 +160,7 @@ export default function Sidebar() {
         </Link>
       </div>
 
-      {!collapsed && <div className="text-xs px-4 mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>导航</div>}
+      {!collapsed && <div className="text-xs px-4 mb-1.5 uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{t.common.navigation}</div>}
 
       <nav className="flex flex-col gap-0.5 px-2 flex-1">
         {navItems.map(({ href, label, icon }) => (
@@ -177,7 +178,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="px-2 mt-4 pt-1">
-        <Link href="/settings" title={collapsed ? '设置' : undefined}
+        <Link href="/settings" title={collapsed ? t.common.settings : undefined}
           className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
           style={isActive('/settings')
             ? { background: 'var(--surface-soft)', color: '#fff', fontWeight: 600, border: '1px solid var(--border)' }
@@ -185,7 +186,7 @@ export default function Sidebar() {
           }
         >
           <span className="shrink-0">{Icons.settings}</span>
-          {!collapsed && <span>设置</span>}
+          {!collapsed && <span>{t.common.settings}</span>}
         </Link>
       </div>
     </aside>

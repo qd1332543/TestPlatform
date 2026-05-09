@@ -81,7 +81,7 @@ sequenceDiagram
 - Executor management: view Local Agent status, capability tags, heartbeats, and launch entry points.
 - Report center: record logs, Allure artifacts, execution summaries, and task status.
 - AI assistant: support contextual Q&A, project creation, task creation, task detail lookup, and result analysis.
-- Settings: configure platform name, AI model, default environment, notification strategy, and Agent launch behavior.
+- Settings: configure platform name, UI language, theme, information density, AI model, default environment, notification strategy, and Agent launch behavior.
 
 ## Capability Overview
 
@@ -115,7 +115,7 @@ Current capabilities around this loop:
 Supporting management capabilities:
 
 - **Dashboard**: platform overview and key entry points.
-- **Settings**: platform name, AI model, default environment, notification strategy, and Agent launch behavior.
+- **Settings**: platform name, UI language, theme, information density, AI model, default environment, notification strategy, and Agent launch behavior.
 
 ## System Architecture
 

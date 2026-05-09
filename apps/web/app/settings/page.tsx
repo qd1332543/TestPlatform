@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { dictionaries, supportedLocales, type Locale } from '@/content/i18n'
+import { useLocale } from '@/lib/useLocale'
 
 type Settings = {
   platformName: string
@@ -110,6 +112,7 @@ function Panel({ title, description, children }: { title: string; description: s
 }
 
 export default function SettingsPage() {
+  const { locale, dictionary: t, setLocale } = useLocale()
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [savedSettings, setSavedSettings] = useState<Settings>(defaultSettings)
   const [loaded, setLoaded] = useState(false)
@@ -153,7 +156,7 @@ export default function SettingsPage() {
     window.dispatchEvent(new Event(settingsUpdatedEvent))
     setSettings(normalized)
     setSavedSettings(normalized)
-    setSavedAt(new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+    setSavedAt(new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
   }
 
   function reset() {
@@ -177,8 +180,8 @@ export default function SettingsPage() {
       <div className="sticky -top-6 z-20 -mx-6 flex flex-col gap-4 px-6 py-4 backdrop-blur md:flex-row md:items-end md:justify-between"
         style={{ background: 'color-mix(in srgb, var(--bg-base) 92%, transparent)', borderBottom: '1px solid var(--border)' }}>
         <div>
-          <h1 className="text-2xl font-bold text-white">设置</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>配置平台默认行为、AI 助手和通知策略</p>
+          <h1 className="text-2xl font-bold text-white">{t.settings.title}</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{t.settings.subtitle}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button
@@ -186,14 +189,14 @@ export default function SettingsPage() {
             onClick={exportJson}
             className="secondary-action px-4 py-2 rounded-lg text-sm transition-colors"
           >
-            导出配置
+            {t.common.export}
           </button>
           <button
             type="button"
             onClick={reset}
             className="secondary-action px-4 py-2 rounded-lg text-sm transition-colors"
           >
-            恢复默认
+            {t.common.reset}
           </button>
           <button
             type="button"
@@ -201,7 +204,7 @@ export default function SettingsPage() {
             disabled={!loaded || !dirty}
             className="primary-action px-4 py-2 rounded-lg text-sm font-medium transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            保存设置
+            {t.common.save}
           </button>
         </div>
       </div>
@@ -215,22 +218,22 @@ export default function SettingsPage() {
             color: dirty ? '#F97316' : '#22C55E',
           }}
         >
-          {dirty ? '有未保存的设置变更' : `设置已保存 ${savedAt}`}
+          {dirty ? t.settings.dirty : t.settings.saved(savedAt ?? t.settings.savedFallback)}
         </div>
       )}
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
         <div className="space-y-5">
-          <Panel title="平台默认值" description="用于新任务和报告归档的默认参数。">
+          <Panel title={t.settings.platformDefaults} description={t.settings.platformDefaultsDesc}>
             <div className="grid gap-4 md:grid-cols-2">
-              <Field label="平台名称">
+              <Field label={t.settings.platformName}>
                 <input
                   className={inputClass}
                   value={settings.platformName}
                   onChange={e => update('platformName', e.target.value)}
                 />
               </Field>
-              <Field label="默认环境">
+              <Field label={t.settings.defaultEnvironment}>
                 <select
                   className={inputClass}
                   value={settings.defaultEnvironment}
@@ -239,7 +242,7 @@ export default function SettingsPage() {
                   {['dev', 'staging', 'prod'].map(env => <option key={env} value={env}>{env}</option>)}
                 </select>
               </Field>
-              <Field label="任务超时" hint="单位：秒">
+              <Field label={t.settings.taskTimeout} hint={t.settings.seconds}>
                 <input
                   type="number"
                   min={60}
@@ -249,7 +252,7 @@ export default function SettingsPage() {
                   onChange={e => update('taskTimeout', Number(e.target.value))}
                 />
               </Field>
-              <Field label="并发任务上限">
+              <Field label={t.settings.maxParallelTasks}>
                 <input
                   type="number"
                   min={1}
@@ -259,7 +262,7 @@ export default function SettingsPage() {
                   onChange={e => update('maxParallelTasks', Number(e.target.value))}
                 />
               </Field>
-              <Field label="失败重试次数">
+              <Field label={t.settings.retryCount}>
                 <input
                   type="number"
                   min={0}
@@ -269,7 +272,7 @@ export default function SettingsPage() {
                   onChange={e => update('retryCount', Number(e.target.value))}
                 />
               </Field>
-              <Field label="报告保留天数">
+              <Field label={t.settings.reportRetentionDays}>
                 <input
                   type="number"
                   min={1}
@@ -282,19 +285,19 @@ export default function SettingsPage() {
             </div>
           </Panel>
 
-          <Panel title="Local Agent" description="配置本机执行器的启动策略。">
+          <Panel title={t.settings.agentPanel} description={t.settings.agentPanelDesc}>
             <div className="panel-inner flex items-center justify-between gap-4 rounded-lg px-4 py-3">
               <div>
-                <div className="text-sm font-medium text-white">打开执行器页自动启动</div>
-                <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>进入执行器页面时自动拉起 Local Agent，确保新任务能被及时领取。</div>
+                <div className="text-sm font-medium text-white">{t.settings.autoStartTitle}</div>
+                <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{t.settings.autoStartDesc}</div>
               </div>
-              <Toggle label="打开执行器页自动启动 Local Agent" checked={settings.autoStartAgent} onChange={value => update('autoStartAgent', value)} />
+              <Toggle label={t.settings.autoStartTitle} checked={settings.autoStartAgent} onChange={value => update('autoStartAgent', value)} />
             </div>
           </Panel>
 
-          <Panel title="AI 助手" description="配置助手模型、接口地址和失败分析策略。">
+          <Panel title={t.settings.aiPanel} description={t.settings.aiPanelDesc}>
             <div className="grid gap-4 md:grid-cols-3">
-              <Field label="服务商">
+              <Field label={t.settings.provider}>
                 <select
                   className={inputClass}
                   value={settings.aiProvider}
@@ -302,17 +305,17 @@ export default function SettingsPage() {
                 >
                   <option value="deepseek">DeepSeek</option>
                   <option value="openai">OpenAI</option>
-                  <option value="custom">自定义</option>
+                  <option value="custom">{t.settings.custom}</option>
                 </select>
               </Field>
-              <Field label="模型">
+              <Field label={t.settings.model}>
                 <input
                   className={inputClass}
                   value={settings.aiModel}
                   onChange={e => update('aiModel', e.target.value)}
                 />
               </Field>
-              <Field label="接口地址">
+              <Field label={t.settings.baseUrl}>
                 <input
                   className={inputClass}
                   value={settings.aiBaseUrl}
@@ -322,14 +325,14 @@ export default function SettingsPage() {
             </div>
             <div className="panel-inner flex items-center justify-between gap-4 rounded-lg px-4 py-3">
               <div>
-                <div className="text-sm font-medium text-white">失败任务自动分析</div>
-                <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>任务失败后允许 AI 自动生成摘要和排查建议。</div>
+                <div className="text-sm font-medium text-white">{t.settings.autoAnalyzeTitle}</div>
+                <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{t.settings.autoAnalyzeDesc}</div>
               </div>
-              <Toggle label="失败任务自动分析" checked={settings.autoAnalyzeFailures} onChange={value => update('autoAnalyzeFailures', value)} />
+              <Toggle label={t.settings.autoAnalyzeTitle} checked={settings.autoAnalyzeFailures} onChange={value => update('autoAnalyzeFailures', value)} />
             </div>
           </Panel>
 
-          <Panel title="通知" description="配置测试失败和恢复时的通知渠道。">
+          <Panel title={t.settings.notifications} description={t.settings.notificationsDesc}>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="Webhook URL">
                 <input
@@ -339,7 +342,7 @@ export default function SettingsPage() {
                   onChange={e => update('webhookUrl', e.target.value)}
                 />
               </Field>
-              <Field label="邮件收件人" hint="多个地址用英文逗号分隔">
+              <Field label={t.settings.emailRecipients} hint={t.settings.emailHint}>
                 <input
                   className={inputClass}
                   placeholder="qa@example.com, dev@example.com"
@@ -350,8 +353,8 @@ export default function SettingsPage() {
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {[
-                { key: 'notifyOnFailure' as const, title: '失败通知', desc: '任务失败或超时时发送通知。' },
-                { key: 'notifyOnRecovery' as const, title: '恢复通知', desc: '失败后首次成功时发送恢复通知。' },
+                { key: 'notifyOnFailure' as const, title: t.settings.notifyOnFailure, desc: t.settings.notifyOnFailureDesc },
+                { key: 'notifyOnRecovery' as const, title: t.settings.notifyOnRecovery, desc: t.settings.notifyOnRecoveryDesc },
               ].map(item => (
                 <div key={item.key} className="panel-inner flex items-center justify-between gap-4 rounded-lg px-4 py-3">
                   <div>
@@ -366,15 +369,30 @@ export default function SettingsPage() {
         </div>
 
         <aside className="space-y-5">
-          <Panel title="显示偏好" description="控制页面信息密度和控制台主题。">
+          <Panel title={t.settings.languagePanel} description={t.settings.languagePanelDesc}>
+            <div className="grid grid-cols-2 gap-2">
+              {supportedLocales.map(option => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setLocale(option as Locale)}
+                  className={`h-10 rounded-lg text-sm font-medium transition-colors ${locale === option ? 'chip-action is-active' : 'chip-action'}`}
+                >
+                  {dictionaries[option].localeName}
+                </button>
+              ))}
+            </div>
+          </Panel>
+
+          <Panel title={t.settings.display} description={t.settings.displayDesc}>
             <div>
-              <div className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>主题</div>
+              <div className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>{t.settings.theme}</div>
               <div className="grid gap-2">
                 {[
-                  { value: 'meteor' as const, label: '星流墨色', desc: '默认主题，黑底、薄荷绿和金色点缀。' },
-                  { value: 'indigo' as const, label: '靛蓝瓷', desc: '更冷静的蓝紫控制台。' },
-                  { value: 'forest' as const, label: '森林墨', desc: '低饱和绿色，适合长时间查看。' },
-                  { value: 'aurora' as const, label: '极光终端', desc: '更强科技感，但仍保留操作台克制感。' },
+                  { value: 'meteor' as const, ...t.settings.themes.meteor },
+                  { value: 'indigo' as const, ...t.settings.themes.indigo },
+                  { value: 'forest' as const, ...t.settings.themes.forest },
+                  { value: 'aurora' as const, ...t.settings.themes.aurora },
                 ].map(option => (
                   <button
                     key={option.value}
@@ -390,8 +408,8 @@ export default function SettingsPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
-                { value: 'comfortable' as const, label: '舒适' },
-                { value: 'compact' as const, label: '紧凑' },
+                { value: 'comfortable' as const, label: t.settings.density.comfortable },
+                { value: 'compact' as const, label: t.settings.density.compact },
               ].map(option => (
                 <button
                   key={option.value}
@@ -405,14 +423,14 @@ export default function SettingsPage() {
             </div>
           </Panel>
 
-          <Panel title="当前配置" description="保存后会写入浏览器本地存储。">
+          <Panel title={t.settings.currentConfig} description={t.settings.currentConfigDesc}>
             <dl className="space-y-3 text-sm">
               {[
-                ['默认环境', settings.defaultEnvironment],
-                ['任务超时', `${settings.taskTimeout}s`],
-                ['并发上限', String(settings.maxParallelTasks)],
-                ['AI 模型', settings.aiModel],
-                ['报告保留', `${settings.reportRetentionDays} 天`],
+                [t.settings.defaultEnvironment, settings.defaultEnvironment],
+                [t.settings.taskTimeout, `${settings.taskTimeout}s`],
+                [t.settings.maxParallel, String(settings.maxParallelTasks)],
+                [t.settings.aiModel, settings.aiModel],
+                [t.settings.retention, `${settings.reportRetentionDays} ${t.settings.days}`],
               ].map(([label, value]) => (
                 <div key={label} className="flex items-center justify-between gap-4">
                   <dt style={{ color: 'var(--text-muted)' }}>{label}</dt>

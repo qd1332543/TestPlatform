@@ -75,15 +75,17 @@
 - [x] 侧栏支持从设置读取自定义平台名称
 - [x] 设置页主题选择写入本地设置并全站生效
 - [x] 明确 Web UI 产品方向：工程测试控制台，融合 CI/DevOps 执行流、QA 报告语义和 AI 操作台能力
+- [ ] 页面文件可维护性整理：保留 Next.js `page.tsx` 路由约定，但将复杂页面实现逐步迁移到具名组件文件，例如 `TasksPage.tsx`、`ReportsPage.tsx`
 - [x] Phase 11 公网 Web 预览准备：补齐 `.env.local.example`，明确部署环境变量、密钥边界和 Local Agent 不直接公网暴露
 - [x] Phase 11 Vercel 部署 runbook：记录账号操作、环境变量、Supabase 预览环境、Codex 可协助范围和人工必须提供内容
 - [ ] Phase 11 公网 Web 预览部署：按 `apps/web/README.md` runbook 选择托管平台、配置独立预览 Supabase、设置部署平台环境变量并发布公网 URL
 - [ ] Phase 12 Public Connected Demo：基于独立预览后端和私有 Agent 打通可操作 Demo
 - [ ] 基于工程测试控制台方向重构首页、项目、任务、报告和 AI 页面
 - [x] 新增 `zh-CN` / `en` 多语言文案层基础模块，使用 `supportedLocales` 通用语言归一化方式
-- [ ] 参考 `junchen-meteor` 的内容配置方式，建设 `zh-CN` / `en` 多语言文案层
-- [ ] 导航、设置、AI 模板、空状态、表单提示和页面标题接入多语言
-- [ ] README / DESIGN / PROGRESS 保持中英文文档同步
+- [x] 参考 `junchen-meteor` 的内容配置方式，建设 `zh-CN` / `en` 多语言文案层
+- [x] 导航、设置、AI 模板、空状态、表单提示和页面标题接入多语言
+- [x] 设置页支持语言切换，语言状态通过 `meteortest.locale` cookie 驱动 Web UI
+- [x] README / DESIGN / PROGRESS 保持中英文文档同步
 
 ## 远期：独立 Agent 与高级执行能力
 

@@ -1,10 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { dictionaries, localeCookieName, normalizeLocale, type Locale } from '@/content/i18n'
+import { defaultLocale, dictionaries, localeCookieName, normalizeLocale, type Locale } from '@/content/i18n'
 
 function readCookieLocale(): Locale {
-  if (typeof document === 'undefined') return 'zh-CN'
+  if (typeof document === 'undefined') return defaultLocale
   const match = document.cookie
     .split('; ')
     .find(row => row.startsWith(`${localeCookieName}=`))

@@ -89,16 +89,16 @@ Current theme options:
 
 Theme is stored in `meteortest.settings.v1` and applied through `ThemeController`.
 
-## Internationalization Plan
+## Internationalization
 
-Multilingual UI is planned. Follow the `junchen-meteor` style: typed content modules first, components consume copy from locale data.
+The Web console uses a typed content module first, and components consume copy from locale data instead of inline bilingual strings.
 
 Initial target locales:
 
 - `zh-CN`
 - `en`
 
-The foundation lives in:
+The implementation lives in:
 
 ```text
 content/i18n.ts
@@ -108,7 +108,11 @@ lib/useLocale.ts
 
 Locale normalization must use the shared `supportedLocales` list. Avoid one-off binary checks in components or API routes.
 
-The first i18n pass should cover navigation, page titles, settings, forms, empty states, AI templates, and common validation messages.
+Server components should use `getLocale()` and `getDictionary()` from `lib/i18n.ts`. Client components should use `useLocale()` from `lib/useLocale.ts`.
+
+The selected locale is stored in the `meteortest.locale` cookie and can be changed from Settings.
+
+The current i18n pass covers navigation, page titles, settings, forms, table headers, empty states, status labels, and AI templates. New user-visible UI copy should be added to `content/i18n.ts` first, then consumed from code.
 
 ## Validation
 
