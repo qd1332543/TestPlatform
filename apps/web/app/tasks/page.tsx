@@ -1,14 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-
-const statusStyle: Record<string, { bg: string; color: string; label: string }> = {
-  queued:    { bg: '#1a2438', color: '#64748B', label: '排队中' },
-  running:   { bg: '#0D1F3C', color: '#3B82F6', label: '执行中' },
-  succeeded: { bg: '#0D2818', color: '#22C55E', label: '成功' },
-  failed:    { bg: '#2A0F0F', color: '#EF4444', label: '失败' },
-  cancelled: { bg: '#1a2438', color: '#475569', label: '已取消' },
-  timeout:   { bg: '#2A1A0A', color: '#F97316', label: '超时' },
-}
+import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 
 type TaskRow = {
   id: string; status: string; environment: string; created_at: string
@@ -23,6 +15,8 @@ function relationName(r: { name: string } | { name: string }[] | null) {
 
 export default async function TasksPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { status } = await searchParams
+  const locale = await getLocale()
+  const t = await getDictionary()
   const supabase = await createClient()
   let query = supabase.from('tasks')
     .select('id, status, environment, created_at, projects(name), test_suites(name), executors(name)')
@@ -31,24 +25,24 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const { data: tasks } = await query
 
   const filters = [
-    { label: '全部', value: '' },
-    { label: '排队中', value: 'queued' },
-    { label: '执行中', value: 'running' },
-    { label: '成功', value: 'succeeded' },
-    { label: '失败', value: 'failed' },
-    { label: '超时', value: 'timeout' },
+    { label: t.filters.all, value: '' },
+    { label: t.filters.queued, value: 'queued' },
+    { label: t.filters.running, value: 'running' },
+    { label: t.filters.succeeded, value: 'succeeded' },
+    { label: t.filters.failed, value: 'failed' },
+    { label: t.filters.timeout, value: 'timeout' },
   ]
 
   return (
     <div className="page-shell space-y-6">
       <div className="page-header">
         <div>
-          <h1 className="page-title">任务中心</h1>
-          <p className="page-subtitle">查看和管理测试任务</p>
+          <h1 className="page-title">{t.pages.tasks.title}</h1>
+          <p className="page-subtitle">{t.pages.tasks.subtitle}</p>
         </div>
         <Link href="/tasks/new"
           className="primary-action px-4 py-2 rounded-lg text-sm font-semibold">
-          + 新建任务
+          {t.pages.tasks.newAction}
         </Link>
       </div>
 
@@ -68,28 +62,28 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              {['项目', '套件', '环境', '状态', '执行器', '时间', '操作'].map(h => (
+              {[t.common.project, t.common.suite, t.common.environment, t.common.status, t.common.executor, t.common.time, t.common.actions].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {!tasks?.length ? (
-              <tr><td colSpan={7} className="px-5 py-10 text-center" style={{ color: 'var(--text-muted)' }}>暂无任务</td></tr>
-            ) : (tasks as TaskRow[]).map((t) => {
-              const s = statusStyle[t.status] ?? statusStyle.queued
+              <tr><td colSpan={7} className="px-5 py-10 text-center" style={{ color: 'var(--text-muted)' }}>{t.pages.tasks.empty}</td></tr>
+            ) : (tasks as TaskRow[]).map((task) => {
+              const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
               return (
-                <tr key={t.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td className="px-5 py-3 font-medium text-white">{relationName(t.projects) ?? '-'}</td>
-                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{relationName(t.test_suites) ?? '-'}</td>
-                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{t.environment}</td>
+                <tr key={task.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <td className="px-5 py-3 font-medium text-white">{relationName(task.projects) ?? '-'}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{relationName(task.test_suites) ?? '-'}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{task.environment}</td>
                   <td className="px-5 py-3">
-                    <span className={`status-badge status-${t.status} px-2 py-0.5`}>{s.label}</span>
+                    <span className={`status-badge status-${task.status} px-2 py-0.5`}>{statusLabel}</span>
                   </td>
-                  <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{relationName(t.executors) ?? '-'}</td>
-                  <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{new Date(t.created_at).toLocaleString('zh-CN')}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{relationName(task.executors) ?? '-'}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{formatDateTime(task.created_at, locale)}</td>
                   <td className="px-5 py-3">
-                    <Link href={`/tasks/${t.id}`} className="link-action text-sm">详情 →</Link>
+                    <Link href={`/tasks/${task.id}`} className="link-action text-sm">{t.common.detailsArrow}</Link>
                   </td>
                 </tr>
               )

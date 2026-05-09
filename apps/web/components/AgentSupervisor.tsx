@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { useLocale } from '@/lib/useLocale'
 
 type AgentStatus = {
   running: boolean
@@ -24,11 +25,12 @@ function shouldAutoStartAgent() {
 }
 
 export default function AgentSupervisor() {
+  const { dictionary: t } = useLocale()
   const [status, setStatus] = useState<AgentStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  async function load(autoStart = false) {
+  const load = useCallback(async (autoStart = false) => {
     setError('')
     setLoading(true)
     try {
@@ -42,17 +44,17 @@ export default function AgentSupervisor() {
         setStatus(data)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : '无法检查 Agent 状态')
+      setError(e instanceof Error ? e.message : t.agent.checkFailed)
     } finally {
       setLoading(false)
     }
-  }
+  }, [t.agent.checkFailed])
 
   useEffect(() => {
     queueMicrotask(() => load(shouldAutoStartAgent()))
     const timer = window.setInterval(() => load(false), 15000)
     return () => window.clearInterval(timer)
-  }, [])
+  }, [load])
 
   const running = status?.running
 
@@ -60,15 +62,15 @@ export default function AgentSupervisor() {
     <div className="data-panel rounded-xl p-4">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>Local Agent 控制台</div>
+          <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.agent.console}</div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full" style={{ background: running ? '#22C55E' : loading ? '#F97316' : '#64748B' }} />
             <span className="text-sm font-semibold text-white">
-              {running ? 'Local Agent 已启动' : loading ? '正在检查 Local Agent' : 'Local Agent 未运行'}
+              {running ? t.agent.running : loading ? t.agent.checking : t.agent.stopped}
             </span>
           </div>
           <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-            {running && status?.pid ? `PID ${status.pid} · 后台轮询 Supabase queued 任务` : '可在设置页控制是否进入执行器页时自动启动'}
+            {running && status?.pid ? t.agent.runningDetail(status.pid) : t.agent.stoppedDetail}
           </p>
         </div>
         <button
@@ -77,7 +79,7 @@ export default function AgentSupervisor() {
           disabled={loading}
           className={`${running ? 'secondary-action' : 'primary-action'} px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40`}
         >
-          {running ? 'Agent 运行中 · 刷新' : '一键启动 Agent'}
+          {running ? t.agent.refresh : t.agent.start}
         </button>
       </div>
 

@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { useLocale } from '@/lib/useLocale'
+import type { Dictionary, Locale } from '@/content/i18n'
 
 type Suggestion = { label: string; prompt: string }
 type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
@@ -61,45 +63,6 @@ const TemplateIcons = {
   ),
 }
 
-const templates = [
-  {
-    label: '失败任务分析',
-    icon: TemplateIcons.failed,
-    desc: '查看最近失败的任务，列出项目、套件和具体失败原因，快速定位问题',
-    text: '查询最近失败的任务，列出项目名称、套件名称和失败原因',
-  },
-  {
-    label: '创建新项目',
-    icon: TemplateIcons.project,
-    desc: '快速新建一个测试项目，配置项目名称、唯一标识和代码仓库地址',
-    text: '帮我创建一个新项目，项目名称：[名称]，标识：[key]，仓库地址：[repo_url]',
-  },
-  {
-    label: '触发测试任务',
-    icon: TemplateIcons.trigger,
-    desc: '为指定项目的测试套件在目标环境中创建并触发一次自动化测试',
-    text: '帮我为项目 [项目名] 的套件 [套件名] 在 [环境] 环境创建一个测试任务',
-  },
-  {
-    label: '今日测试报告',
-    icon: TemplateIcons.report,
-    desc: '汇总今天所有测试的执行情况，分析成功率趋势和主要失败原因',
-    text: '分析今日测试报告，总结成功率、主要失败原因，并给出改进建议',
-  },
-  {
-    label: '执行器状态',
-    icon: TemplateIcons.executor,
-    desc: '查看所有注册执行器的在线状态、负载情况和最近执行记录',
-    text: '列出当前所有执行器的名称、在线状态和最近执行的任务',
-  },
-  {
-    label: '项目套件列表',
-    icon: TemplateIcons.suite,
-    desc: '查看指定项目下所有测试套件的名称、类型和执行命令配置',
-    text: '列出项目 [项目名] 下所有的测试套件，包括套件类型和执行命令',
-  },
-]
-
 function parseTemplate(text: string) {
   const parts: { type: 'text' | 'param'; value: string }[] = []
   const regex = /\[([^\]]+)\]/g
@@ -113,13 +76,13 @@ function parseTemplate(text: string) {
   return parts
 }
 
-function newConversation(): Conversation {
-  return { id: crypto.randomUUID(), title: '新对话', messages: [], updatedAt: Date.now() }
+function newConversation(title: string): Conversation {
+  return { id: crypto.randomUUID(), title, messages: [], updatedAt: Date.now() }
 }
 
-function titleFromMessage(content: string) {
+function titleFromMessage(content: string, fallback: string) {
   const compact = content.trim().replace(/\s+/g, ' ')
-  return compact.length > 18 ? `${compact.slice(0, 18)}...` : compact || '新对话'
+  return compact.length > 18 ? `${compact.slice(0, 18)}...` : compact || fallback
 }
 
 function getAiSettings() {
@@ -161,23 +124,24 @@ function firstRecord(value: unknown) {
   return isRecord(value) ? value : null
 }
 
-function statusMeta(status: string) {
-  const map: Record<string, { label: string; color: string; bg: string }> = {
-    queued: { label: '排队中', color: '#60A5FA', bg: '#0D1829' },
-    running: { label: '运行中', color: '#3B82F6', bg: '#0D1F3C' },
-    succeeded: { label: '已成功', color: '#22C55E', bg: '#0D2818' },
-    failed: { label: '已失败', color: '#EF4444', bg: '#2A0F0F' },
-    cancelled: { label: '已取消', color: '#64748B', bg: '#1a2438' },
-    timeout: { label: '已超时', color: '#F97316', bg: '#2A1A0A' },
+function statusMeta(status: string, t: Dictionary) {
+  const map: Record<string, { color: string; bg: string }> = {
+    queued: { color: '#60A5FA', bg: '#0D1829' },
+    running: { color: '#3B82F6', bg: '#0D1F3C' },
+    succeeded: { color: '#22C55E', bg: '#0D2818' },
+    failed: { color: '#EF4444', bg: '#2A0F0F' },
+    cancelled: { color: '#64748B', bg: '#1a2438' },
+    timeout: { color: '#F97316', bg: '#2A1A0A' },
   }
-  return map[status] ?? { label: status || '-', color: '#94A3B8', bg: '#1a2438' }
+  const style = map[status] ?? { color: '#94A3B8', bg: '#1a2438' }
+  return { ...style, label: t.status[status as keyof typeof t.status] ?? (status || '-') }
 }
 
-function formatDate(value: unknown) {
-  return typeof value === 'string' ? new Date(value).toLocaleString('zh-CN') : '-'
+function formatDate(value: unknown, locale: Locale) {
+  return typeof value === 'string' ? new Date(value).toLocaleString(locale) : '-'
 }
 
-function ActionCards({ actions }: { actions?: ToolResult[] }) {
+function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictionary; locale: Locale }) {
   const visibleActions = actions?.filter(action => action.ok && ['create_task', 'get_task_detail', 'create_project'].includes(action.action ?? '')) ?? []
   if (!visibleActions.length) return null
 
@@ -189,10 +153,10 @@ function ActionCards({ actions }: { actions?: ToolResult[] }) {
           const taskId = typeof task.id === 'string' ? task.id : '-'
           const environment = typeof task.environment === 'string' ? task.environment : '-'
           const status = typeof task.status === 'string' ? task.status : '-'
-          const meta = statusMeta(status)
+          const meta = statusMeta(status, t)
           const report = firstRecord(task.reports)
           const analysis = firstRecord(task.ai_analyses)
-          const title = action.action === 'create_task' ? '测试任务已创建' : '任务状态'
+          const title = action.action === 'create_task' ? t.ai.taskCreated : t.ai.taskStatus
           return (
             <div key={`${action.action}-${taskId}-${index}`} className="rounded-xl overflow-hidden" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
               <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -204,43 +168,43 @@ function ActionCards({ actions }: { actions?: ToolResult[] }) {
               </div>
               <div className="grid grid-cols-2 gap-3 px-4 py-3 text-xs">
                 <div>
-                  <div style={{ color: 'var(--text-muted)' }}>项目</div>
+                  <div style={{ color: 'var(--text-muted)' }}>{t.common.project}</div>
                   <div className="mt-1 font-medium text-white truncate">{relationName(task.projects)}</div>
                 </div>
                 <div>
-                  <div style={{ color: 'var(--text-muted)' }}>套件</div>
+                  <div style={{ color: 'var(--text-muted)' }}>{t.common.suite}</div>
                   <div className="mt-1 font-medium text-white truncate">{relationName(task.test_suites)}</div>
                 </div>
                 <div>
-                  <div style={{ color: 'var(--text-muted)' }}>环境</div>
+                  <div style={{ color: 'var(--text-muted)' }}>{t.common.environment}</div>
                   <div className="mt-1 font-medium text-white">{environment}</div>
                 </div>
                 <div>
-                  <div style={{ color: 'var(--text-muted)' }}>任务 ID</div>
+                  <div style={{ color: 'var(--text-muted)' }}>{t.common.taskId}</div>
                   <div className="mt-1 font-mono text-[11px] truncate" style={{ color: '#60A5FA' }}>{taskId}</div>
                 </div>
                 {action.action === 'get_task_detail' && (
                   <>
                     <div>
-                      <div style={{ color: 'var(--text-muted)' }}>创建时间</div>
-                      <div className="mt-1 text-white">{formatDate(task.created_at)}</div>
+                      <div style={{ color: 'var(--text-muted)' }}>{t.common.createdAt}</div>
+                      <div className="mt-1 text-white">{formatDate(task.created_at, locale)}</div>
                     </div>
                     <div>
-                      <div style={{ color: 'var(--text-muted)' }}>开始时间</div>
-                      <div className="mt-1 text-white">{formatDate(task.started_at)}</div>
+                      <div style={{ color: 'var(--text-muted)' }}>{t.common.startedAt}</div>
+                      <div className="mt-1 text-white">{formatDate(task.started_at, locale)}</div>
                     </div>
                   </>
                 )}
               </div>
               {report && typeof report.summary === 'string' && (
                 <div className="px-4 py-3 text-xs" style={{ borderTop: '1px solid var(--border)' }}>
-                  <div className="font-medium text-white">报告摘要</div>
+                  <div className="font-medium text-white">{t.common.reportSummary}</div>
                   <div className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{report.summary}</div>
                 </div>
               )}
               {analysis && (
                 <div className="px-4 py-3 text-xs" style={{ borderTop: '1px solid var(--border)' }}>
-                  <div className="font-medium text-white">AI 分析</div>
+                  <div className="font-medium text-white">{t.reports.aiAnalysis}</div>
                   {typeof analysis.failure_reason === 'string' && <div className="mt-1" style={{ color: '#EF4444' }}>{analysis.failure_reason}</div>}
                   {typeof analysis.suggestion === 'string' && <div className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</div>}
                 </div>
@@ -258,12 +222,12 @@ function ActionCards({ actions }: { actions?: ToolResult[] }) {
             <div key={`${action.action}-${key}-${index}`} className="rounded-xl px-4 py-3" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
               <div className="flex items-center gap-2 font-semibold text-white">
                 <span className="w-2 h-2 rounded-full" style={{ background: '#22C55E' }} />
-                项目已创建
+                {t.ai.projectCreated}
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
-                <div><div style={{ color: 'var(--text-muted)' }}>名称</div><div className="mt-1 text-white">{name}</div></div>
-                <div><div style={{ color: 'var(--text-muted)' }}>标识</div><div className="mt-1 font-mono" style={{ color: '#60A5FA' }}>{key}</div></div>
-                <div className="col-span-2"><div style={{ color: 'var(--text-muted)' }}>仓库</div><div className="mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>{repo}</div></div>
+                <div><div style={{ color: 'var(--text-muted)' }}>{t.common.name}</div><div className="mt-1 text-white">{name}</div></div>
+                <div><div style={{ color: 'var(--text-muted)' }}>{t.common.key}</div><div className="mt-1 font-mono" style={{ color: '#60A5FA' }}>{key}</div></div>
+                <div className="col-span-2"><div style={{ color: 'var(--text-muted)' }}>{t.common.repository}</div><div className="mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>{repo}</div></div>
               </div>
             </div>
           )
@@ -335,6 +299,11 @@ function MessageContent({ content, hasActions }: { content: string; hasActions: 
 }
 
 export default function AiPage() {
+  const { locale, dictionary: t } = useLocale()
+  const templates = t.ai.templates.map(template => ({
+    ...template,
+    icon: TemplateIcons[template.id as keyof typeof TemplateIcons],
+  }))
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -364,12 +333,12 @@ export default function AiPage() {
         window.localStorage.removeItem(historyKey)
       }
     }
-    const first = newConversation()
+    const first = newConversation(t.ai.newConversation)
     queueMicrotask(() => {
       setConversations([first])
       setActiveId(first.id)
     })
-  }, [])
+  }, [t.ai.newConversation])
 
   const applyTemplate = useCallback((text: string) => {
     setInput(text)
@@ -383,7 +352,7 @@ export default function AiPage() {
   }, [])
 
   function createConversation() {
-    const conversation = newConversation()
+    const conversation = newConversation(t.ai.newConversation)
     setConversations(prev => [conversation, ...prev])
     setActiveId(conversation.id)
     setMessages([])
@@ -401,7 +370,7 @@ export default function AiPage() {
     if (loading) return
     setConversations(prev => {
       const remaining = prev.filter(c => c.id !== id)
-      const next = remaining.length ? remaining : [newConversation()]
+      const next = remaining.length ? remaining : [newConversation(t.ai.newConversation)]
       window.localStorage.setItem(historyKey, JSON.stringify(next))
       if (id === activeId) {
         setActiveId(next[0].id)
@@ -419,7 +388,7 @@ export default function AiPage() {
           ? {
               ...c,
               messages: nextMessages,
-              title: c.title === '新对话' && nextMessages[0]?.content ? titleFromMessage(nextMessages[0].content) : c.title,
+              title: c.title === t.ai.newConversation && nextMessages[0]?.content ? titleFromMessage(nextMessages[0].content, t.ai.newConversation) : c.title,
               updatedAt: nextMessages.length ? Date.now() : c.updatedAt,
             }
           : c)
@@ -466,12 +435,12 @@ export default function AiPage() {
       const data = await res.json()
       persistMessages([...withUser, {
         role: 'assistant',
-        content: data.reply ?? data.error ?? '请求失败',
+        content: data.reply ?? data.error ?? t.ai.requestFailed,
         actions: Array.isArray(data.actions) ? data.actions : [],
         suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
       }])
     } catch {
-      persistMessages([...withUser, { role: 'assistant', content: '请求失败，请重试' }])
+      persistMessages([...withUser, { role: 'assistant', content: t.ai.retryFailed }])
     } finally {
       setLoading(false)
     }
@@ -485,7 +454,7 @@ export default function AiPage() {
             onClick={createConversation}
             className="primary-action w-full px-3 py-2 rounded-lg text-sm font-semibold"
           >
-            + 新对话
+            + {t.ai.newConversation}
           </button>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
@@ -502,7 +471,7 @@ export default function AiPage() {
               >
                 <div className="truncate text-sm font-medium" style={{ color: activeId === c.id ? '#fff' : 'var(--text-secondary)' }}>{c.title}</div>
                 <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  {c.messages.length ? `${c.messages.length} 条消息` : '暂无消息'}
+                  {c.messages.length ? t.ai.messageCount(c.messages.length) : t.ai.emptyMessages}
                 </div>
               </button>
               <button
@@ -510,7 +479,7 @@ export default function AiPage() {
                 onClick={() => deleteConversation(c.id)}
                 className="w-7 h-7 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
                 style={{ color: 'var(--text-muted)' }}
-                title="删除对话"
+                title={t.ai.deleteConversation}
               >
                 ×
               </button>
@@ -525,14 +494,14 @@ export default function AiPage() {
         <div className="w-10 h-10 rounded-2xl flex items-center justify-center text-xl shadow-lg"
           style={{ background: 'var(--accent)', color: '#06100C', boxShadow: '0 4px 20px color-mix(in srgb, var(--accent) 24%, transparent)' }}>✦</div>
         <div>
-          <h1 className="text-xl font-bold text-white leading-tight">AI 助手</h1>
-          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>DeepSeek · 创建项目 / 创建任务 / 查询套件 / 分析报告</p>
+          <h1 className="text-xl font-bold text-white leading-tight">{t.ai.title}</h1>
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{t.ai.subtitle}</p>
         </div>
         <button
           onClick={createConversation}
           className="primary-action lg:hidden ml-auto px-3 py-1.5 rounded-lg text-xs font-semibold"
         >
-          新对话
+          {t.ai.newConversation}
         </button>
       </div>
 
@@ -543,8 +512,8 @@ export default function AiPage() {
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
               style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)', color: 'var(--accent)' }}>✦</div>
             <div>
-              <p className="font-semibold text-base text-white">你好，我是 AI 助手</p>
-              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>选择下方模板快速开始，或直接输入问题</p>
+              <p className="font-semibold text-base text-white">{t.ai.greeting}</p>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{t.ai.greetingHint}</p>
             </div>
           </div>
         )}
@@ -559,7 +528,7 @@ export default function AiPage() {
                 ? { background: 'var(--accent)', color: '#06100C' }
                 : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
               }>
-              <ActionCards actions={m.actions} />
+              <ActionCards actions={m.actions} t={t} locale={locale} />
               {m.content && <MessageContent content={m.content} hasActions={Boolean(m.actions?.length)} />}
               {m.role === 'assistant' && Boolean(m.suggestions?.length) && (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -635,8 +604,7 @@ export default function AiPage() {
       <div className="mt-3">
         <div className="flex items-center gap-2 rounded-2xl px-4 py-2.5 transition-all"
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
-          {/* 附件按钮 */}
-          <button className="shrink-0 opacity-40 hover:opacity-70 transition-opacity" title="附件">
+          <button className="shrink-0 opacity-40 hover:opacity-70 transition-opacity" title={t.ai.attachment}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
               <path d="M13.5 7.5l-5.5 5.5a4 4 0 01-5.657-5.657l6-6a2.5 2.5 0 013.535 3.535l-6 6a1 1 0 01-1.414-1.414l5.5-5.5" stroke="#94A3B8" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
@@ -645,13 +613,12 @@ export default function AiPage() {
             ref={inputRef}
             className="flex-1 text-sm text-white outline-none bg-transparent py-0.5"
             style={{ caretColor: 'var(--accent)' }}
-            placeholder="可以描述任务或提问任何问题..."
+            placeholder={t.ai.placeholder}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={loading}
           />
-          {/* 发送按钮 — 圆形 */}
           <button onClick={handleSend} disabled={loading || !input.trim()}
             className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
             style={{ background: input.trim() ? 'var(--accent)' : 'var(--surface-soft)' }}>
@@ -661,7 +628,7 @@ export default function AiPage() {
           </button>
         </div>
         <p className="text-xs mt-2 text-center" style={{ color: 'var(--text-muted)' }}>
-          内容由 AI 生成，请仔细甄别 · <kbd className="px-1 py-0.5 rounded font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>Tab</kbd> 切换参数
+          {t.ai.footer} · <kbd className="px-1 py-0.5 rounded font-mono" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>Tab</kbd> {t.ai.switchParams}
         </p>
       </div>
       </div>

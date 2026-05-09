@@ -2,15 +2,18 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import ThemeController from "@/components/ThemeController";
+import { getLocale } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "MeteorTest",
-  description: "通用自动化测试平台",
+  description: "General-purpose automation testing platform",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const locale = await getLocale()
+
   return (
-    <html lang="zh" className="h-full">
+    <html lang={locale} className="h-full">
       <body className="h-full text-white">
         <ThemeController />
         <div className="app-shell flex h-full">

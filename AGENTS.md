@@ -54,6 +54,13 @@ MeteorTest is split into three responsibilities:
 
 The web console should feel like a restrained operations console, with visual inspiration from `JunchenMeteor/junchen-meteor` but without turning product pages into marketing pages.
 
+- Treat the target product direction as an **engineering testing console**, not a decorative dashboard or a generic admin template.
+- Combine three reference families deliberately:
+  - CI / DevOps consoles for task status, execution history, failure details, logs, and run detail layouts.
+  - Test reporting / QA platforms for project, suite, case, report, failure-analysis, executor, and device dimensions.
+  - AI workspaces for actionable AI entry points: project import, suite import, task creation, report inspection, failure analysis, and next-step suggestions.
+- Do not simply copy one product family. MeteorTest should present a testing control plane, local executor scheduling, report center, and AI operations surface as one coherent workflow.
+- Concrete page direction: the homepage should show what happened today, Projects should emphasize integration status, Tasks should emphasize the execution queue, Reports should emphasize failure reason and next action, and AI should feel like an operation command surface rather than a plain chat page.
 - Use the theme token system in `apps/web/app/globals.css` instead of hard-coded page colors.
 - Keep page structure consistent: page header, primary action, filters, data panel, status badges, and forms should use the shared semantic classes where possible.
 - Theme selection lives in Settings and is stored in `meteortest.settings.v1`.
@@ -62,13 +69,17 @@ The web console should feel like a restrained operations console, with visual in
 
 ## Internationalization Direction
 
-MeteorTest should add full Web UI internationalization in a future pass, following the content-configuration approach used by `JunchenMeteor/junchen-meteor`.
+MeteorTest Web UI uses a typed content-configuration i18n layer, following the approach used by `JunchenMeteor/junchen-meteor`.
 
 - Keep locale copy in typed content modules instead of scattering bilingual string literals across components.
 - Start with `zh-CN` and `en`.
-- Prefer route-aware or provider-based locale state, then persist the selected language in the same Settings model.
-- Page metadata, navigation labels, settings labels, AI templates, empty states, validation messages, and docs links should all use the locale source.
-- When i18n is implemented, update README files, `DESIGN.md`, `PROGRESS.md`, and this file in the same PR.
+- Define supported locales through a shared `supportedLocales` list and normalize unknown values through a generic helper. Do not hard-code binary language checks such as `value === 'en' ? 'en' : 'zh-CN'`.
+- Server components should use `getLocale()` and `getDictionary()` from `apps/web/lib/i18n.ts`.
+- Client components should use `useLocale()` from `apps/web/lib/useLocale.ts`.
+- The selected language is stored in the `meteortest.locale` cookie and controlled from Settings.
+- Page metadata, navigation labels, settings labels, AI templates, empty states, form labels, table headers, status labels, and user-visible fallback messages should all use the locale source.
+- When adding or changing user-visible UI copy, update `apps/web/content/i18n.ts` first and then consume the key from code. Do not add new inline Chinese/English UI literals except stable product names, user data, or technical identifiers.
+- When i18n behavior changes, update README files, `DESIGN.md`, `PROGRESS.md`, and this file in the same PR.
 
 ## Setup
 
@@ -354,6 +365,19 @@ Keep UI text and workflows consistent with the Chinese product name:
 ```
 
 Keep `MeteorTest` as the engineering/product English name.
+
+### Next.js Route File Structure
+
+Next.js App Router requires route entry files such as `page.tsx`; do not rename those files directly or routes will break.
+
+For non-trivial pages, keep `page.tsx` as a thin route entry and move business UI into a named sibling component, for example:
+
+```text
+apps/web/app/tasks/page.tsx        route entry only
+apps/web/app/tasks/TasksPage.tsx   page implementation
+```
+
+Use this pattern when a page grows beyond a small route wrapper, or when searchability suffers from many same-named `page.tsx` files. Do not mix broad file-structure moves into feature PRs unless the user explicitly asks for that refactor.
 
 ## AI Assistant Notes
 

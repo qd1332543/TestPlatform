@@ -1,13 +1,16 @@
 import { createClient } from '@/lib/supabase/server'
 import AgentSupervisor from '@/components/AgentSupervisor'
+import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 
-const statusStyle: Record<string, { bg: string; color: string; dot: string; label: string }> = {
-  online:  { bg: '#0D2818', color: '#22C55E', dot: '#22C55E', label: '在线' },
-  offline: { bg: '#1a2438', color: '#64748B', dot: '#475569', label: '离线' },
-  busy:    { bg: '#2A1A0A', color: '#F97316', dot: '#F97316', label: '忙碌' },
+const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {
+  online:  { bg: '#0D2818', color: '#22C55E', dot: '#22C55E' },
+  offline: { bg: '#1a2438', color: '#64748B', dot: '#475569' },
+  busy:    { bg: '#2A1A0A', color: '#F97316', dot: '#F97316' },
 }
 
 export default async function ExecutorsPage() {
+  const locale = await getLocale()
+  const t = await getDictionary()
   const supabase = await createClient()
   const { data: executors } = await supabase
     .from('executors').select('id, name, type, status, capabilities, last_heartbeat_at')
@@ -16,22 +19,22 @@ export default async function ExecutorsPage() {
   return (
     <div className="page-shell space-y-6">
       <div>
-        <h1 className="page-title">执行器</h1>
-        <p className="page-subtitle">启动 Local Agent，管理自动化测试执行节点</p>
+        <h1 className="page-title">{t.pages.executors.title}</h1>
+        <p className="page-subtitle">{t.pages.executors.subtitle}</p>
       </div>
       <AgentSupervisor />
       <div className="data-panel rounded-xl overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
-              {['名称', '类型', '状态', '能力标签', '最近心跳'].map(h => (
+              {[t.common.name, t.common.type, t.common.status, t.common.capabilities, t.common.heartbeat].map(h => (
                 <th key={h} className="px-5 py-3 text-left text-xs uppercase tracking-wide font-medium" style={{ color: 'var(--text-muted)' }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {!executors?.length ? (
-              <tr><td colSpan={5} className="px-5 py-10 text-center" style={{ color: 'var(--text-muted)' }}>暂无执行器</td></tr>
+              <tr><td colSpan={5} className="px-5 py-10 text-center" style={{ color: 'var(--text-muted)' }}>{t.pages.executors.empty}</td></tr>
             ) : executors.map(e => {
               const s = statusStyle[e.status] ?? statusStyle.offline
               return (
@@ -43,7 +46,7 @@ export default async function ExecutorsPage() {
                   <td className="px-5 py-3">
                     <span className={`status-badge status-${e.status} gap-1.5 px-2 py-0.5`}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
-                      {s.label}
+                      {t.status[e.status as keyof typeof t.status] ?? e.status}
                     </span>
                   </td>
                   <td className="px-5 py-3">
@@ -54,7 +57,7 @@ export default async function ExecutorsPage() {
                     </div>
                   </td>
                   <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>
-                    {e.last_heartbeat_at ? new Date(e.last_heartbeat_at).toLocaleString('zh-CN') : '-'}
+                    {formatDateTime(e.last_heartbeat_at, locale)}
                   </td>
                 </tr>
               )

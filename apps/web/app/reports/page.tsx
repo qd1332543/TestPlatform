@@ -1,14 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-
-const statusStyle: Record<string, { bg: string; color: string; label: string }> = {
-  queued: { bg: '#1a2438', color: '#64748B', label: '排队中' },
-  running: { bg: '#0D1F3C', color: '#3B82F6', label: '执行中' },
-  succeeded: { bg: '#0D2818', color: '#22C55E', label: '成功' },
-  failed: { bg: '#2A0F0F', color: '#EF4444', label: '失败' },
-  cancelled: { bg: '#1a2438', color: '#475569', label: '已取消' },
-  timeout: { bg: '#2A1A0A', color: '#F97316', label: '超时' },
-}
+import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 
 type ReportRow = {
   id: string
@@ -33,6 +25,8 @@ function firstItem<T>(value: T[] | T | null | undefined): T | null {
 }
 
 export default async function ReportsPage() {
+  const locale = await getLocale()
+  const t = await getDictionary()
   const supabase = await createClient()
   const { data } = await supabase
     .from('tasks')
@@ -50,74 +44,74 @@ export default async function ReportsPage() {
     <div className="page-shell space-y-6">
       <div className="page-header">
         <div>
-          <h1 className="page-title">报告中心</h1>
-          <p className="page-subtitle">查看测试结果、日志链接和 AI 分析结论</p>
+          <h1 className="page-title">{t.pages.reports.title}</h1>
+          <p className="page-subtitle">{t.pages.reports.subtitle}</p>
         </div>
         <div className="text-xs text-right" style={{ color: 'var(--text-muted)' }}>
-          <div>结果 {totalReports}</div>
-          <div>成功 {succeededCount} · 失败 {failedCount} · 已分析 {analyzedCount}</div>
+          <div>{t.reports.resultCount} {totalReports}</div>
+          <div>{t.reports.succeeded} {succeededCount} · {t.reports.failed} {failedCount} · {t.reports.analyzed} {analyzedCount}</div>
         </div>
       </div>
 
       {!reports.length ? (
         <div className="data-panel rounded-xl">
-          <div className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>暂无报告。先创建任务并等待执行器回传结果。</div>
+          <div className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{t.pages.reports.empty}</div>
         </div>
       ) : (
         <div className="space-y-4">
           {reports.map(report => {
-            const s = statusStyle[report.status] ?? statusStyle.queued
             const taskReport = firstItem(report.reports)
             const analysis = firstItem(report.ai_analyses)
+            const statusLabel = t.status[report.status as keyof typeof t.status] ?? report.status
             return (
               <div key={report.id} className="data-panel rounded-xl p-5 space-y-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className={`status-badge status-${report.status} px-2 py-0.5`}>{s.label}</span>
+                      <span className={`status-badge status-${report.status} px-2 py-0.5`}>{statusLabel}</span>
                       <span className="text-sm text-white font-medium">{relationName(report.projects) ?? '-'}</span>
                       <span className="text-sm" style={{ color: 'var(--text-muted)' }}>·</span>
                       <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{relationName(report.test_suites) ?? '-'}</span>
                     </div>
                     <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      环境 {report.environment} · 创建于 {new Date(report.created_at).toLocaleString('zh-CN')}
+                      {t.reports.environment} {report.environment} · {t.reports.created} {formatDateTime(report.created_at, locale)}
                     </div>
                     {(report.started_at || report.finished_at) && (
                       <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {report.started_at ? `开始 ${new Date(report.started_at).toLocaleString('zh-CN')}` : ''}
+                        {report.started_at ? `${t.common.startedAt} ${formatDateTime(report.started_at, locale)}` : ''}
                         {report.started_at && report.finished_at ? ' · ' : ''}
-                        {report.finished_at ? `结束 ${new Date(report.finished_at).toLocaleString('zh-CN')}` : ''}
+                        {report.finished_at ? `${t.common.finishedAt} ${formatDateTime(report.finished_at, locale)}` : ''}
                       </div>
                     )}
                   </div>
                   <Link href={`/tasks/${report.id}`} className="link-action text-sm shrink-0">
-                    查看任务详情 →
+                    {t.reports.taskDetails}
                   </Link>
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
                   <div className="panel-inner rounded-lg p-4">
-                    <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>测试结果</div>
+                    <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.reports.testResult}</div>
                     {taskReport ? (
                       <div className="space-y-2">
                         {taskReport.summary && <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{taskReport.summary}</div>}
                         <div className="flex flex-wrap gap-4 text-sm">
-                          {taskReport.log_url && <a href={taskReport.log_url} target="_blank" className="link-action">查看日志</a>}
-                          {taskReport.allure_url && <a href={taskReport.allure_url} target="_blank" className="link-action">Allure 报告</a>}
+                          {taskReport.log_url && <a href={taskReport.log_url} target="_blank" className="link-action">{t.reports.log}</a>}
+                          {taskReport.allure_url && <a href={taskReport.allure_url} target="_blank" className="link-action">{t.reports.allure}</a>}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-sm" style={{ color: 'var(--text-muted)' }}>没有测试结果记录，通常表示执行器还未回传 report。</div>
+                      <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{t.reports.noReport}</div>
                     )}
                   </div>
 
                   <div className="panel-inner rounded-lg p-4">
-                    <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>AI 分析</div>
+                    <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.reports.aiAnalysis}</div>
                     {analysis ? (
                       <div className="space-y-2 text-sm">
-                        {analysis.failure_reason && <div><span style={{ color: 'var(--text-muted)' }}>失败原因：</span><span style={{ color: '#FCA5A5' }}>{analysis.failure_reason}</span></div>}
-                        {analysis.impact && <div><span style={{ color: 'var(--text-muted)' }}>影响范围：</span><span style={{ color: 'var(--text-secondary)' }}>{analysis.impact}</span></div>}
-                        {analysis.suggestion && <div><span style={{ color: 'var(--text-muted)' }}>修复建议：</span><span style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</span></div>}
+                        {analysis.failure_reason && <div><span style={{ color: 'var(--text-muted)' }}>{t.reports.failureReason}</span><span style={{ color: '#FCA5A5' }}>{analysis.failure_reason}</span></div>}
+                        {analysis.impact && <div><span style={{ color: 'var(--text-muted)' }}>{t.reports.impact}</span><span style={{ color: 'var(--text-secondary)' }}>{analysis.impact}</span></div>}
+                        {analysis.suggestion && <div><span style={{ color: 'var(--text-muted)' }}>{t.reports.suggestion}</span><span style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</span></div>}
                         {analysis.flaky_probability != null && (
                           <div className="pt-1">
                             <div className="flex items-center gap-2">
@@ -130,7 +124,7 @@ export default async function ReportsPage() {
                         )}
                       </div>
                     ) : (
-                      <div className="text-sm" style={{ color: 'var(--text-muted)' }}>没有 AI 分析记录。一般是任务还没失败，或者分析任务还没跑完。</div>
+                      <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{t.reports.noAnalysis}</div>
                     )}
                   </div>
                 </div>
