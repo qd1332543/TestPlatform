@@ -64,8 +64,12 @@ The web console should feel like a restrained operations console, with visual in
 - Use the theme token system in `apps/web/app/globals.css` instead of hard-coded page colors.
 - Keep page structure consistent: page header, primary action, filters, data panel, status badges, and forms should use the shared semantic classes where possible.
 - Theme selection lives in Settings and is stored in `meteortest.settings.v1`.
-- Current supported themes are `meteor`, `indigo`, `forest`, and `aurora`.
-- New pages should support theme changes automatically by using CSS variables such as `--bg-card`, `--border`, `--accent`, `--text-secondary`, and shared classes like `data-panel`, `primary-action`, `secondary-action`, `chip-action`, `field-input`, `status-badge`, and `link-action`.
+- Current supported themes are `meteor`, `indigo`, `dune`, `aurora`, `parchment`, `sky`, `glacier`, and `sakura`.
+- Theme ordering should group dark themes first, then light themes: `meteor`, `indigo`, `dune`, `aurora`, `parchment`, `sky`, `glacier`, `sakura`.
+- New pages should support theme changes automatically by using CSS variables such as `--bg-card`, `--border`, `--accent`, `--text-secondary`, and shared classes like `data-panel`, `primary-action`, `secondary-action`, `chip-action`, `toggle-control`, `quiet-scrollbar`, `field-input`, `status-badge`, and `link-action`.
+- Interactive controls must use control-specific tokens such as `--control-on-bg`, `--control-on-border`, and `--control-on-thumb`; do not bind switches directly to `--accent` when that creates poor contrast in light themes.
+- UI changes must be implemented together with the locale content they display. When adding or changing labels, headings, empty states, helper text, table headers, buttons, status text, or user-facing fallback messages, update `apps/web/content/i18n.ts` in the same change and consume the value through `getDictionary()` or `useLocale()`.
+- Do not merge UI-only wording changes that bypass the i18n layer. Hard-coded UI text is only acceptable for stable product names, technical identifiers, user data, route names, or third-party names.
 
 ## Internationalization Direction
 
@@ -79,6 +83,7 @@ MeteorTest Web UI uses a typed content-configuration i18n layer, following the a
 - The selected language is stored in the `meteortest.locale` cookie and controlled from Settings.
 - Page metadata, navigation labels, settings labels, AI templates, empty states, form labels, table headers, status labels, and user-visible fallback messages should all use the locale source.
 - When adding or changing user-visible UI copy, update `apps/web/content/i18n.ts` first and then consume the key from code. Do not add new inline Chinese/English UI literals except stable product names, user data, or technical identifiers.
+- When refactoring UI layout or interaction, re-check both `zh-CN` and `en` copy paths. The layout must tolerate longer English strings and denser Chinese labels without overlap or clipped controls.
 - When i18n behavior changes, update README files, `DESIGN.md`, `PROGRESS.md`, and this file in the same PR.
 
 ## Setup
@@ -378,6 +383,8 @@ apps/web/app/tasks/TasksPage.tsx   page implementation
 ```
 
 Use this pattern when a page grows beyond a small route wrapper, or when searchability suffers from many same-named `page.tsx` files. Do not mix broad file-structure moves into feature PRs unless the user explicitly asks for that refactor.
+
+New or refactored route pages should follow this structure from the start: route-level `page.tsx` remains a thin entry, while the actual implementation lives in a named page component such as `ReportsPage.tsx`, `ProjectDetailPage.tsx`, or `NewTaskPage.tsx`.
 
 ## AI Assistant Notes
 
