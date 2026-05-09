@@ -75,7 +75,7 @@
 - [x] 侧栏支持从设置读取自定义平台名称
 - [x] 设置页主题选择写入本地设置并全站生效
 - [x] 明确 Web UI 产品方向：工程测试控制台，融合 CI/DevOps 执行流、QA 报告语义和 AI 操作台能力
-- [ ] 页面文件可维护性整理：保留 Next.js `page.tsx` 路由约定，但将复杂页面实现逐步迁移到具名组件文件，例如 `TasksPage.tsx`、`ReportsPage.tsx`
+- [x] 页面文件可维护性整理：保留 Next.js `page.tsx` 路由约定，但将复杂页面实现逐步迁移到具名组件文件，例如 `TasksPage.tsx`、`ReportsPage.tsx`
 - [x] Phase 11 公网 Web 预览准备：补齐 `.env.local.example`，明确部署环境变量、密钥边界和 Local Agent 不直接公网暴露
 - [x] Phase 11 Vercel 部署 runbook：记录账号操作、环境变量、Supabase 预览环境、Codex 可协助范围和人工必须提供内容
 - [ ] Phase 11 公网 Web 预览部署：按 `apps/web/README.md` runbook 选择托管平台、配置独立预览 Supabase、设置部署平台环境变量并发布公网 URL
