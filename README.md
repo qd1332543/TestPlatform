@@ -230,6 +230,8 @@ DEEPSEEK_API_KEY=your-deepseek-api-key
 
 `DEEPSEEK_API_KEY` is optional. Without it, the AI assistant is unavailable, but projects, tasks, reports, and executor pages can still be developed and tested.
 
+For public Web previews, configure these values in the deployment provider's protected environment settings instead of committing `.env.local`. Keep `SUPABASE_SERVICE_ROLE_KEY`, `DEEPSEEK_API_KEY`, local repository paths, and Local Agent runtime settings server-only or private. A public preview should expose the Web console first; connected execution by a private Local Agent is a separate rollout step.
+
 ### 4. Start the Web console
 
 ```bash
@@ -347,6 +349,8 @@ The Agent will:
 - Write back tasks, reports, and AI analysis records.
 
 The Web executor page also shows Local Agent status and provides a launch entry point. The Settings page can control whether the Agent starts automatically when the executor page is opened.
+
+Do not expose the Local Agent directly on the public internet. For public Web access, the Agent should run privately and poll the platform backend with scoped credentials.
 
 ## Recommended Validation Flow
 

@@ -230,6 +230,8 @@ DEEPSEEK_API_KEY=your-deepseek-api-key
 
 `DEEPSEEK_API_KEY` 是可选项。没有它时，AI 助手不可用，但项目、任务、报告和执行器页面仍可开发和调试。
 
+如果要部署公网 Web 预览，把这些值配置到部署平台的受保护环境变量中，不要提交 `.env.local`。`SUPABASE_SERVICE_ROLE_KEY`、`DEEPSEEK_API_KEY`、本地仓库路径和 Local Agent 运行配置必须保持服务端或本机私有。公网预览应先开放 Web 控制台；由私有 Local Agent 执行真实任务属于后续接入步骤。
+
 ### 4. 启动 Web 控制台
 
 ```bash
@@ -347,6 +349,8 @@ Agent 会：
 - 写回 tasks、reports 和 ai_analyses。
 
 Web 执行器页面也会展示 Local Agent 状态，并提供启动入口。设置页可以控制打开执行器页面时是否自动启动 Agent。
+
+不要把 Local Agent 直接暴露到公网。需要公网访问 Web 时，Agent 应在私有机器或可信 runner 上运行，并通过受控凭据轮询平台后端。
 
 ## 推荐验证流程
 
