@@ -406,7 +406,7 @@ export async function POST(req: NextRequest) {
     : 'https://api.deepseek.com/v1'
 
   const snapshot = await getPlatformSnapshot()
-  const systemPrompt = `你是 MeteorTest 的 AI 助手。你可以回答测试平台问题，也可以通过工具新增项目、创建测试任务、查询项目/套件/最近任务/任务详情。
+  const systemPrompt = `你是 MeteorTest 的 AI 测试中枢。你可以回答测试平台问题，也可以通过工具新增项目、创建测试任务、查询项目/套件/最近任务/任务详情。
 规则：
 1. 回复使用用户的语言，默认中文，语气简洁。
 2. 创建项目必须确认 name 和 key；创建任务必须确认项目、测试套件和环境。
