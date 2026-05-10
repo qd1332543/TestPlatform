@@ -1,16 +1,30 @@
-import { spawn } from 'child_process'
-import { existsSync, mkdirSync, readFileSync, writeFileSync, openSync } from 'fs'
-import path from 'path'
 import { NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const repoRoot = process.env.METEORTEST_REPO_ROOT || path.resolve(/* turbopackIgnore: true */ process.cwd(), '../..')
-const runtimeDir = path.join(repoRoot, '.meteortest-agent')
-const pidFile = path.join(runtimeDir, 'agent.pid')
-const logFile = path.join(runtimeDir, 'agent-web.log')
 const agentDisabled = process.env.VERCEL === '1' || process.env.METEORTEST_AGENT_DISABLED === '1'
+
+type AgentRuntimeState = {
+  pid: number | null
+}
+
+type ProcessWithBuiltins = NodeJS.Process & {
+  getBuiltinModule?: (id: 'child_process') => typeof import('child_process')
+}
+
+const runtimeState = globalThis as typeof globalThis & {
+  __meteorTestAgent?: AgentRuntimeState
+}
+
+function agentState() {
+  runtimeState.__meteorTestAgent ??= { pid: null }
+  return runtimeState.__meteorTestAgent
+}
+
+function agentRepoRoot() {
+  return process.env.METEORTEST_REPO_ROOT || ''
+}
 
 function disabledStatus() {
   return {
@@ -24,9 +38,20 @@ function disabledStatus() {
   }
 }
 
+function unavailableStatus(disabledReason: string) {
+  return {
+    available: false,
+    running: false,
+    started: false,
+    pid: null,
+    logFile: '',
+    logTail: '',
+    disabledReason,
+  }
+}
+
 function readPid() {
-  if (!existsSync(pidFile)) return null
-  const pid = Number(readFileSync(pidFile, 'utf8').trim())
+  const pid = agentState().pid
   return Number.isFinite(pid) ? pid : null
 }
 
@@ -40,21 +65,18 @@ function isRunning(pid: number | null) {
   }
 }
 
-function tailLog() {
-  if (!existsSync(logFile)) return ''
-  const content = readFileSync(logFile, 'utf8')
-  return content.split('\n').slice(-20).join('\n').trim()
-}
-
 function status() {
   if (agentDisabled) return disabledStatus()
+  if (!agentRepoRoot()) {
+    return unavailableStatus('Local Agent control requires METEORTEST_REPO_ROOT in the Web process environment.')
+  }
   const pid = readPid()
   return {
     available: true,
     running: isRunning(pid),
     pid,
-    logFile,
-    logTail: tailLog(),
+    logFile: '',
+    logTail: '',
   }
 }
 
@@ -67,29 +89,38 @@ export async function POST() {
 
   const current = status()
   if (current.running) return NextResponse.json({ ...current, started: false })
+  if (!current.available) return NextResponse.json(current, { status: 400 })
 
-  mkdirSync(runtimeDir, { recursive: true })
-  const python = process.env.METEORTEST_AGENT_PYTHON || path.join(repoRoot, 'agent/.venv/bin/python')
-  const out = openSync(logFile, 'a')
-  const child = spawn(
+  const childProcess = (process as ProcessWithBuiltins).getBuiltinModule?.('child_process')
+  if (!childProcess) {
+    return NextResponse.json(unavailableStatus('Local Agent control requires a Node runtime with process.getBuiltinModule.'), {
+      status: 500,
+    })
+  }
+
+  const repoRoot = agentRepoRoot()
+  const python =
+    process.env.METEORTEST_AGENT_PYTHON ||
+    `${repoRoot}/agent/${'.venv'}/bin/python`
+  const child = childProcess.spawn(
     python,
     ['-m', 'agent.agent', '--config', 'agent/config.yaml', '--interval', process.env.METEORTEST_AGENT_INTERVAL || '10'],
     {
       cwd: repoRoot,
       detached: true,
       env: process.env,
-      stdio: ['ignore', out, out],
+      stdio: 'ignore',
     },
   )
 
-  writeFileSync(pidFile, String(child.pid))
+  agentState().pid = child.pid ?? null
   child.unref()
 
   return NextResponse.json({
     running: true,
     started: true,
     pid: child.pid,
-    logFile,
-    logTail: tailLog(),
+    logFile: '',
+    logTail: '',
   })
 }
