@@ -3,7 +3,8 @@ import { NextResponse } from 'next/server'
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-const agentDisabled = process.env.VERCEL === '1' || process.env.METEORTEST_AGENT_DISABLED === '1'
+const publicPreview = process.env.METEORTEST_PUBLIC_PREVIEW === '1'
+const agentDisabled = publicPreview || process.env.VERCEL === '1' || process.env.METEORTEST_AGENT_DISABLED === '1'
 
 type AgentRuntimeState = {
   pid: number | null
@@ -34,6 +35,7 @@ function disabledStatus() {
     pid: null,
     logFile: '',
     logTail: '',
+    publicPreview,
     disabledReason: 'Local Agent control is disabled in public Web deployments. Run the Agent privately and let it poll Supabase.',
   }
 }

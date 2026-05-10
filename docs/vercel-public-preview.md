@@ -7,6 +7,7 @@ This runbook describes how to deploy MeteorTest Web to Vercel as a public previe
 Deploy the Web console only:
 
 - Public visitors can open the MeteorTest Web UI.
+- Current preview URL: `https://meteortest.jcmeteor.com/`.
 - The deployment uses an isolated preview Supabase project or schema.
 - Secrets live in Vercel Project Settings, not in Git.
 - Local Agent execution stays private.
@@ -63,6 +64,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-preview-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-preview-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-preview-service-role-key
 DEEPSEEK_API_KEY=optional
+METEORTEST_AGENT_DISABLED=1
+METEORTEST_PUBLIC_PREVIEW=1 once implemented
 ```
 
 Use Vercel Project Settings for these values. Do not commit `.env.local`.
@@ -73,6 +76,7 @@ Important boundaries:
 - `SUPABASE_SERVICE_ROLE_KEY` and `DEEPSEEK_API_KEY` are server-only.
 - Never add the `NEXT_PUBLIC_` prefix to service-role or AI provider keys.
 - Do not configure `METEORTEST_REPO_ROOT`, `METEORTEST_AGENT_PYTHON`, `METEORTEST_AGENT_INTERVAL`, local repository paths, or local Agent config in the public deployment unless an execution-safety design exists.
+- Public preview deployments must not attempt to spawn a Local Agent. `/executors` and `/api/agent/status` should show a disabled/unavailable state.
 
 ## Supabase Preview Setup
 
@@ -127,6 +131,14 @@ Only after the URL is verified:
 1. Add the public MeteorTest Web preview link to the personal website.
 2. Update `README.md`, `README.zh-CN.md`, `PROGRESS.md`, and `AGENTS.md`.
 3. Keep Phase 12 public connected execution deferred unless the safety design is complete.
+
+Then continue hardening in this order:
+
+1. Public preview mode: make Agent startup impossible in public deployments and document the unavailable state.
+2. Access protection: enable Vercel Deployment Protection, Vercel Password, or an equivalent guard before long-lived public use.
+3. Preview data: seed safe demo projects, suites, tasks, reports, executors, and builds.
+4. Task/report experience: make failed-task analysis readable through status, logs, failure category, AI analysis, and next actions.
+5. Private Agent loop: connect a private Local Agent to the preview backend only after the above is stable.
 
 ## References
 

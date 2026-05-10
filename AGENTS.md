@@ -122,6 +122,11 @@ For public Web preview work:
 - Update README files and `PROGRESS.md` in the same PR when deployment behavior or boundaries change.
 - Follow the public preview deployment runbook in `apps/web/README.md` before opening a live public URL. Do not skip directly to connected execution.
 - For Vercel deployment, follow `docs/vercel-public-preview.md` and `docs/vercel-public-preview.zh-CN.md`.
+- The current public preview URL is `https://meteortest.jcmeteor.com/`.
+- The current hardening sequence is recorded in `PROGRESS.md`: public preview mode, access protection, preview seed data, task/report experience, then private-Agent online loop.
+- Public preview deployments should set `METEORTEST_AGENT_DISABLED=1`; prefer also setting `METEORTEST_PUBLIC_PREVIEW=1` once the code path is implemented.
+- In public preview mode, `/api/agent/status` and the Executors page must never attempt to start a machine-local Agent. They should show a clear disabled/unavailable state and instruct the operator to run the Agent privately.
+- Do not add public Web preview links to the personal website without preserving this boundary: Web preview is online, Local Agent execution is private, and public connected execution is deferred.
 
 ### Agent
 

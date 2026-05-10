@@ -24,6 +24,12 @@ type Settings = {
   density: 'comfortable' | 'compact'
 }
 
+type AgentStatus = {
+  available?: boolean
+  publicPreview?: boolean
+  disabledReason?: string
+}
+
 const storageKey = 'meteortest.settings.v1'
 const settingsUpdatedEvent = 'meteortest-settings-updated'
 
@@ -71,14 +77,15 @@ function applyTheme(theme: Settings['theme']) {
   }
 }
 
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (checked: boolean) => void; label: string }) {
+function Toggle({ checked, onChange, label, disabled = false }: { checked: boolean; onChange: (checked: boolean) => void; label: string; disabled?: boolean }) {
   return (
     <button
       type="button"
       aria-pressed={checked}
       aria-label={label}
+      disabled={disabled}
       onClick={() => onChange(!checked)}
-      className="toggle-control"
+      className="toggle-control disabled:cursor-not-allowed disabled:opacity-40"
     >
       <span className="toggle-thumb" />
     </button>
@@ -113,6 +120,8 @@ export default function SettingsPage() {
   const [savedSettings, setSavedSettings] = useState<Settings>(defaultSettings)
   const [loaded, setLoaded] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null)
+  const agentControlsDisabled = agentStatus?.available === false
 
   useEffect(() => {
     const raw = window.localStorage.getItem(storageKey)
@@ -132,6 +141,25 @@ export default function SettingsPage() {
       }
     }
     queueMicrotask(() => setLoaded(true))
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAgentStatus() {
+      try {
+        const res = await fetch('/api/agent/status', { cache: 'no-store' })
+        const data = await res.json() as AgentStatus
+        if (!cancelled) setAgentStatus(data)
+      } catch {
+        if (!cancelled) setAgentStatus(null)
+      }
+    }
+
+    loadAgentStatus()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const dirty = useMemo(
@@ -279,10 +307,19 @@ export default function SettingsPage() {
           <Panel title={t.settings.agentPanel} description={t.settings.agentPanelDesc}>
             <div className="panel-inner flex items-center justify-between gap-4 rounded-lg px-4 py-3">
               <div>
-                <div className="text-sm font-medium text-white">{t.settings.autoStartTitle}</div>
-                <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{t.settings.autoStartDesc}</div>
+                <div className="text-sm font-medium text-white">
+                  {agentControlsDisabled ? t.settings.autoStartDisabledTitle : t.settings.autoStartTitle}
+                </div>
+                <div className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  {agentControlsDisabled ? t.settings.autoStartDisabledDesc : t.settings.autoStartDesc}
+                </div>
               </div>
-              <Toggle label={t.settings.autoStartTitle} checked={settings.autoStartAgent} onChange={value => update('autoStartAgent', value)} />
+              <Toggle
+                label={t.settings.autoStartTitle}
+                checked={!agentControlsDisabled && settings.autoStartAgent}
+                onChange={value => update('autoStartAgent', value)}
+                disabled={agentControlsDisabled}
+              />
             </div>
           </Panel>
 

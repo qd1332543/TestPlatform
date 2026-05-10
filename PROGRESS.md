@@ -24,6 +24,65 @@
 - [x] 支持收集 Allure 结果
 - [x] 支持把任务状态写回本地任务表
 
+## 当前优先级：公网预览加固与 Beta 路径
+
+> 当前公网预览：`https://meteortest.jcmeteor.com/`
+> 当前定位：Web Preview 已可访问；Local Agent 仍保持私有；公网联网执行 Demo 仍延期。
+
+### 推荐推进顺序
+
+1. 完善公网预览模式，确保 Vercel 部署不会尝试启动本机 Local Agent。
+2. 为公网控制台增加访问保护，避免带服务端能力的控制台长期裸露。
+3. 准备预览数据初始化，让 Dashboard、Projects、Tasks、Reports、Executors 都有安全 demo 数据。
+4. 增强任务详情和报告体验，让 demo failed task 能清楚展示状态、日志、失败原因、AI 分析和下一步建议。
+5. 在公网 Web + preview Supabase 稳定后，再用私有 Local Agent 跑通线上任务闭环。
+
+### Public Preview Mode
+
+- [x] 新增或明确 `METEORTEST_PUBLIC_PREVIEW=1` 作为公网预览模式开关
+- [x] 保留 `METEORTEST_AGENT_DISABLED=1` 用于禁用公网部署中的 Local Agent 启动
+- [x] `/api/agent/status` 在 public preview 下始终返回 disabled/unavailable，不尝试读取或启动本机 Agent
+- [x] Executors 页面在 public preview 下显示“公网部署不启动 Local Agent；请在私有机器上单独运行 Agent 并轮询后端”
+- [x] Settings 页面在 public preview 下隐藏或禁用 auto-start Agent 控制，避免误导
+- [x] Vercel runbook 明确不要配置 `METEORTEST_REPO_ROOT`、`METEORTEST_AGENT_PYTHON`、`METEORTEST_AGENT_INTERVAL` 或本机路径
+- [ ] Smoke check 覆盖 `/executors` 和 `/api/agent/status`，确认不暴露本机路径、栈信息、密钥或 Agent 启动入口
+
+### Authentication And Access Control
+
+- [ ] 短期：启用 Vercel Deployment Protection、Vercel Password 或等价访问保护
+- [ ] 在 `docs/vercel-public-preview.md` 和中文文档中记录当前访问保护方式
+- [ ] 中期：设计 Supabase Auth 登录页、会话状态、API route 鉴权和 viewer/operator/admin 角色边界
+- [ ] 长期：把任务创建、构建登记、AI 分析、执行器控制等操作拆分权限
+
+### Preview Data Initialization
+
+- [ ] 增加 `supabase/seed-preview.sql` 或脚本化 seed 流程
+- [ ] Demo project：`iOS-Automation-Framework`
+- [ ] Demo suite：`api_smoke`
+- [ ] Demo tasks：至少覆盖 queued、succeeded、failed
+- [ ] Demo report：包含 pytest summary、日志链接占位、AI 分析摘要
+- [ ] Demo executor：`local-agent-demo`，状态为 offline/disabled，明确不是公网 Agent
+- [ ] Demo build：示例 app build 元数据，不包含真实包、内部 URL、账号或设备信息
+- [ ] Runbook 记录如何在新的 preview Supabase 中初始化 demo 数据
+
+### Task And Report Experience
+
+- [ ] 任务详情增加状态时间线或状态流说明
+- [ ] 报告详情增强摘要卡片、日志预览、失败原因分类和下一步建议
+- [ ] AI 分析结果绑定 task/report 上下文，而不是只作为独立聊天内容
+- [ ] 增加“导出分析包”或等价信息包入口，便于二次 AI 分析
+- [ ] 让一个 demo failed task 能在不看数据库的情况下说明发生了什么、为什么失败、下一步该做什么
+
+### Private Agent Online Loop
+
+- [ ] Vercel Web 连接 preview Supabase
+- [ ] 私有机器 Local Agent 连接同一个 preview Supabase
+- [ ] 从 `https://meteortest.jcmeteor.com/` 创建任务
+- [ ] 私有 Agent 轮询 queued 任务并执行 iOS-Automation-Framework smoke suite
+- [ ] Agent 回写 task status、report、artifact/log URL
+- [ ] Web 展示 succeeded/failed、报告摘要和 AI 分析
+- [ ] 完成后，个人官网可以声明 `validated private-agent preview loop`，但仍不能声明 public connected execution
+
 ## 中期：平台调度与多项目接入
 
 ### 平台 Web MVP
@@ -79,7 +138,8 @@
 - [x] 页面文件可维护性整理：保留 Next.js `page.tsx` 路由约定，但将复杂页面实现逐步迁移到具名组件文件，例如 `TasksPage.tsx`、`ReportsPage.tsx`
 - [x] Phase 11 公网 Web 预览准备：补齐 `.env.local.example`，明确部署环境变量、密钥边界和 Local Agent 不直接公网暴露
 - [x] Phase 11 Vercel 部署 runbook：记录账号操作、环境变量、Supabase 预览环境、Codex 可协助范围和人工必须提供内容
-- [ ] Phase 11 公网 Web 预览部署：按 `apps/web/README.md` runbook 选择托管平台、配置独立预览 Supabase、设置部署平台环境变量并发布公网 URL
+- [x] Phase 11 公网 Web 预览部署：Vercel 预览已发布到 `https://meteortest.jcmeteor.com/`
+- [ ] Phase 11 公网 Web 预览加固：完善 public preview mode、访问保护、demo 数据、任务/报告体验和私有 Agent 线上闭环
 - [ ] Phase 12 Public Connected Demo：基于独立预览后端和私有 Agent 打通可操作 Demo
 - [ ] 基于工程测试控制台方向重构首页、项目、任务、报告和 AI 页面
   - [x] 首页、项目、任务和报告页完成第一轮控制台化布局：状态概览、接入状态卡片、执行队列和报告分析侧栏
