@@ -35,6 +35,12 @@ Do not commit `.env.local` or real keys.
 
 The Web console can be deployed as a public preview when its provider receives environment variables through protected deployment settings, for example Vercel, Netlify, Cloudflare Pages, or GitHub Actions secrets.
 
+Current public preview:
+
+```text
+https://meteortest.jcmeteor.com/
+```
+
 Public preview is for viewing and validating the Web console surface first:
 
 - It may connect to a dedicated preview Supabase project.
@@ -57,6 +63,8 @@ Use this order when opening MeteorTest Web on the public internet:
    NEXT_PUBLIC_SUPABASE_ANON_KEY
    SUPABASE_SERVICE_ROLE_KEY
    DEEPSEEK_API_KEY optional
+   METEORTEST_AGENT_DISABLED=1
+   METEORTEST_PUBLIC_PREVIEW=1 once implemented
    ```
 
 4. Keep `METEORTEST_REPO_ROOT`, `METEORTEST_AGENT_PYTHON`, `METEORTEST_AGENT_INTERVAL`, local repository paths, and local Agent config out of the public Web deployment unless a reviewed execution-safety design exists.
@@ -70,6 +78,14 @@ Use this order when opening MeteorTest Web on the public internet:
    - AI assistant returns a clear unavailable state if `DEEPSEEK_API_KEY` is not configured.
 
 7. Only after the Web preview is stable, decide whether a private Local Agent should poll the preview backend with scoped credentials. Do not expose a machine-local Agent endpoint directly to public traffic.
+
+Current follow-up order:
+
+1. Harden public preview mode so public deployments never try to start a machine-local Agent.
+2. Add access protection before treating the preview as a long-lived public console.
+3. Seed safe demo data for dashboard, projects, tasks, reports, executors, and builds.
+4. Improve task detail and report analysis surfaces around status, logs, failure category, AI analysis, and next actions.
+5. Run a private Local Agent against the preview backend only after the preview boundary is stable.
 
 For a detailed Vercel-specific walkthrough, see:
 

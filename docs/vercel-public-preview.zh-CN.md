@@ -7,6 +7,7 @@
 这次只部署 Web 控制台：
 
 - 访问者可以打开 MeteorTest Web UI。
+- 当前预览地址：`https://meteortest.jcmeteor.com/`。
 - 部署连接隔离的预览 Supabase 项目或 schema。
 - 密钥放在 Vercel Project Settings，不进入 Git。
 - Local Agent 执行保持私有。
@@ -63,6 +64,8 @@ NEXT_PUBLIC_SUPABASE_URL=https://your-preview-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-preview-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-preview-service-role-key
 DEEPSEEK_API_KEY=可选
+METEORTEST_AGENT_DISABLED=1
+METEORTEST_PUBLIC_PREVIEW=1 完成代码支持后启用
 ```
 
 这些值要配置在 Vercel Project Settings 中，不要提交 `.env.local`。
@@ -73,6 +76,7 @@ DEEPSEEK_API_KEY=可选
 - `SUPABASE_SERVICE_ROLE_KEY` 和 `DEEPSEEK_API_KEY` 只能服务端使用。
 - 不要给 service-role key 或 AI 服务 key 加 `NEXT_PUBLIC_` 前缀。
 - 不要在公网部署中配置 `METEORTEST_REPO_ROOT`、`METEORTEST_AGENT_PYTHON`、`METEORTEST_AGENT_INTERVAL`、本地仓库路径或本机 Agent 配置，除非已经完成执行安全设计。
+- 公网预览部署不得尝试启动 Local Agent。`/executors` 和 `/api/agent/status` 应显示 disabled/unavailable 状态。
 
 ## Supabase 预览环境
 
@@ -127,6 +131,14 @@ supabase/migrations/003_constraints.sql
 1. 把 MeteorTest Web 公网预览链接加到个人官网。
 2. 更新 `README.md`、`README.zh-CN.md`、`PROGRESS.md` 和 `AGENTS.md`。
 3. Phase 12 公网联网执行继续保持延期，除非安全设计已经完成。
+
+然后按这个顺序继续加固：
+
+1. 公网预览模式：确保公网部署不可能启动本机 Agent，并记录不可用状态。
+2. 访问保护：长期公开前启用 Vercel Deployment Protection、Vercel Password 或等价保护。
+3. 预览数据：初始化安全 demo 项目、suite、任务、报告、执行器和构建数据。
+4. 任务/报告体验：通过状态、日志、失败分类、AI 分析和下一步建议，让 failed task 可读。
+5. 私有 Agent 闭环：上述稳定后，再让私有 Local Agent 连接 preview backend。
 
 ## 参考资料
 
