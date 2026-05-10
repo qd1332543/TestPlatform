@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocale } from '@/lib/useLocale'
 import type { Dictionary, Locale } from '@/content/i18n'
@@ -15,6 +16,7 @@ const defaultAiSettings = {
   aiModel: 'deepseek-v4-pro',
   aiBaseUrl: 'https://api.deepseek.com',
 }
+const taskIdPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi
 
 const TemplateIcons = {
   failed: (
@@ -141,6 +143,30 @@ function formatDate(value: unknown, locale: Locale) {
   return typeof value === 'string' ? new Date(value).toLocaleString(locale) : '-'
 }
 
+function renderTaskLinks(text: string) {
+  const nodes: React.ReactNode[] = []
+  let lastIndex = 0
+  const matches = text.matchAll(taskIdPattern)
+  for (const match of matches) {
+    const taskId = match[0]
+    const index = match.index ?? 0
+    if (index > lastIndex) nodes.push(text.slice(lastIndex, index))
+    nodes.push(
+      <Link
+        key={`${taskId}-${index}`}
+        href={`/tasks/${taskId}`}
+        className="font-mono underline decoration-dotted underline-offset-4 transition-colors hover:text-white"
+        style={{ color: '#60A5FA' }}
+      >
+        {taskId}
+      </Link>,
+    )
+    lastIndex = index + taskId.length
+  }
+  if (lastIndex < text.length) nodes.push(text.slice(lastIndex))
+  return nodes.length ? nodes : text
+}
+
 function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictionary; locale: Locale }) {
   const visibleActions = actions?.filter(action => action.ok && ['create_task', 'get_task_detail', 'create_project'].includes(action.action ?? '')) ?? []
   if (!visibleActions.length) return null
@@ -157,8 +183,9 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
           const report = firstRecord(task.reports)
           const analysis = firstRecord(task.ai_analyses)
           const title = action.action === 'create_task' ? t.ai.taskCreated : t.ai.taskStatus
-          return (
-            <div key={`${action.action}-${taskId}-${index}`} className="rounded-xl overflow-hidden" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
+          const key = `${action.action}-${taskId}-${index}`
+          const card = (
+            <div className="rounded-xl overflow-hidden transition-colors group-hover:border-sky-400" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
               <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full" style={{ background: meta.color }} />
@@ -209,8 +236,16 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
                   {typeof analysis.suggestion === 'string' && <div className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</div>}
                 </div>
               )}
+              {taskId !== '-' && (
+                <div className="px-4 py-2 text-xs font-medium transition-colors group-hover:text-white" style={{ borderTop: '1px solid var(--border)', color: '#60A5FA' }}>
+                  {t.ai.openTaskDetail}
+                </div>
+              )}
             </div>
           )
+          return taskId !== '-'
+            ? <Link key={key} href={`/tasks/${taskId}`} className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded-xl">{card}</Link>
+            : <div key={key}>{card}</div>
         }
 
         const project = projectActionData(action)
@@ -275,7 +310,7 @@ function MessageContent({ content, hasActions }: { content: string; hasActions: 
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex} style={{ borderTop: '1px solid var(--border)' }}>
                   {row.map((cell, cellIndex) => (
-                    <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top" style={{ color: '#CBD5E1' }}>{cell.replace(/\*\*/g, '').replace(/`/g, '')}</td>
+                    <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top" style={{ color: '#CBD5E1' }}>{renderTaskLinks(cell.replace(/\*\*/g, '').replace(/`/g, ''))}</td>
                   ))}
                 </tr>
               ))}
@@ -292,7 +327,7 @@ function MessageContent({ content, hasActions }: { content: string; hasActions: 
       index += 1
     }
     const text = paragraph.join('\n').trim()
-    if (text) nodes.push(<div key={`text-${index}`} className="whitespace-pre-wrap">{text}</div>)
+    if (text) nodes.push(<div key={`text-${index}`} className="whitespace-pre-wrap">{renderTaskLinks(text)}</div>)
   }
 
   return <div className={hasActions ? 'mt-3 space-y-2' : 'space-y-2'}>{nodes}</div>
