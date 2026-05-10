@@ -92,6 +92,14 @@ supabase/migrations/003_constraints.sql
 
 For the first public preview, prefer empty data or demo data. Do not connect real device records, private app builds, internal URLs, real test accounts, or production report storage.
 
+To seed public-safe demo data after migrations, run:
+
+```text
+supabase/seed-preview.sql
+```
+
+The seed creates a demo `iOS-Automation-Framework` project, `api_smoke` suite, placeholder build metadata, an offline `local-agent-demo` executor, queued/succeeded/failed tasks, report summaries, and a synthetic AI analysis row. It is intended for preview surfaces only and must not be edited to include private endpoints, local paths, credentials, real devices, or production artifacts.
+
 ## Vercel Dashboard Flow
 
 1. Open Vercel.
@@ -136,7 +144,7 @@ Then continue hardening in this order:
 
 1. Public preview mode: make Agent startup impossible in public deployments and document the unavailable state.
 2. Access protection: enable Vercel Deployment Protection, Vercel Password, or an equivalent guard before long-lived public use.
-3. Preview data: seed safe demo projects, suites, tasks, reports, executors, and builds.
+3. Preview data: run `supabase/seed-preview.sql` to seed safe demo projects, suites, tasks, reports, executors, and builds.
 4. Task/report experience: make failed-task analysis readable through status, logs, failure category, AI analysis, and next actions.
 5. Private Agent loop: connect a private Local Agent to the preview backend only after the above is stable.
 

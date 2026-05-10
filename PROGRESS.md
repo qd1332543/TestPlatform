@@ -56,14 +56,14 @@
 
 ### Preview Data Initialization
 
-- [ ] 增加 `supabase/seed-preview.sql` 或脚本化 seed 流程
-- [ ] Demo project：`iOS-Automation-Framework`
-- [ ] Demo suite：`api_smoke`
-- [ ] Demo tasks：至少覆盖 queued、succeeded、failed
-- [ ] Demo report：包含 pytest summary、日志链接占位、AI 分析摘要
-- [ ] Demo executor：`local-agent-demo`，状态为 offline/disabled，明确不是公网 Agent
-- [ ] Demo build：示例 app build 元数据，不包含真实包、内部 URL、账号或设备信息
-- [ ] Runbook 记录如何在新的 preview Supabase 中初始化 demo 数据
+- [x] 增加 `supabase/seed-preview.sql` 或脚本化 seed 流程
+- [x] Demo project：`iOS-Automation-Framework`
+- [x] Demo suite：`api_smoke`
+- [x] Demo tasks：至少覆盖 queued、succeeded、failed
+- [x] Demo report：包含 pytest summary、日志链接占位、AI 分析摘要
+- [x] Demo executor：`local-agent-demo`，状态为 offline/disabled，明确不是公网 Agent
+- [x] Demo build：示例 app build 元数据，不包含真实包、内部 URL、账号或设备信息
+- [x] Runbook 记录如何在新的 preview Supabase 中初始化 demo 数据
 
 ### Task And Report Experience
 

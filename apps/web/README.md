@@ -92,6 +92,14 @@ For a detailed Vercel-specific walkthrough, see:
 - `docs/vercel-public-preview.md`
 - `docs/vercel-public-preview.zh-CN.md`
 
+Preview seed data:
+
+```text
+supabase/seed-preview.sql
+```
+
+Run it after the migrations when you want the public preview to show safe demo projects, suites, tasks, reports, an offline demo executor, and AI analysis examples. The seed uses placeholder URLs and synthetic execution data only.
+
 ## UI Direction
 
 The console should be visually consistent across pages. Use shared CSS variables and semantic classes from `app/globals.css` instead of hard-coded page colors.
