@@ -6,6 +6,18 @@ type ReportRow = {
   id: string
   status: string
   environment: string
+  parameters: {
+    display_name?: string
+    failure_category?: string
+    preview_task_key?: string
+    safe_demo?: boolean
+    pytest?: {
+      passed?: number
+      failed?: number
+      deselected?: number
+      exit_code?: number
+    }
+  } | null
   created_at: string
   started_at: string | null
   finished_at: string | null
@@ -43,7 +55,7 @@ export default async function ReportsPage() {
   const supabase = await createClient()
   const { data } = await supabase
     .from('tasks')
-    .select('id, status, environment, created_at, started_at, finished_at, projects(name), test_suites(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
+    .select('id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
     .order('created_at', { ascending: false })
     .limit(50)
 
@@ -92,6 +104,16 @@ export default async function ReportsPage() {
             const taskReport = firstItem(report.reports)
             const analysis = firstItem(report.ai_analyses)
             const statusLabel = t.status[report.status as keyof typeof t.status] ?? report.status
+            const parameters = report.parameters ?? {}
+            const pytest = parameters.pytest
+            const pytestSummary = pytest
+              ? [
+                  pytest.passed != null ? `${pytest.passed} passed` : null,
+                  pytest.failed != null ? `${pytest.failed} failed` : null,
+                  pytest.deselected != null ? `${pytest.deselected} deselected` : null,
+                  pytest.exit_code != null ? `exit ${pytest.exit_code}` : null,
+                ].filter(Boolean).join(', ')
+              : ''
             const exportMarkdown = [
               `# MeteorTest Report Analysis Package / MeteorTest 报告分析包`,
               ``,
@@ -141,12 +163,13 @@ export default async function ReportsPage() {
                   <div className="space-y-2 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`status-badge status-${report.status} px-2 py-0.5`}>{statusLabel}</span>
+                      {parameters.safe_demo ? <span className="status-badge status-running px-2 py-0.5">{t.taskDetail.previewTask}</span> : null}
                       <span className="text-sm text-white font-medium">{relationName(report.projects) ?? '-'}</span>
                       <span className="text-sm" style={{ color: 'var(--text-muted)' }}>·</span>
                       <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{relationName(report.test_suites) ?? '-'}</span>
                     </div>
                     <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      {t.reports.environment} {report.environment} · {t.reports.created} {formatDateTime(report.created_at, locale)}
+                      {parameters.display_name ? `${parameters.display_name} · ` : ''}{t.reports.environment} {report.environment} · {t.reports.created} {formatDateTime(report.created_at, locale)}
                     </div>
                     {(report.started_at || report.finished_at) && (
                       <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -176,6 +199,12 @@ export default async function ReportsPage() {
                     {taskReport ? (
                       <div className="space-y-2">
                         {taskReport.summary && <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{taskReport.summary}</div>}
+                        {(pytestSummary || parameters.failure_category) && (
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            {pytestSummary ? <span className="status-badge status-succeeded px-2 py-0.5">{t.taskDetail.pytestSummary}: {pytestSummary}</span> : null}
+                            {parameters.failure_category ? <span className="status-badge status-failed px-2 py-0.5">{t.taskDetail.failureCategory}: {parameters.failure_category}</span> : null}
+                          </div>
+                        )}
                         <div className="flex flex-wrap gap-4 text-sm">
                           {taskReport.log_url && <a href={taskReport.log_url} target="_blank" className="link-action">{t.reports.log}</a>}
                           {taskReport.allure_url && <a href={taskReport.allure_url} target="_blank" className="link-action">{t.reports.allure}</a>}
