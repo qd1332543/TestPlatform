@@ -10,6 +10,19 @@ const repoRoot = process.env.METEORTEST_REPO_ROOT || path.resolve(/* turbopackIg
 const runtimeDir = path.join(repoRoot, '.meteortest-agent')
 const pidFile = path.join(runtimeDir, 'agent.pid')
 const logFile = path.join(runtimeDir, 'agent-web.log')
+const agentDisabled = process.env.VERCEL === '1' || process.env.METEORTEST_AGENT_DISABLED === '1'
+
+function disabledStatus() {
+  return {
+    available: false,
+    running: false,
+    started: false,
+    pid: null,
+    logFile: '',
+    logTail: '',
+    disabledReason: 'Local Agent control is disabled in public Web deployments. Run the Agent privately and let it poll Supabase.',
+  }
+}
 
 function readPid() {
   if (!existsSync(pidFile)) return null
@@ -34,8 +47,10 @@ function tailLog() {
 }
 
 function status() {
+  if (agentDisabled) return disabledStatus()
   const pid = readPid()
   return {
+    available: true,
     running: isRunning(pid),
     pid,
     logFile,
@@ -48,6 +63,8 @@ export async function GET() {
 }
 
 export async function POST() {
+  if (agentDisabled) return NextResponse.json(disabledStatus())
+
   const current = status()
   if (current.running) return NextResponse.json({ ...current, started: false })
 
