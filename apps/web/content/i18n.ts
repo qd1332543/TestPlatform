@@ -187,6 +187,11 @@ export const dictionaries = {
       report: '测试报告',
       aiFailureAnalysis: 'AI 失败分析',
       flakyProbability: 'Flaky 概率',
+      previewTask: '预览任务',
+      executionSummary: '执行摘要',
+      failureCategory: '失败分类',
+      pytestSummary: 'Pytest 摘要',
+      waitingForReport: '任务还没有报告。queued/running 状态通常表示执行器尚未回传结果。',
     },
     agent: {
       console: 'Local Agent 控制台',
@@ -516,6 +521,11 @@ export const dictionaries = {
       report: 'Test report',
       aiFailureAnalysis: 'AI failure analysis',
       flakyProbability: 'Flaky probability',
+      previewTask: 'Preview task',
+      executionSummary: 'Execution summary',
+      failureCategory: 'Failure category',
+      pytestSummary: 'Pytest summary',
+      waitingForReport: 'No report yet. Queued or running tasks usually mean the executor has not reported back.',
     },
     agent: {
       console: 'Local Agent Console',

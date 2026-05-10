@@ -12,6 +12,19 @@ const statusStyle: Record<string, { bg: string; color: string }> = {
   timeout:   { bg: '#2A1A0A', color: '#F97316' },
 }
 
+type TaskParameters = {
+  display_name?: string
+  failure_category?: string
+  preview_task_key?: string
+  safe_demo?: boolean
+  pytest?: {
+    passed?: number
+    failed?: number
+    deselected?: number
+    exit_code?: number
+  }
+}
+
 function markdownValue(value: unknown) {
   if (value == null || value === '') return '-'
   return String(value).replace(/\r\n/g, '\n').trim() || '-'
@@ -40,6 +53,17 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const analysis = task.ai_analyses?.[0]
   const s = statusStyle[task.status] ?? statusStyle.queued
   const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
+  const parameters = (task.parameters ?? {}) as TaskParameters
+  const displayName = parameters.display_name || task.id
+  const pytest = parameters.pytest
+  const pytestSummary = pytest
+    ? [
+        pytest.passed != null ? `${pytest.passed} passed` : null,
+        pytest.failed != null ? `${pytest.failed} failed` : null,
+        pytest.deselected != null ? `${pytest.deselected} deselected` : null,
+        pytest.exit_code != null ? `exit ${pytest.exit_code}` : null,
+      ].filter(Boolean).join(', ')
+    : ''
 
   const meta = [
     { label: t.common.project, value: task.projects?.name ?? '-' },
@@ -112,10 +136,15 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         </div>
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">{t.taskDetail.title}</h1>
+            <h1 className="text-2xl font-bold text-white">{displayName}</h1>
             <span className={`status-badge status-${task.status} items-center gap-1.5 px-2.5 py-1`}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />{statusLabel}
             </span>
+            {parameters.safe_demo ? (
+              <span className="status-badge status-running items-center gap-1.5 px-2.5 py-1">
+                {t.taskDetail.previewTask}
+              </span>
+            ) : null}
           </div>
           <a
             href={markdownDataUrl(exportMarkdown)}
@@ -143,23 +172,43 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             <code className="panel-inner text-xs font-mono px-3 py-2 rounded-lg block" style={{ color: 'var(--accent)' }}>{task.test_suites.command}</code>
           </div>
         )}
+        {(pytestSummary || parameters.failure_category) && (
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {pytestSummary ? (
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.pytestSummary}</div>
+                <div className="text-sm text-white">{pytestSummary}</div>
+              </div>
+            ) : null}
+            {parameters.failure_category ? (
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.failureCategory}</div>
+                <div className="text-sm text-white">{parameters.failure_category}</div>
+              </div>
+            ) : null}
+          </div>
+        )}
       </div>
 
       {/* Report */}
-      {report && (
-        <div className="data-panel rounded-xl overflow-hidden">
-          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-            <span className="text-sm font-semibold text-white">{t.taskDetail.report}</span>
-          </div>
-          <div className="p-5 space-y-3">
-            {report.summary && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{report.summary}</p>}
-            <div className="flex gap-3">
-              {report.log_url && <a href={report.log_url} target="_blank" className="link-action text-sm">{t.reports.log}</a>}
-              {report.allure_url && <a href={report.allure_url} target="_blank" className="link-action text-sm">{t.reports.allure}</a>}
-            </div>
+      <div className="data-panel rounded-xl overflow-hidden">
+        <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+          <span className="text-sm font-semibold text-white">{t.taskDetail.report}</span>
+        </div>
+        <div className="p-5 space-y-3">
+          {report ? (
+            <>
+              {report.summary && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{report.summary}</p>}
+              <div className="flex gap-3">
+                {report.log_url && <a href={report.log_url} target="_blank" className="link-action text-sm">{t.reports.log}</a>}
+                {report.allure_url && <a href={report.allure_url} target="_blank" className="link-action text-sm">{t.reports.allure}</a>}
+              </div>
+            </>
+          ) : (
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.waitingForReport}</p>
+          )}
           </div>
         </div>
-      )}
 
       {/* AI Analysis */}
       <div className="data-panel rounded-xl overflow-hidden">
