@@ -24,6 +24,19 @@ function firstItem<T>(value: T[] | T | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value
 }
 
+function markdownValue(value: unknown) {
+  if (value == null || value === '') return '-'
+  return String(value).replace(/\r\n/g, '\n').trim() || '-'
+}
+
+function markdownLink(label: string, url?: string | null) {
+  return url ? `[${label}](${url})` : '-'
+}
+
+function markdownDataUrl(markdown: string) {
+  return `data:text/markdown;charset=utf-8,${encodeURIComponent(markdown)}`
+}
+
 export default async function ReportsPage() {
   const locale = await getLocale()
   const t = await getDictionary()
@@ -79,6 +92,49 @@ export default async function ReportsPage() {
             const taskReport = firstItem(report.reports)
             const analysis = firstItem(report.ai_analyses)
             const statusLabel = t.status[report.status as keyof typeof t.status] ?? report.status
+            const exportMarkdown = [
+              `# MeteorTest Report Analysis Package / MeteorTest 报告分析包`,
+              ``,
+              `## Task / 任务信息`,
+              ``,
+              `| Field | Value |`,
+              `|---|---|`,
+              `| Task ID | ${report.id} |`,
+              `| Project | ${markdownValue(relationName(report.projects))} |`,
+              `| Suite | ${markdownValue(relationName(report.test_suites))} |`,
+              `| Environment | ${markdownValue(report.environment)} |`,
+              `| Status | ${markdownValue(statusLabel)} |`,
+              `| Created At | ${markdownValue(formatDateTime(report.created_at, locale))} |`,
+              `| Started At | ${markdownValue(report.started_at ? formatDateTime(report.started_at, locale) : null)} |`,
+              `| Finished At | ${markdownValue(report.finished_at ? formatDateTime(report.finished_at, locale) : null)} |`,
+              ``,
+              `## Test Report / 测试报告`,
+              ``,
+              `- Summary: ${markdownValue(taskReport?.summary)}`,
+              `- 摘要：${markdownValue(taskReport?.summary)}`,
+              `- Log: ${markdownLink(t.reports.log, taskReport?.log_url)}`,
+              `- 日志：${markdownLink(t.reports.log, taskReport?.log_url)}`,
+              `- Allure: ${markdownLink(t.reports.allure, taskReport?.allure_url)}`,
+              `- Allure 报告：${markdownLink(t.reports.allure, taskReport?.allure_url)}`,
+              ``,
+              `## AI Analysis / AI 分析`,
+              ``,
+              `- Failure Reason: ${markdownValue(analysis?.failure_reason)}`,
+              `- 失败原因：${markdownValue(analysis?.failure_reason)}`,
+              `- Impact: ${markdownValue(analysis?.impact)}`,
+              `- 影响范围：${markdownValue(analysis?.impact)}`,
+              `- Suggestion: ${markdownValue(analysis?.suggestion)}`,
+              `- 修复建议：${markdownValue(analysis?.suggestion)}`,
+              `- Flaky Probability: ${analysis?.flaky_probability != null ? `${(analysis.flaky_probability * 100).toFixed(0)}%` : '-'}`,
+              `- Flaky 概率：${analysis?.flaky_probability != null ? `${(analysis.flaky_probability * 100).toFixed(0)}%` : '-'}`,
+              ``,
+              `## Prompt Hint / 分析提示词`,
+              ``,
+              `Please analyze this MeteorTest report package. Focus on failure cause, impact, debugging priority, and whether the issue looks like a test problem, environment problem, or product defect.`,
+              ``,
+              `请分析这个 MeteorTest 报告分析包。请重点判断：失败原因、影响范围、排查优先级，以及它更像测试脚本问题、环境问题、产品缺陷还是偶发不稳定。请用中文输出，并保留必要英文技术术语。`,
+              ``,
+            ].join('\n')
             return (
               <div key={report.id} className="data-panel rounded-xl p-5 space-y-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -100,9 +156,18 @@ export default async function ReportsPage() {
                       </div>
                     )}
                   </div>
-                  <Link href={`/tasks/${report.id}`} className="link-action text-sm shrink-0">
-                    {t.reports.taskDetails}
-                  </Link>
+                  <div className="flex shrink-0 flex-wrap gap-3">
+                    <a
+                      href={markdownDataUrl(exportMarkdown)}
+                      download={`meteortest-report-${report.id}.md`}
+                      className="secondary-action rounded-lg px-3 py-1.5 text-sm font-semibold"
+                    >
+                      {t.reports.exportMarkdown}
+                    </a>
+                    <Link href={`/tasks/${report.id}`} className="link-action text-sm">
+                      {t.reports.taskDetails}
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-2">
