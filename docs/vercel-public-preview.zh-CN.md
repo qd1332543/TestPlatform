@@ -92,6 +92,14 @@ supabase/migrations/003_constraints.sql
 
 第一次公网预览优先使用空数据或 demo 数据。不要接入真实设备记录、私有 app 构建、内部 URL、真实测试账号或生产报告存储。
 
+如果需要初始化公开安全的 demo 数据，在迁移后执行：
+
+```text
+supabase/seed-preview.sql
+```
+
+这个 seed 会创建 demo `iOS-Automation-Framework` 项目、`api_smoke` suite、占位构建元数据、离线的 `local-agent-demo` 执行器、queued/succeeded/failed 任务、报告摘要和一条合成 AI 分析记录。它只用于预览页面，不要改成包含私有端点、本机路径、凭据、真实设备或生产产物的数据。
+
 ## Vercel 页面操作流程
 
 1. 打开 Vercel。
@@ -136,7 +144,7 @@ supabase/migrations/003_constraints.sql
 
 1. 公网预览模式：确保公网部署不可能启动本机 Agent，并记录不可用状态。
 2. 访问保护：长期公开前启用 Vercel Deployment Protection、Vercel Password 或等价保护。
-3. 预览数据：初始化安全 demo 项目、suite、任务、报告、执行器和构建数据。
+3. 预览数据：执行 `supabase/seed-preview.sql` 初始化安全 demo 项目、suite、任务、报告、执行器和构建数据。
 4. 任务/报告体验：通过状态、日志、失败分类、AI 分析和下一步建议，让 failed task 可读。
 5. 私有 Agent 闭环：上述稳定后，再让私有 Local Agent 连接 preview backend。
 
