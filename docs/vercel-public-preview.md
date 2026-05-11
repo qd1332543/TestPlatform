@@ -66,9 +66,12 @@ SUPABASE_SERVICE_ROLE_KEY=your-preview-service-role-key
 DEEPSEEK_API_KEY=optional
 METEORTEST_AGENT_DISABLED=1
 METEORTEST_PUBLIC_PREVIEW=1
+METEORTEST_PREVIEW_ACCESS_TOKEN=optional-shared-preview-token
 ```
 
 Use Vercel Project Settings for these values. Do not commit `.env.local`.
+
+`METEORTEST_PREVIEW_ACCESS_TOKEN` enables the app-level preview gate. When it is set together with `METEORTEST_PUBLIC_PREVIEW=1`, visitors must enter the token before loading pages. API callers can pass the same value in the `x-meteortest-preview-token` header. Leave it empty only for short-lived previews that are already protected by Vercel Deployment Protection or another access control layer.
 
 Do not configure `METEORTEST_SMOKE_NO_SUPABASE` in Vercel. That flag is only for CI smoke checks that must verify public-preview safety without requiring real Supabase credentials.
 
@@ -79,6 +82,7 @@ Important boundaries:
 - Never add the `NEXT_PUBLIC_` prefix to service-role or AI provider keys.
 - Do not configure `METEORTEST_REPO_ROOT`, `METEORTEST_AGENT_PYTHON`, `METEORTEST_AGENT_INTERVAL`, local repository paths, or local Agent config in the public deployment unless an execution-safety design exists.
 - Public preview deployments must not attempt to spawn a Local Agent. `/executors` and `/api/agent/status` should show a disabled/unavailable state.
+- If `METEORTEST_PREVIEW_ACCESS_TOKEN` is set, keep it server-only in Vercel Project Settings and do not paste it into issues, PR bodies, screenshots, or client code.
 
 ## Supabase Preview Setup
 
@@ -126,7 +130,7 @@ Before or after a deployment change, the repository CI runs:
 npm run smoke:public-preview
 ```
 
-This local smoke check builds the Web app with public-preview flags, starts an isolated preview server, verifies `/api/agent/status` stays disabled, verifies `/executors` renders the public-preview boundary, and scans for local paths, secret variable names, stack traces, or Agent startup details. It deliberately uses `METEORTEST_SMOKE_NO_SUPABASE=1`; the live Vercel preview should use the Supabase variables configured in Project Settings.
+This local smoke check builds the Web app with public-preview flags, starts an isolated preview server, verifies the preview access gate, verifies `/api/agent/status` stays disabled, verifies `/executors` renders the public-preview boundary, and scans for local paths, secret variable names, stack traces, or Agent startup details. It deliberately uses `METEORTEST_SMOKE_NO_SUPABASE=1`; the live Vercel preview should use the Supabase variables configured in Project Settings.
 
 Open the deployment URL and check:
 
@@ -153,7 +157,7 @@ Only after the URL is verified:
 Then continue hardening in this order:
 
 1. Public preview mode: make Agent startup impossible in public deployments and document the unavailable state.
-2. Access protection: enable Vercel Deployment Protection, Vercel Password, or an equivalent guard before long-lived public use.
+2. Access protection: enable Vercel Deployment Protection, `METEORTEST_PREVIEW_ACCESS_TOKEN`, or an equivalent guard before long-lived public use.
 3. Preview data: run `supabase/seed-preview.sql` to seed safe demo projects, suites, tasks, reports, executors, and builds.
 4. Task/report experience: make failed-task analysis readable through status, logs, failure category, AI analysis, and next actions.
 5. Private Agent loop: connect a private Local Agent to the preview backend only after the above is stable.

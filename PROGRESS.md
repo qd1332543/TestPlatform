@@ -47,13 +47,14 @@
 - [x] Vercel runbook 明确不要配置 `METEORTEST_REPO_ROOT`、`METEORTEST_AGENT_PYTHON`、`METEORTEST_AGENT_INTERVAL` 或本机路径
 - [x] Smoke check 覆盖 `/executors` 和 `/api/agent/status`，确认不暴露本机路径、栈信息、密钥或 Agent 启动入口
   - `apps/web/scripts/check-public-preview.mts` 使用 public-preview 环境构建并启动独立 smoke server。
-  - CI 通过 `npm run smoke:public-preview` 验证 `/api/agent/status` 禁用 Agent 控制、`/executors` 服务端渲染 public preview 边界提示，并扫描响应中是否出现本机路径、密钥变量、栈信息或 Agent 启动入口。
+  - CI 通过 `npm run smoke:public-preview` 验证 preview access gate、`/api/agent/status` 禁用 Agent 控制、`/executors` 服务端渲染 public preview 边界提示，并扫描响应中是否出现本机路径、密钥变量、栈信息或 Agent 启动入口。
   - smoke 使用 `METEORTEST_SMOKE_NO_SUPABASE=1` 跳过 Supabase 查询；Vercel 真实公网预览已配置 Supabase 密钥时仍可正常展示 preview 数据。
 
 ### Authentication And Access Control
 
 - [ ] 短期：启用 Vercel Deployment Protection、Vercel Password 或等价访问保护
-- [ ] 在 `docs/vercel-public-preview.md` 和中文文档中记录当前访问保护方式
+- [x] 增加应用级 `METEORTEST_PREVIEW_ACCESS_TOKEN` 访问门禁，供公网预览在 Vercel 环境变量中启用
+- [x] 在 `docs/vercel-public-preview.md` 和中文文档中记录访问保护方式与 token 边界
 - [ ] 中期：设计 Supabase Auth 登录页、会话状态、API route 鉴权和 viewer/operator/admin 角色边界
 - [ ] 长期：把任务创建、构建登记、AI 分析、执行器控制等操作拆分权限
 
