@@ -290,8 +290,21 @@ Issue and PR titles should start with one of the repository type prefixes below.
 - `[Test]` for test coverage, validation, fixtures, and CI test behavior.
 - `[Documentation]` for README, architecture notes, setup guides, and agent instructions.
 - `[Security]` for dependency or security hardening changes.
+- `[Smoke test]` for smoke-test work.
+- `[Known Issues]` for known issue tracking.
 
 Use the same prefix family for the tracking issue and its PR when they describe the same work. If a change spans multiple areas, choose the dominant user-visible intent. For example, docs plus workflow guidance should usually be `[Documentation]`; protocol/runtime behavior plus docs should usually be `[Feature]`.
+
+Add GitHub labels to issues according to the selected prefix when the authenticated account has permission:
+
+- `[Feature]` issues must use `enhancement`.
+- `[Bug]` issues must use `bug`.
+- `[Test]` and `[Smoke test]` issues must use `test`.
+- `[Documentation]` issues must use `documentation`.
+- `[Security]` issues must use `security`.
+- `[Known Issues]` issues must use `known issue`.
+
+If label permission is missing, state that limitation in the handoff instead of silently claiming the rule was fully applied.
 
 Issue and PR descriptions should use English. Use simple section headings such as `## Summary`, `## Proposed Changes`, and `## Test Plan`.
 
@@ -302,6 +315,8 @@ Closes #<issue-number>
 ```
 
 Do not add `Related PR: #<number>` to the issue body.
+
+Use fresh GitHub data when checking issue or PR state. Prefer `gh api --cache 0s` or direct `gh api` calls before deciding whether an issue or PR already exists.
 
 Do not add `Co-Authored-By` or AI attribution to commit messages.
 
