@@ -77,7 +77,7 @@ export default function AgentSupervisor() {
         <div>
           <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.agent.console}</div>
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full" style={{ background: running ? '#22C55E' : loading ? '#F97316' : '#64748B' }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: running ? 'var(--status-success-text)' : loading ? 'var(--status-warning-text)' : 'var(--status-queued-text)' }} />
             <span className="text-sm font-semibold text-white">
               {running ? t.agent.running : loading ? t.agent.checking : unavailable ? t.agent.unavailable : t.agent.stopped}
             </span>
@@ -97,7 +97,7 @@ export default function AgentSupervisor() {
       </div>
 
       {error && (
-        <div className="mt-3 rounded-lg px-3 py-2 text-xs" style={{ background: '#2A0F0F', color: '#EF4444', border: '1px solid #7F1D1D' }}>
+        <div className="mt-3 rounded-lg px-3 py-2 text-xs" style={{ background: 'var(--status-failed-bg)', color: 'var(--status-failed-text)', border: '1px solid color-mix(in srgb, var(--status-failed-text) 34%, var(--border))' }}>
           {error}
         </div>
       )}

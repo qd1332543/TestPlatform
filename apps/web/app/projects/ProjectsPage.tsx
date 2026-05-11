@@ -39,9 +39,9 @@ export default async function ProjectsPage() {
 
       <div className="grid gap-4 md:grid-cols-3">
         {[
-          { label: t.common.projects, value: projectRows.length },
-          { label: t.projectDetail.suites, value: suiteCount },
-          { label: t.common.repository, value: repositoryCount },
+          { label: t.pages.projects.connectedProjects, value: projectRows.length },
+          { label: t.pages.projects.suiteTotal, value: suiteCount },
+          { label: t.pages.projects.repoLinkedCount, value: repositoryCount },
         ].map(item => (
           <div key={item.label} className="metric-card rounded-xl p-4">
             <div className="metric-label">{item.label}</div>
@@ -56,12 +56,15 @@ export default async function ProjectsPage() {
         ) : (
           projectRows.map(project => (
             <Link key={project.id} href={`/projects/${project.id}`} className="resource-card rounded-xl p-5 transition-colors">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <div className="section-title truncate">{project.name}</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <span className="code-pill px-2 py-0.5 text-xs font-mono">{project.key}</span>
                     <span className="meta-pill px-2 py-0.5 text-xs">{project.test_suites?.length ?? 0} {t.projectDetail.suites}</span>
+                    <span className="meta-pill px-2 py-0.5 text-xs">
+                      {project.repo_url ? t.pages.projects.repositoryLinked : t.pages.projects.repositoryMissing}
+                    </span>
                   </div>
                 </div>
                 <span className="link-action text-sm shrink-0">{t.common.detailsArrow}</span>
@@ -71,6 +74,20 @@ export default async function ProjectsPage() {
               </p>
               <div className="mt-4 truncate text-xs" style={{ color: 'var(--text-muted)' }}>
                 {project.repo_url || t.common.repository}
+              </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-lg p-3" style={{ background: 'var(--surface-faint)', border: '1px solid var(--border)' }}>
+                  <div className="metric-label">{t.pages.projects.integrationTitle}</div>
+                  <div className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    {project.repo_url ? t.pages.projects.repositoryLinked : t.pages.projects.repositoryMissing}
+                  </div>
+                </div>
+                <div className="rounded-lg p-3" style={{ background: 'var(--surface-faint)', border: '1px solid var(--border)' }}>
+                  <div className="metric-label">{t.pages.projects.nextAction}</div>
+                  <div className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    {project.repo_url ? t.pages.projects.nextActionImport : t.pages.projects.nextActionRepo}
+                  </div>
+                </div>
               </div>
             </Link>
           ))

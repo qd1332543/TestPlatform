@@ -23,18 +23,18 @@ function relationName(r: { name: string } | { name: string }[] | null) {
 }
 
 const platformStyle: Record<string, { bg: string; color: string }> = {
-  ios:     { bg: '#0D1829', color: '#60A5FA' },
-  android: { bg: '#0D2818', color: '#22C55E' },
-  web:     { bg: '#1a1040', color: '#A78BFA' },
+  ios:     { bg: 'color-mix(in srgb, var(--accent-3) 14%, transparent)', color: 'var(--accent-3)' },
+  android: { bg: 'var(--status-success-bg)', color: 'var(--status-success-text)' },
+  web:     { bg: 'color-mix(in srgb, var(--accent) 14%, transparent)', color: 'var(--accent)' },
 }
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
-  queued: { bg: '#1a2438', color: '#64748B' },
-  running: { bg: '#0D1F3C', color: '#3B82F6' },
-  succeeded: { bg: '#0D2818', color: '#22C55E' },
-  failed: { bg: '#2A0F0F', color: '#EF4444' },
-  cancelled: { bg: '#1a2438', color: '#475569' },
-  timeout: { bg: '#2A1A0A', color: '#F97316' },
+  queued: { bg: 'var(--status-queued-bg)', color: 'var(--status-queued-text)' },
+  running: { bg: 'var(--status-running-bg)', color: 'var(--status-running-text)' },
+  succeeded: { bg: 'var(--status-success-bg)', color: 'var(--status-success-text)' },
+  failed: { bg: 'var(--status-failed-bg)', color: 'var(--status-failed-text)' },
+  cancelled: { bg: 'var(--status-queued-bg)', color: 'var(--status-queued-text)' },
+  timeout: { bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' },
 }
 
 export default async function BuildsPage() {
@@ -112,7 +112,7 @@ export default async function BuildsPage() {
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-2 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="px-2 py-0.5 rounded text-xs font-medium uppercase" style={{ background: ps.bg, color: ps.color, border: `1px solid ${ps.color}30` }}>{b.platform}</span>
+                      <span className="px-2 py-0.5 rounded text-xs font-medium uppercase" style={{ background: ps.bg, color: ps.color, border: '1px solid color-mix(in srgb, var(--accent) 28%, var(--border))' }}>{b.platform}</span>
                       <span className="text-sm font-medium text-white">{relationName(b.projects) ?? '-'}</span>
                       <span className="text-sm" style={{ color: 'var(--text-muted)' }}>·</span>
                       <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t.common.version} {b.version}</span>
@@ -141,7 +141,7 @@ export default async function BuildsPage() {
                               <div className="text-sm font-medium text-white">{relationName(task.projects) ?? '-'}</div>
                               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'} · {formatDateTime(task.created_at, locale)}</div>
                             </div>
-                            <span className={`status-badge status-${task.status} px-2 py-0.5 shrink-0`} style={{ color: s.color }}>{statusLabel}</span>
+                            <span className={`status-badge status-${task.status} px-2 py-0.5 shrink-0`} style={{ background: s.bg, color: s.color }}>{statusLabel}</span>
                           </Link>
                         )
                       })}

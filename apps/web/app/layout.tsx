@@ -16,7 +16,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} className="h-full">
       <body className="h-full text-white">
         <ThemeController />
-        <div className="app-shell flex h-full">
+        <div className="app-shell h-full">
           <Sidebar />
           <main className="app-main flex-1 overflow-auto p-6 min-w-0">{children}</main>
         </div>

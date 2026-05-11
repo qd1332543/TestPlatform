@@ -35,6 +35,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     succeeded: taskRows.filter(task => task.status === 'succeeded').length,
     failed: taskRows.filter(task => task.status === 'failed' || task.status === 'timeout').length,
   }
+  const hasQueueRisk = statusCounts.failed > 0 || statusCounts.queued > 3
 
   const filters = [
     { label: t.filters.all, value: '' },
@@ -84,12 +85,34 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         })}
       </div>
 
+      <div className="data-panel rounded-xl p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="section-title">{t.pages.tasks.queueHealth}</div>
+            <div className="section-subtitle">{hasQueueRisk ? t.pages.tasks.queueHealthRisk : t.pages.tasks.queueHealthGood}</div>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {[
+              { label: t.status.queued, value: statusCounts.queued, className: 'status-queued' },
+              { label: t.status.running, value: statusCounts.running, className: 'status-running' },
+              { label: t.status.failed, value: statusCounts.failed, className: 'status-failed' },
+              { label: t.status.succeeded, value: statusCounts.succeeded, className: 'status-succeeded' },
+            ].map(item => (
+              <div key={item.label} className="rounded-lg px-3 py-2" style={{ background: 'var(--surface-faint)', border: '1px solid var(--border)' }}>
+                <div className={`status-badge ${item.className} px-2 py-0.5`}>{item.label}</div>
+                <div className="mt-2 text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{item.value}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="data-panel rounded-xl overflow-hidden">
         <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-          <div className="section-title">{t.pages.tasks.title}</div>
-          <div className="section-subtitle">{t.pages.tasks.subtitle}</div>
+          <div className="section-title">{t.pages.tasks.queueTitle}</div>
+          <div className="section-subtitle">{t.pages.tasks.queueSubtitle}</div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="desktop-table overflow-x-auto">
         <table className="console-table">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -121,6 +144,30 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             })}
           </tbody>
         </table>
+        </div>
+        <div className="mobile-card-list p-3">
+          {!taskRows.length ? (
+            <div className="px-5 py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{t.pages.tasks.empty}</div>
+          ) : taskRows.map((task) => {
+            const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
+            return (
+              <Link key={task.id} href={`/tasks/${task.id}`} className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{relationName(task.projects) ?? '-'}</div>
+                    <div className="mt-1 text-xs truncate" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'}</div>
+                  </div>
+                  <span className={`status-badge status-${task.status} shrink-0 px-2 py-0.5`}>{statusLabel}</span>
+                </div>
+                <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2" style={{ color: 'var(--text-secondary)' }}>
+                  <span>{t.common.environment}: {task.environment}</span>
+                  <span>{t.common.executor}: {relationName(task.executors) ?? '-'}</span>
+                  <span className="sm:col-span-2">{formatDateTime(task.created_at, locale)}</span>
+                </div>
+                <div className="mt-3 link-action text-sm">{t.pages.tasks.mobileOpen}</div>
+              </Link>
+            )
+          })}
         </div>
       </div>
     </div>

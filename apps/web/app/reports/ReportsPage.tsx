@@ -149,15 +149,15 @@ export default async function ReportsPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex shrink-0 flex-wrap gap-3">
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
                     <a
                       href={markdownDataUrl(exportMarkdown)}
                       download={`meteortest-report-${report.id}.md`}
-                      className="secondary-action rounded-lg px-3 py-1.5 text-sm font-semibold"
+                      className="secondary-action inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold"
                     >
                       {t.reports.exportMarkdown}
                     </a>
-                    <Link href={`/tasks/${report.id}`} className="link-action text-sm">
+                    <Link href={`/tasks/${report.id}`} className="chip-action inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold">
                       {t.reports.taskDetails}
                     </Link>
                   </div>
@@ -189,7 +189,7 @@ export default async function ReportsPage() {
                     <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.reports.aiAnalysis}</div>
                     {analysis ? (
                       <div className="space-y-2 text-sm">
-                        {analysis.failure_reason && <div><span style={{ color: 'var(--text-muted)' }}>{t.reports.failureReason}</span><span style={{ color: '#FCA5A5' }}>{analysis.failure_reason}</span></div>}
+                        {analysis.failure_reason && <div><span style={{ color: 'var(--text-muted)' }}>{t.reports.failureReason}</span><span style={{ color: 'var(--status-failed-text)' }}>{analysis.failure_reason}</span></div>}
                         {analysis.impact && <div><span style={{ color: 'var(--text-muted)' }}>{t.reports.impact}</span><span style={{ color: 'var(--text-secondary)' }}>{analysis.impact}</span></div>}
                         {analysis.suggestion && <div><span style={{ color: 'var(--text-muted)' }}>{t.reports.suggestion}</span><span style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</span></div>}
                         {analysis.flaky_probability != null && (
