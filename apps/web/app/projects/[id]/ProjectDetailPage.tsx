@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ImportSuitesForm from '@/components/ImportSuitesForm'
+import ProjectManagementPanel from '@/components/ProjectManagementPanel'
 import { getDictionary } from '@/lib/i18n'
 
 type TestSuiteRow = { id: string; name: string; type: string; command: string }
@@ -81,6 +82,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       </div>
 
       <ImportSuitesForm projectId={project.id} />
+
+      <ProjectManagementPanel
+        project={{
+          id: project.id,
+          name: project.name,
+          repo_url: project.repo_url ?? '',
+          description: project.description ?? '',
+        }}
+        copy={t.projectDetail.management}
+      />
     </div>
   )
 }
