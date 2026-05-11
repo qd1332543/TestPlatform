@@ -238,6 +238,7 @@ Use these principles:
 - When changing database shape, add a new migration under `supabase/migrations/`; do not edit already-applied migrations unless the user explicitly asks for a history rewrite.
 - When changing API response shapes, check affected UI components, shared types, and Agent clients.
 - When changing Agent task lifecycle behavior, check local JSON mode and Supabase mode where applicable.
+- Destructive project-management actions must be explicit in the UI, require user confirmation, and stay disabled in `METEORTEST_PUBLIC_PREVIEW=1` unless a separate access-control design is implemented.
 - Keep `README.md` and `README.zh-CN.md` aligned. `README.md` is the English primary README, and `README.zh-CN.md` is the Simplified Chinese mirror. When updating either file, keep structure, claims, setup steps, limitations, roadmap, diagrams, and validation instructions equivalent. If a Chinese phrasing does not translate well, adjust the Chinese text too instead of letting the two versions diverge.
 
 ## GitHub Workflow Rules
