@@ -16,6 +16,7 @@ const statusStyle: Record<string, { bg: string; color: string }> = {
 type TaskParameters = {
   display_name?: string
   failure_category?: string
+  notes?: string
   preview_task_key?: string
   safe_demo?: boolean
   pytest?: {
@@ -24,6 +25,10 @@ type TaskParameters = {
     deselected?: number
     exit_code?: number
   }
+}
+
+function isDiagnosticStatus(status: string) {
+  return status === 'failed' || status === 'timeout'
 }
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -52,6 +57,15 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         pytest.exit_code != null ? `exit ${pytest.exit_code}` : null,
       ].filter(Boolean).join(', ')
     : ''
+  const shouldShowDiagnostic = isDiagnosticStatus(task.status)
+  const diagnosticEvidence: { label: string; value: string }[] = []
+  if (report?.summary) diagnosticEvidence.push({ label: t.taskDetail.reportEvidence, value: report.summary })
+  if (pytestSummary) diagnosticEvidence.push({ label: t.taskDetail.pytestEvidence, value: pytestSummary })
+  if (parameters.failure_category) diagnosticEvidence.push({ label: t.taskDetail.categoryEvidence, value: parameters.failure_category })
+  if (parameters.notes) diagnosticEvidence.push({ label: t.taskDetail.noteEvidence, value: parameters.notes })
+  const diagnosticNextActions = analysis?.suggestion
+    ? [analysis.suggestion, ...t.reports.defaultNextSteps]
+    : t.reports.defaultNextSteps
 
   const meta = [
     { label: t.common.project, value: task.projects?.name ?? '-' },
@@ -117,6 +131,69 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           </a>
         </div>
       </div>
+
+      {shouldShowDiagnostic ? (
+        <div className="data-panel rounded-xl overflow-hidden">
+          <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface-soft)' }}>
+            <div className="flex flex-col gap-1 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-white">{t.taskDetail.diagnosticTitle}</div>
+                <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.diagnosticSubtitle}</div>
+              </div>
+              <span className="status-badge status-failed w-fit px-2 py-0.5">
+                {parameters.failure_category || statusLabel}
+              </span>
+            </div>
+          </div>
+          <div className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+            <div className="space-y-4">
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.whatHappened}</div>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  {analysis?.failure_reason || report?.summary || t.taskDetail.noDiagnosticReason}
+                </p>
+              </div>
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.evidence}</div>
+                {diagnosticEvidence.length ? (
+                  <div className="space-y-2">
+                    {diagnosticEvidence.map(item => (
+                      <div key={item.label} className="grid gap-1 text-sm md:grid-cols-[140px_minmax(0,1fr)]">
+                        <span style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.noDiagnosticEvidence}</div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.nextActions}</div>
+                <ul className="space-y-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {diagnosticNextActions.map(step => <li key={step}>- {step}</li>)}
+                </ul>
+              </div>
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.openEvidence}</div>
+                <div className="flex flex-wrap gap-3">
+                  {report?.log_url ? <a href={report.log_url} target="_blank" className="link-action text-sm">{t.reports.log}</a> : null}
+                  {report?.allure_url ? <a href={report.allure_url} target="_blank" className="link-action text-sm">{t.reports.allure}</a> : null}
+                  <a
+                    href={markdownDataUrl(exportMarkdown)}
+                    download={exportFilename}
+                    className="link-action text-sm"
+                  >
+                    {t.reports.exportMarkdown}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {/* Meta */}
       <div className="data-panel rounded-xl p-5">
