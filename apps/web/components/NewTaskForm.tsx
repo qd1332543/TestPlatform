@@ -71,7 +71,7 @@ export default function NewTaskForm({ projects, builds }: { projects: Project[],
           </select>
         </div>
       )}
-      {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#EF4444', background: '#2A0F0F' }}>{error}</p>}
+      {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: 'var(--status-failed-text)', background: 'var(--status-failed-bg)', border: '1px solid color-mix(in srgb, var(--status-failed-text) 34%, var(--border))' }}>{error}</p>}
       <button type="submit"
         className="primary-action w-full py-2.5 rounded-lg text-sm font-semibold">
         {t.forms.createTask}

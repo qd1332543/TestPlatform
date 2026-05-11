@@ -27,40 +27,40 @@ const TemplateIcons = {
   ),
   project: (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="3" y="7" width="22" height="17" rx="2.5" fill="#0D1829" stroke="#3B82F6" strokeWidth="1.5"/>
-      <path d="M3 12h22" stroke="#3B82F6" strokeWidth="1.2"/>
-      <path d="M3 11V9.5C3 8.1 4.1 7 5.5 7H10l2 2.5H3" fill="#1E3A5F"/>
-      <path d="M8 17h12M8 20.5h8" stroke="#60A5FA" strokeWidth="1.3" strokeLinecap="round"/>
+      <rect x="3" y="7" width="22" height="17" rx="2.5" fill="color-mix(in srgb, var(--accent-3) 12%, transparent)" stroke="var(--accent-3)" strokeWidth="1.5"/>
+      <path d="M3 12h22" stroke="var(--accent-3)" strokeWidth="1.2"/>
+      <path d="M3 11V9.5C3 8.1 4.1 7 5.5 7H10l2 2.5H3" fill="color-mix(in srgb, var(--accent-3) 18%, transparent)"/>
+      <path d="M8 17h12M8 20.5h8" stroke="var(--accent-3)" strokeWidth="1.3" strokeLinecap="round"/>
     </svg>
   ),
   trigger: (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <circle cx="14" cy="14" r="12" fill="#0D1829" stroke="#3B82F6" strokeWidth="1.5"/>
-      <path d="M11 9.5l9 4.5-9 4.5V9.5Z" fill="#3B82F6" stroke="#3B82F6" strokeWidth="1" strokeLinejoin="round"/>
+      <circle cx="14" cy="14" r="12" fill="color-mix(in srgb, var(--accent-3) 12%, transparent)" stroke="var(--accent-3)" strokeWidth="1.5"/>
+      <path d="M11 9.5l9 4.5-9 4.5V9.5Z" fill="var(--accent-3)" stroke="var(--accent-3)" strokeWidth="1" strokeLinejoin="round"/>
     </svg>
   ),
   report: (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="4" y="3" width="20" height="22" rx="2.5" fill="#0D2818" stroke="#22C55E" strokeWidth="1.5"/>
-      <path d="M8 10h12M8 14h12M8 18h7" stroke="#22C55E" strokeWidth="1.3" strokeLinecap="round"/>
-      <circle cx="20" cy="19" r="4" fill="#0D2818" stroke="#22C55E" strokeWidth="1.2"/>
-      <path d="M18.5 19l1 1 2-2" stroke="#22C55E" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+      <rect x="4" y="3" width="20" height="22" rx="2.5" fill="var(--status-success-bg)" stroke="var(--status-success-text)" strokeWidth="1.5"/>
+      <path d="M8 10h12M8 14h12M8 18h7" stroke="var(--status-success-text)" strokeWidth="1.3" strokeLinecap="round"/>
+      <circle cx="20" cy="19" r="4" fill="var(--status-success-bg)" stroke="var(--status-success-text)" strokeWidth="1.2"/>
+      <path d="M18.5 19l1 1 2-2" stroke="var(--status-success-text)" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
     </svg>
   ),
   executor: (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="3" y="6" width="22" height="16" rx="2.5" fill="#0D1829" stroke="#A78BFA" strokeWidth="1.5"/>
-      <rect x="3" y="19" width="22" height="3" rx="1" fill="#1a1040" stroke="#A78BFA" strokeWidth="1"/>
-      <path d="M9 13l3 3 6-6" stroke="#A78BFA" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-      <circle cx="14" cy="21.5" r="0.8" fill="#A78BFA"/>
+      <rect x="3" y="6" width="22" height="16" rx="2.5" fill="color-mix(in srgb, var(--accent) 12%, transparent)" stroke="var(--accent)" strokeWidth="1.5"/>
+      <rect x="3" y="19" width="22" height="3" rx="1" fill="color-mix(in srgb, var(--accent) 18%, transparent)" stroke="var(--accent)" strokeWidth="1"/>
+      <path d="M9 13l3 3 6-6" stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="14" cy="21.5" r="0.8" fill="var(--accent)"/>
     </svg>
   ),
   suite: (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <rect x="3" y="3" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
-      <rect x="15" y="3" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
-      <rect x="3" y="15" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
-      <rect x="15" y="15" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
+      <rect x="3" y="3" width="10" height="10" rx="2" fill="color-mix(in srgb, var(--accent-2) 12%, transparent)" stroke="var(--accent-2)" strokeWidth="1.5"/>
+      <rect x="15" y="3" width="10" height="10" rx="2" fill="color-mix(in srgb, var(--accent-2) 12%, transparent)" stroke="var(--accent-2)" strokeWidth="1.5"/>
+      <rect x="3" y="15" width="10" height="10" rx="2" fill="color-mix(in srgb, var(--accent-2) 12%, transparent)" stroke="var(--accent-2)" strokeWidth="1.5"/>
+      <rect x="15" y="15" width="10" height="10" rx="2" fill="color-mix(in srgb, var(--accent-2) 12%, transparent)" stroke="var(--accent-2)" strokeWidth="1.5"/>
     </svg>
   ),
   onboarding: (
@@ -184,14 +184,14 @@ function firstRecord(value: unknown) {
 
 function statusMeta(status: string, t: Dictionary) {
   const map: Record<string, { color: string; bg: string }> = {
-    queued: { color: '#60A5FA', bg: '#0D1829' },
-    running: { color: '#3B82F6', bg: '#0D1F3C' },
-    succeeded: { color: '#22C55E', bg: '#0D2818' },
-    failed: { color: '#EF4444', bg: '#2A0F0F' },
-    cancelled: { color: '#64748B', bg: '#1a2438' },
-    timeout: { color: '#F97316', bg: '#2A1A0A' },
+    queued: { color: 'var(--status-queued-text)', bg: 'var(--status-queued-bg)' },
+    running: { color: 'var(--status-running-text)', bg: 'var(--status-running-bg)' },
+    succeeded: { color: 'var(--status-success-text)', bg: 'var(--status-success-bg)' },
+    failed: { color: 'var(--status-failed-text)', bg: 'var(--status-failed-bg)' },
+    cancelled: { color: 'var(--status-queued-text)', bg: 'var(--status-queued-bg)' },
+    timeout: { color: 'var(--status-warning-text)', bg: 'var(--status-warning-bg)' },
   }
-  const style = map[status] ?? { color: '#94A3B8', bg: '#1a2438' }
+  const style = map[status] ?? { color: 'var(--text-muted)', bg: 'var(--surface-soft)' }
   return { ...style, label: t.status[status as keyof typeof t.status] ?? (status || '-') }
 }
 
@@ -212,7 +212,7 @@ function renderTaskLinks(text: string) {
         key={`${taskId}-${index}`}
         href={`/tasks/${taskId}`}
         className="font-mono underline decoration-dotted underline-offset-4 transition-colors hover:text-white"
-        style={{ color: '#60A5FA' }}
+        style={{ color: 'var(--accent)' }}
       >
         {taskId}
       </Link>,
@@ -284,7 +284,7 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
           const title = action.action === 'create_task' ? t.ai.taskCreated : t.ai.taskStatus
           const key = `${action.action}-${taskId}-${index}`
           const card = (
-            <div className="rounded-xl overflow-hidden transition-colors group-hover:border-sky-400" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
+            <div className="soft-panel rounded-xl overflow-hidden transition-colors" style={{ border: '1px solid var(--border)' }}>
               <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full" style={{ background: meta.color }} />
@@ -307,7 +307,7 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)' }}>{t.common.taskId}</div>
-                  <div className="mt-1 font-mono text-[11px] truncate" style={{ color: '#60A5FA' }}>{taskId}</div>
+                  <div className="mt-1 font-mono text-[11px] truncate" style={{ color: 'var(--accent)' }}>{taskId}</div>
                 </div>
                 {action.action === 'get_task_detail' && (
                   <>
@@ -331,19 +331,19 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
               {analysis && (
                 <div className="px-4 py-3 text-xs" style={{ borderTop: '1px solid var(--border)' }}>
                   <div className="font-medium text-white">{t.reports.aiAnalysis}</div>
-                  {typeof analysis.failure_reason === 'string' && <div className="mt-1" style={{ color: '#EF4444' }}>{analysis.failure_reason}</div>}
+                  {typeof analysis.failure_reason === 'string' && <div className="mt-1" style={{ color: 'var(--status-failed-text)' }}>{analysis.failure_reason}</div>}
                   {typeof analysis.suggestion === 'string' && <div className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</div>}
                 </div>
               )}
               {taskId !== '-' && (
-                <div className="px-4 py-2 text-xs font-medium transition-colors group-hover:text-white" style={{ borderTop: '1px solid var(--border)', color: '#60A5FA' }}>
+                <div className="px-4 py-2 text-xs font-medium transition-colors group-hover:text-white" style={{ borderTop: '1px solid var(--border)', color: 'var(--accent)' }}>
                   {t.ai.openTaskDetail}
                 </div>
               )}
             </div>
           )
           return taskId !== '-'
-            ? <Link key={key} href={`/tasks/${taskId}`} className="block group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 rounded-xl">{card}</Link>
+            ? <Link key={key} href={`/tasks/${taskId}`} className="block group rounded-xl focus-visible:outline-none" style={{ outlineColor: 'var(--accent)' }}>{card}</Link>
             : <div key={key}>{card}</div>
         }
 
@@ -353,14 +353,14 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
           const name = typeof project.name === 'string' ? project.name : '-'
           const repo = typeof project.repo_url === 'string' && project.repo_url ? project.repo_url : '-'
           return (
-            <div key={`${action.action}-${key}-${index}`} className="rounded-xl px-4 py-3" style={{ background: '#0A0F1E', border: '1px solid #1E3A5F' }}>
+            <div key={`${action.action}-${key}-${index}`} className="soft-panel rounded-xl px-4 py-3">
               <div className="flex items-center gap-2 font-semibold text-white">
-                <span className="w-2 h-2 rounded-full" style={{ background: '#22C55E' }} />
+                <span className="w-2 h-2 rounded-full" style={{ background: 'var(--status-success-text)' }} />
                 {t.ai.projectCreated}
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
                 <div><div style={{ color: 'var(--text-muted)' }}>{t.common.name}</div><div className="mt-1 text-white">{name}</div></div>
-                <div><div style={{ color: 'var(--text-muted)' }}>{t.common.key}</div><div className="mt-1 font-mono" style={{ color: '#60A5FA' }}>{key}</div></div>
+                <div><div style={{ color: 'var(--text-muted)' }}>{t.common.key}</div><div className="mt-1 font-mono" style={{ color: 'var(--accent)' }}>{key}</div></div>
                 <div className="col-span-2"><div style={{ color: 'var(--text-muted)' }}>{t.common.repository}</div><div className="mt-1 truncate" style={{ color: 'var(--text-secondary)' }}>{repo}</div></div>
               </div>
             </div>
@@ -398,7 +398,7 @@ function MessageContent({ content, hasActions }: { content: string; hasActions: 
       nodes.push(
         <div key={`table-${index}`} className="my-2 overflow-hidden rounded-xl" style={{ border: '1px solid var(--border)' }}>
           <table className="w-full text-xs">
-            <thead style={{ background: '#0A0F1E' }}>
+            <thead style={{ background: 'var(--surface-soft)' }}>
               <tr>
                 {headers.map(header => (
                   <th key={header} className="px-3 py-2 text-left font-semibold" style={{ color: 'var(--text-secondary)' }}>{header}</th>
@@ -409,7 +409,7 @@ function MessageContent({ content, hasActions }: { content: string; hasActions: 
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex} style={{ borderTop: '1px solid var(--border)' }}>
                   {row.map((cell, cellIndex) => (
-                    <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top" style={{ color: '#CBD5E1' }}>{renderTaskLinks(cell.replace(/\*\*/g, '').replace(/`/g, ''))}</td>
+                    <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top" style={{ color: 'var(--text-secondary)' }}>{renderTaskLinks(cell.replace(/\*\*/g, '').replace(/`/g, ''))}</td>
                   ))}
                 </tr>
               ))}
@@ -688,11 +688,11 @@ export default function AiPage() {
           <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
             {m.role === 'assistant' && (
               <div className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0 mt-0.5"
-                style={{ background: 'var(--accent)', color: '#06100C' }}>✦</div>
+                style={{ background: 'var(--action-primary-bg)', color: 'var(--action-primary-text)' }}>✦</div>
             )}
             <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm leading-relaxed ${m.role === 'user' ? 'rounded-tr-sm whitespace-pre-wrap' : 'rounded-tl-sm'}`}
               style={m.role === 'user'
-                ? { background: 'var(--accent)', color: '#06100C' }
+                ? { background: 'var(--action-primary-bg)', color: 'var(--action-primary-text)' }
                 : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
               }>
               <ActionCards actions={m.actions} t={t} locale={locale} />
@@ -717,7 +717,7 @@ export default function AiPage() {
         {loading && (
           <div className="flex gap-2 justify-start">
             <div className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0 mt-0.5"
-              style={{ background: 'var(--accent)', color: '#06100C' }}>✦</div>
+              style={{ background: 'var(--action-primary-bg)', color: 'var(--action-primary-text)' }}>✦</div>
             <div className="px-4 py-3 rounded-2xl rounded-tl-sm" style={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}>
               <div className="flex gap-1 items-center h-4">
                 {[0, 150, 300].map(d => (

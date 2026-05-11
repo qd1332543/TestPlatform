@@ -5,12 +5,12 @@ import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
-  queued:    { bg: '#1a2438', color: '#64748B' },
-  running:   { bg: '#0D1F3C', color: '#3B82F6' },
-  succeeded: { bg: '#0D2818', color: '#22C55E' },
-  failed:    { bg: '#2A0F0F', color: '#EF4444' },
-  cancelled: { bg: '#1a2438', color: '#475569' },
-  timeout:   { bg: '#2A1A0A', color: '#F97316' },
+  queued:    { bg: 'var(--status-queued-bg)', color: 'var(--status-queued-text)' },
+  running:   { bg: 'var(--status-running-bg)', color: 'var(--status-running-text)' },
+  succeeded: { bg: 'var(--status-success-bg)', color: 'var(--status-success-text)' },
+  failed:    { bg: 'var(--status-failed-bg)', color: 'var(--status-failed-text)' },
+  cancelled: { bg: 'var(--status-queued-bg)', color: 'var(--status-queued-text)' },
+  timeout:   { bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)' },
 }
 
 type TaskParameters = {
@@ -99,7 +99,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-white">{displayName}</h1>
-            <span className={`status-badge status-${task.status} items-center gap-1.5 px-2.5 py-1`}>
+            <span className={`status-badge status-${task.status} items-center gap-1.5 px-2.5 py-1`} style={{ background: s.bg, color: s.color }}>
               <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.color }} />{statusLabel}
             </span>
             {parameters.safe_demo ? (

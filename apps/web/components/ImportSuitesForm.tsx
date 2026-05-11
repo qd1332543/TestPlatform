@@ -70,7 +70,7 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
         ) : (
           <textarea
             className="w-full rounded-lg px-3 py-2.5 text-xs font-mono h-36 resize-none outline-none"
-            style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid var(--border)', color: 'var(--text-secondary)', caretColor: 'var(--accent)' }}
+            style={{ background: 'color-mix(in srgb, var(--bg-card) 82%, transparent)', border: '1px solid var(--border)', color: 'var(--text-secondary)', caretColor: 'var(--accent)' }}
             placeholder={t.forms.pastePlaceholder}
             value={yml}
             onChange={e => setYml(e.target.value)}
@@ -81,7 +81,7 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
             className="primary-action px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40">
             {t.common.import}
           </button>
-          {status && <span className="text-sm" style={{ color: status.startsWith('✓') ? '#22C55E' : '#EF4444' }}>{status}</span>}
+          {status && <span className="text-sm" style={{ color: status.startsWith('✓') ? 'var(--status-success-text)' : 'var(--status-failed-text)' }}>{status}</span>}
         </div>
       </div>
     </div>

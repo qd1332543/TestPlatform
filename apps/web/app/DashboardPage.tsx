@@ -13,15 +13,6 @@ function relationName(r: { name: string } | { name: string }[] | null) {
   return Array.isArray(r) ? r[0]?.name : r?.name
 }
 
-const statusStyle: Record<string, { bg: string; color: string }> = {
-  queued:    { bg: '#1a2438', color: '#64748B' },
-  running:   { bg: '#0D1F3C', color: '#3B82F6' },
-  succeeded: { bg: '#0D2818', color: '#22C55E' },
-  failed:    { bg: '#2A0F0F', color: '#EF4444' },
-  cancelled: { bg: '#1a2438', color: '#475569' },
-  timeout:   { bg: '#2A1A0A', color: '#F97316' },
-}
-
 export default async function Dashboard() {
   const locale = await getLocale()
   const copy = await getDictionary()
@@ -53,8 +44,8 @@ export default async function Dashboard() {
 
   const stats = [
     { label: copy.dashboard.stats.todayTasks, value: String(total), icon: '01', color: 'var(--accent)' },
-    { label: copy.dashboard.stats.successRate, value: successRate, icon: '02', color: '#22C55E' },
-    { label: copy.dashboard.stats.failedTasks, value: String(failed), icon: '03', color: failed > 0 ? '#EF4444' : 'var(--text-muted)' },
+    { label: copy.dashboard.stats.successRate, value: successRate, icon: '02', color: 'var(--status-success-text)' },
+    { label: copy.dashboard.stats.failedTasks, value: String(failed), icon: '03', color: failed > 0 ? 'var(--status-failed-text)' : 'var(--text-muted)' },
     { label: copy.dashboard.stats.avgDuration, value: avgDuration, icon: '04', color: 'var(--accent-2)' },
   ]
 
@@ -88,15 +79,25 @@ export default async function Dashboard() {
                 </div>
               ))}
             </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {copy.dashboard.todayFocus.map((item, index) => (
+                <div key={item} className="rounded-lg p-3" style={{ background: 'var(--surface-faint)', border: '1px solid var(--border)' }}>
+                  <div className="mb-2 text-xs font-mono" style={{ color: index === 0 ? 'var(--accent-2)' : 'var(--accent)' }}>
+                    {copy.dashboard.todayFocusTitle} / {index + 1}
+                  </div>
+                  <div className="text-sm leading-5" style={{ color: 'var(--text-secondary)' }}>{item}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div className="rounded-xl p-4" style={{ background: 'rgba(0,0,0,0.16)', border: '1px solid var(--border)' }}>
+          <div className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
             <div className="section-title mb-1">{copy.dashboard.executionFlow}</div>
             <div className="section-subtitle mb-4">{copy.dashboard.aiSubtitle}</div>
             <div className="space-y-3">
               {copy.dashboard.flow.map((step, index) => (
                 <div key={step} className="flex items-center gap-3 rounded-lg px-3 py-2.5" style={{ background: 'var(--surface-faint)', border: '1px solid var(--border)' }}>
-                  <span className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold" style={{ color: '#06100C', background: index === 4 ? 'var(--accent-2)' : 'var(--accent)' }}>
+                  <span className="w-7 h-7 rounded-md flex items-center justify-center text-xs font-bold" style={{ color: index === 4 ? 'var(--action-primary-text)' : 'var(--accent-solid-text)', background: index === 4 ? 'var(--action-primary-bg)' : 'var(--accent)' }}>
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <span className="text-sm text-white">{step}</span>
@@ -121,11 +122,18 @@ export default async function Dashboard() {
         ))}
       </div>
 
-      {/* Quick actions */}
-      <div className="flex flex-wrap gap-3">
-        <Link href="/tasks/new" className="primary-action px-4 py-2 rounded-lg text-sm font-medium">{copy.dashboard.quick.newTask}</Link>
-        <Link href="/tasks?status=failed" className="secondary-action px-4 py-2 rounded-lg text-sm">{copy.dashboard.quick.failed}</Link>
-        <Link href="/reports" className="secondary-action px-4 py-2 rounded-lg text-sm">{copy.dashboard.quick.reports}</Link>
+      <div className="data-panel rounded-xl p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="section-title">{copy.dashboard.queueTitle}</div>
+            <div className="section-subtitle">{copy.dashboard.queueSubtitle}</div>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <Link href="/tasks/new" className="primary-action px-4 py-2 rounded-lg text-sm font-medium text-center">{copy.dashboard.quick.newTask}</Link>
+            <Link href="/tasks?status=failed" className="secondary-action px-4 py-2 rounded-lg text-sm text-center">{copy.dashboard.quick.failed}</Link>
+            <Link href="/reports" className="secondary-action px-4 py-2 rounded-lg text-sm text-center">{copy.dashboard.quick.reports}</Link>
+          </div>
+        </div>
       </div>
 
       {/* Recent tasks */}
@@ -140,7 +148,8 @@ export default async function Dashboard() {
         {!recentTasks?.length ? (
           <div className="px-5 py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{copy.dashboard.emptyTasks}</div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+          <div className="desktop-table overflow-x-auto">
           <table className="console-table">
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -151,7 +160,6 @@ export default async function Dashboard() {
             </thead>
             <tbody>
               {(recentTasks as RecentTaskRow[]).map((task) => {
-                const s = statusStyle[task.status] ?? statusStyle.queued
                 const statusLabel = copy.status[task.status as keyof typeof copy.status] ?? task.status
                 return (
                   <tr key={task.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -159,7 +167,7 @@ export default async function Dashboard() {
                     <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{relationName(task.test_suites) ?? '-'}</td>
                     <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{task.environment}</td>
                     <td className="px-5 py-3">
-                      <span className={`status-badge status-${task.status} px-2 py-0.5`} style={{ color: s.color }}>{statusLabel}</span>
+                      <span className={`status-badge status-${task.status} px-2 py-0.5`}>{statusLabel}</span>
                     </td>
                     <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{formatDateTime(task.created_at, locale)}</td>
                   </tr>
@@ -168,6 +176,27 @@ export default async function Dashboard() {
             </tbody>
           </table>
           </div>
+          <div className="mobile-card-list p-3">
+            {(recentTasks as RecentTaskRow[]).map((task) => {
+              const statusLabel = copy.status[task.status as keyof typeof copy.status] ?? task.status
+              return (
+                <Link key={task.id} href={`/tasks/${task.id}`} className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{relationName(task.projects) ?? '-'}</div>
+                      <div className="mt-1 text-xs truncate" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'}</div>
+                    </div>
+                    <span className={`status-badge status-${task.status} shrink-0 px-2 py-0.5`}>{statusLabel}</span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    <span className="meta-pill px-2 py-0.5">{task.environment}</span>
+                    <span>{formatDateTime(task.created_at, locale)}</span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+          </>
         )}
       </div>
     </div>

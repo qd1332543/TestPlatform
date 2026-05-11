@@ -112,9 +112,57 @@ export default function Sidebar() {
     }
   }, [])
 
+  const navLinkStyle = (href: string) => isActive(href)
+    ? { background: 'var(--surface-soft)', color: 'var(--text-primary)', fontWeight: 600, border: '1px solid var(--border)' }
+    : { color: 'var(--text-secondary)' }
+
   return (
+    <>
+    <header
+      className="md:hidden sticky top-0 z-30 overflow-hidden border-b backdrop-blur"
+      style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border)' }}
+    >
+      <div className="flex items-center gap-3 px-3 py-3">
+        <span className="brand-orbit" />
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{platformName}</div>
+          <div className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{t.common.automationPlatform}</div>
+        </div>
+        <Link
+          href={aiItem.href}
+          className="shrink-0 rounded-lg px-3 py-2 text-xs font-semibold"
+          style={isActive(aiItem.href)
+            ? { background: 'color-mix(in srgb, var(--accent) 24%, transparent)', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--accent) 42%, transparent)' }
+            : { background: 'var(--surface-soft)', color: 'var(--accent)', border: '1px solid var(--border)' }
+          }
+        >
+          {aiItem.label}
+        </Link>
+      </div>
+      <nav className="quiet-scrollbar flex max-w-full gap-2 overflow-x-auto px-3 pb-3">
+        {navItems.map(({ href, label, icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs"
+            style={navLinkStyle(href)}
+          >
+            <span className="shrink-0">{icon}</span>
+            <span>{label}</span>
+          </Link>
+        ))}
+        <Link
+          href="/settings"
+          className="flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs"
+          style={navLinkStyle('/settings')}
+        >
+          <span className="shrink-0">{Icons.settings}</span>
+          <span>{t.common.settings}</span>
+        </Link>
+      </nav>
+    </header>
     <aside
-      className={`${collapsed ? 'w-16' : 'w-60'} flex flex-col py-5 shrink-0 transition-all duration-200 border-r backdrop-blur`}
+      className={`${collapsed ? 'w-16' : 'w-60'} hidden md:flex flex-col py-5 shrink-0 transition-all duration-200 border-r backdrop-blur`}
       style={{ background: 'var(--bg-sidebar)', borderColor: 'var(--border)' }}
     >
       <div className="flex items-center justify-between px-3 mb-7 h-10">
@@ -131,7 +179,7 @@ export default function Sidebar() {
           onClick={() => setCollapsed(c => !c)}
           className="w-8 h-8 flex items-center justify-center rounded-full transition-colors shrink-0 ml-auto"
           style={{ color: 'var(--text-muted)' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-primary)')}
           onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}
           title={collapsed ? t.common.expand : t.common.collapse}
         >
@@ -151,8 +199,8 @@ export default function Sidebar() {
         <Link href={aiItem.href} title={collapsed ? aiItem.label : undefined}
           className={`flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-semibold transition-all ${collapsed ? 'justify-center' : ''}`}
           style={isActive(aiItem.href)
-            ? { background: 'linear-gradient(135deg, rgba(116, 214, 179, 0.22), rgba(242, 199, 110, 0.12))', color: '#fff', border: '1px solid rgba(116, 214, 179, 0.42)', boxShadow: '0 16px 42px rgba(0,0,0,0.22)' }
-            : { background: 'rgba(116, 214, 179, 0.08)', color: 'var(--accent)', border: '1px solid rgba(116, 214, 179, 0.22)' }
+            ? { background: 'linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent-2) 12%, transparent))', color: 'var(--text-primary)', border: '1px solid color-mix(in srgb, var(--accent) 42%, transparent)', boxShadow: '0 16px 42px color-mix(in srgb, var(--bg-base) 22%, transparent)' }
+            : { background: 'color-mix(in srgb, var(--accent) 8%, transparent)', color: 'var(--accent)', border: '1px solid color-mix(in srgb, var(--accent) 22%, transparent)' }
           }
         >
           <span className="shrink-0">{aiItem.icon}</span>
@@ -167,7 +215,7 @@ export default function Sidebar() {
           <Link key={href} href={href} title={collapsed ? label : undefined}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
             style={isActive(href)
-              ? { background: 'var(--surface-soft)', color: '#fff', fontWeight: 600, border: '1px solid var(--border)' }
+              ? { background: 'var(--surface-soft)', color: 'var(--text-primary)', fontWeight: 600, border: '1px solid var(--border)' }
               : { color: 'var(--text-secondary)' }
             }
           >
@@ -181,7 +229,7 @@ export default function Sidebar() {
         <Link href="/settings" title={collapsed ? t.common.settings : undefined}
           className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm transition-colors ${collapsed ? 'justify-center' : ''}`}
           style={isActive('/settings')
-            ? { background: 'var(--surface-soft)', color: '#fff', fontWeight: 600, border: '1px solid var(--border)' }
+            ? { background: 'var(--surface-soft)', color: 'var(--text-primary)', fontWeight: 600, border: '1px solid var(--border)' }
             : { color: 'var(--text-muted)' }
           }
         >
@@ -190,5 +238,6 @@ export default function Sidebar() {
         </Link>
       </div>
     </aside>
+    </>
   )
 }

@@ -4,9 +4,9 @@ import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { demoExecutors, isLocalDemo } from '@/lib/localDemo'
 
 const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {
-  online:  { bg: '#0D2818', color: '#22C55E', dot: '#22C55E' },
-  offline: { bg: '#1a2438', color: '#64748B', dot: '#475569' },
-  busy:    { bg: '#2A1A0A', color: '#F97316', dot: '#F97316' },
+  online:  { bg: 'var(--status-running-bg)', color: 'var(--status-running-text)', dot: 'var(--status-running-text)' },
+  offline: { bg: 'var(--status-queued-bg)', color: 'var(--status-queued-text)', dot: 'var(--status-queued-text)' },
+  busy:    { bg: 'var(--status-warning-bg)', color: 'var(--status-warning-text)', dot: 'var(--status-warning-text)' },
 }
 
 type ExecutorRow = {
@@ -74,7 +74,7 @@ export default async function ExecutorsPage() {
                     <span className="code-pill px-2 py-0.5 text-xs font-mono">{e.type}</span>
                   </td>
                   <td className="px-5 py-3">
-                    <span className={`status-badge status-${e.status} gap-1.5 px-2 py-0.5`}>
+                    <span className={`status-badge status-${e.status} gap-1.5 px-2 py-0.5`} style={{ background: s.bg, color: s.color }}>
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: s.dot }} />
                       {t.status[e.status as keyof typeof t.status] ?? e.status}
                     </span>

@@ -56,7 +56,7 @@ export default function NewBuildForm({ projects }: { projects: Project[] }) {
       {field(t.forms.bundleId, 'bundle_id', false, 'com.example.app')}
       {field(t.forms.packageName, 'package_name', false, 'com.example.app')}
       {field(t.forms.gitCommit, 'git_commit', false, 'abc1234')}
-      {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: '#FCA5A5', background: '#2A0F0F', border: '1px solid #7F1D1D' }}>{error}</p>}
+      {error && <p className="text-sm px-3 py-2 rounded-lg" style={{ color: 'var(--status-failed-text)', background: 'var(--status-failed-bg)', border: '1px solid color-mix(in srgb, var(--status-failed-text) 34%, var(--border))' }}>{error}</p>}
       <button type="submit" className="primary-action w-full px-4 py-2.5 rounded-lg text-sm font-semibold">{t.forms.registerBuild}</button>
     </form>
   )
