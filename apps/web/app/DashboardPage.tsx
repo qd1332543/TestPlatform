@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
+import { demoTasks, isLocalDemo } from '@/lib/localDemo'
 
 type RecentTaskRow = {
   id: string; status: string; environment: string; created_at: string
@@ -24,12 +25,14 @@ const statusStyle: Record<string, { bg: string; color: string }> = {
 export default async function Dashboard() {
   const locale = await getLocale()
   const copy = await getDictionary()
-  const supabase = await createClient()
+  const supabase = isLocalDemo() ? null : await createClient()
   const today = new Date(); today.setHours(0, 0, 0, 0)
 
-  const { data: tasks } = await supabase
-    .from('tasks').select('id, status, started_at, finished_at')
-    .gte('created_at', today.toISOString()).order('created_at', { ascending: false })
+  const { data: tasks } = supabase
+    ? await supabase
+      .from('tasks').select('id, status, started_at, finished_at')
+      .gte('created_at', today.toISOString()).order('created_at', { ascending: false })
+    : { data: demoTasks }
 
   const total = tasks?.length ?? 0
   const succeeded = tasks?.filter(t => t.status === 'succeeded').length ?? 0
@@ -42,9 +45,11 @@ export default async function Dashboard() {
   const avgDuration = durations?.length
     ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length / 1000) + 's' : '-'
 
-  const { data: recentTasks } = await supabase
-    .from('tasks').select('id, status, environment, created_at, projects(name), test_suites(name)')
-    .order('created_at', { ascending: false }).limit(10)
+  const { data: recentTasks } = supabase
+    ? await supabase
+      .from('tasks').select('id, status, environment, created_at, projects(name), test_suites(name)')
+      .order('created_at', { ascending: false }).limit(10)
+    : { data: demoTasks }
 
   const stats = [
     { label: copy.dashboard.stats.todayTasks, value: String(total), icon: '01', color: 'var(--accent)' },

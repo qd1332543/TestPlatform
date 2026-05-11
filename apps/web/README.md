@@ -7,10 +7,12 @@ Next.js console for MeteorTest. It owns the dashboard, project center, task cent
 ```bash
 npm ci
 cp .env.local.example .env.local
-npm run dev
+npm run dev:local
 ```
 
 Open `http://localhost:3000`.
+
+`npm run dev:local` is the preferred local WebUI preview entry point. It locks the preview to `127.0.0.1:3000`, stops an existing process listening on that port, starts Next.js in a safe public-preview/local-preview mode, and writes logs to `.next/dev-local.log`.
 
 Required local environment file:
 
@@ -157,4 +159,5 @@ The current i18n pass covers navigation, page titles, settings, forms, table hea
 ```bash
 npm run lint
 npm run build
+npm run dev:local
 ```

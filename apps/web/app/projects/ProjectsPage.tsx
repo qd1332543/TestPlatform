@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { getDictionary } from '@/lib/i18n'
+import { demoProjects, isLocalDemo } from '@/lib/localDemo'
 
 type ProjectRow = {
   id: string
@@ -13,10 +14,12 @@ type ProjectRow = {
 
 export default async function ProjectsPage() {
   const t = await getDictionary()
-  const supabase = await createClient()
-  const { data: projects } = await supabase
-    .from('projects').select('id, key, name, repo_url, description, created_at, test_suites(id)')
-    .order('created_at', { ascending: false })
+  const supabase = isLocalDemo() ? null : await createClient()
+  const { data: projects } = supabase
+    ? await supabase
+      .from('projects').select('id, key, name, repo_url, description, created_at, test_suites(id)')
+      .order('created_at', { ascending: false })
+    : { data: demoProjects }
   const projectRows = (projects ?? []) as ProjectRow[]
   const suiteCount = projectRows.reduce((sum, project) => sum + (project.test_suites?.length ?? 0), 0)
   const repositoryCount = projectRows.filter(project => project.repo_url).length

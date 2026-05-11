@@ -68,6 +68,7 @@ The web console should feel like a restrained operations console, with visual in
 - Theme ordering should group dark themes first, then light themes: `meteor`, `indigo`, `dune`, `aurora`, `parchment`, `sky`, `glacier`, `sakura`.
 - New pages should support theme changes automatically by using CSS variables such as `--bg-card`, `--border`, `--accent`, `--text-secondary`, and shared classes like `data-panel`, `primary-action`, `secondary-action`, `chip-action`, `toggle-control`, `quiet-scrollbar`, `field-input`, `status-badge`, and `link-action`.
 - Interactive controls must use control-specific tokens such as `--control-on-bg`, `--control-on-border`, and `--control-on-thumb`; do not bind switches directly to `--accent` when that creates poor contrast in light themes.
+- WebUI changes should include a basic mobile/responsive pass. If proper mobile adaptation would materially expand the change, split it into a separate task or PR and record that follow-up instead of burying the gap.
 - UI changes must be implemented together with the locale content they display. When adding or changing labels, headings, empty states, helper text, table headers, buttons, status text, or user-facing fallback messages, update `apps/web/content/i18n.ts` in the same change and consume the value through `getDictionary()` or `useLocale()`.
 - Do not merge UI-only wording changes that bypass the i18n layer. Hard-coded UI text is only acceptable for stable product names, technical identifiers, user data, route names, or third-party names.
 - Web-side automation and validation scripts should use TypeScript (`.ts` or `.mts`) when project tooling allows it. Avoid adding ad hoc `.js` or `.mjs` scripts for Web work unless the file is a framework-required config file or there is a documented runtime constraint.
@@ -100,8 +101,10 @@ For local development:
 
 ```bash
 cd apps/web
-npm run dev
+npm run dev:local
 ```
+
+MeteorTest WebUI local preview is fixed to `http://127.0.0.1:3000`. Use `npm run dev:local` after WebUI changes; it stops an existing process on port 3000, starts Next.js with public-preview/local-preview safety defaults, and writes logs to `apps/web/.next/dev-local.log`. Do not ask the user to remind you to restart port 3000 after WebUI changes.
 
 The web app expects Supabase environment variables in `apps/web/.env.local`:
 

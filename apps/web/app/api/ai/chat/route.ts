@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
+import { demoExecutors, demoProjects, demoTasks, isLocalDemo } from '@/lib/localDemo'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
@@ -34,6 +35,10 @@ function sameText(a?: string | null, b?: string | null) {
 }
 
 async function getPlatformSnapshot() {
+  if (isLocalDemo()) {
+    return { projects: demoProjects, recentTasks: demoTasks, executors: demoExecutors }
+  }
+
   const supabase = serviceClient()
   const [{ data: projects }, { data: tasks }, { data: executors }] = await Promise.all([
     supabase
