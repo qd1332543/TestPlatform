@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import AgentSupervisor from '@/components/AgentSupervisor'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
+import { demoExecutors, isLocalDemo } from '@/lib/localDemo'
 
 const statusStyle: Record<string, { bg: string; color: string; dot: string }> = {
   online:  { bg: '#0D2818', color: '#22C55E', dot: '#22C55E' },
@@ -24,7 +25,9 @@ export default async function ExecutorsPage() {
   const skipSupabaseForSmoke = process.env.METEORTEST_SMOKE_NO_SUPABASE === '1'
   let executors: ExecutorRow[] = []
 
-  if (!skipSupabaseForSmoke) {
+  if (isLocalDemo()) {
+    executors = demoExecutors
+  } else if (!skipSupabaseForSmoke) {
     const supabase = await createClient()
     const { data } = await supabase
         .from('executors')

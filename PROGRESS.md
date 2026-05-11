@@ -147,11 +147,12 @@
 - [x] Phase 11 公网 Web 预览准备：补齐 `.env.local.example`，明确部署环境变量、密钥边界和 Local Agent 不直接公网暴露
 - [x] Phase 11 Vercel 部署 runbook：记录账号操作、环境变量、Supabase 预览环境、Codex 可协助范围和人工必须提供内容
 - [x] Phase 11 公网 Web 预览部署：Vercel 预览已发布到 `https://meteortest.jcmeteor.com/`
+- [x] WebUI 本地预览入口固定为 `npm run dev:local`，锁定 `127.0.0.1:3000` 并提供 public-preview/local-preview 安全默认值
 - [ ] Phase 11 公网 Web 预览加固：完善 public preview mode、访问保护、demo 数据、任务/报告体验和私有 Agent 线上闭环
 - [ ] Phase 12 Public Connected Demo：基于独立预览后端和私有 Agent 打通可操作 Demo
 - [ ] 基于工程测试控制台方向重构首页、项目、任务、报告和 AI 页面
   - [x] 首页、项目、任务和报告页完成第一轮控制台化布局：状态概览、接入状态卡片、执行队列和报告分析侧栏
-  - [ ] AI 页面按“操作指挥台”方向继续重构
+  - [x] AI 页面完成第一轮“操作指挥台”重构：新增操作入口卡片、平台上下文面板、执行对话区和移动端基础对话切换
 - [x] 新增 `zh-CN` / `en` 多语言文案层基础模块，使用 `supportedLocales` 通用语言归一化方式
 - [x] 参考 `junchen-meteor` 的内容配置方式，建设 `zh-CN` / `en` 多语言文案层
 - [x] 导航、设置、AI 模板、空状态、表单提示和页面标题接入多语言
@@ -169,7 +170,7 @@
 
 ### 移动端入口
 
-- [ ] 响应式 Web
+- [ ] WebUI 移动端适配专项：完整检查 Dashboard、Projects、Tasks、Reports、Builds、Executors、Settings 和 AI 页面在手机浏览器下的导航、表格、操作按钮、表单和滚动体验
 - [ ] WebView 封装
 
 ### 云真机和高级调度

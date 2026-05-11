@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
+import { demoBuilds, demoTasks, isLocalDemo } from '@/lib/localDemo'
 
 type BuildRow = {
   id: string; platform: string; version: string; build_number: string | null
@@ -39,20 +40,22 @@ const statusStyle: Record<string, { bg: string; color: string }> = {
 export default async function BuildsPage() {
   const locale = await getLocale()
   const t = await getDictionary()
-  const supabase = await createClient()
-  const { data: builds } = await supabase
-    .from('app_builds').select('*, projects(name)')
-    .order('created_at', { ascending: false }).limit(50)
+  const supabase = isLocalDemo() ? null : await createClient()
+  const { data: builds } = supabase
+    ? await supabase
+      .from('app_builds').select('*, projects(name)')
+      .order('created_at', { ascending: false }).limit(50)
+    : { data: demoBuilds }
   const buildList = (builds ?? []) as BuildRow[]
   const buildIds = buildList.map(b => b.id)
 
-  const { data: tasks } = buildIds.length
+  const { data: tasks } = supabase && buildIds.length
     ? await supabase
       .from('tasks')
       .select('id, app_build_id, status, created_at, projects(name), test_suites(name)')
       .in('app_build_id', buildIds)
       .order('created_at', { ascending: false })
-    : { data: [] as BuildTaskRow[] }
+    : { data: isLocalDemo() ? demoTasks.map((task, index) => ({ ...task, app_build_id: demoBuilds[index % demoBuilds.length]?.id ?? null })) : [] as BuildTaskRow[] }
 
   const taskList = (tasks ?? []) as BuildTaskRow[]
   const taskMap = taskList.reduce<Record<string, BuildTaskRow[]>>((acc, task) => {

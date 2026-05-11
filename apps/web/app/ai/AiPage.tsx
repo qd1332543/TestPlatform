@@ -21,8 +21,8 @@ const taskIdPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 const TemplateIcons = {
   failed: (
     <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-      <circle cx="14" cy="14" r="12" fill="#2A0F0F" stroke="#EF4444" strokeWidth="1.5"/>
-      <path d="M14 8v7M14 18v1.5" stroke="#EF4444" strokeWidth="2" strokeLinecap="round"/>
+      <path d="M14 3L25 23H3L14 3Z" fill="color-mix(in srgb, var(--status-failed-text) 14%, transparent)" stroke="var(--status-failed-text)" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M14 10v5M14 18.5v.5" stroke="var(--status-failed-text)" strokeWidth="2" strokeLinecap="round"/>
     </svg>
   ),
   project: (
@@ -63,6 +63,62 @@ const TemplateIcons = {
       <rect x="15" y="15" width="10" height="10" rx="2" fill="#0D1829" stroke="#F59E0B" strokeWidth="1.5"/>
     </svg>
   ),
+  onboarding: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="5" width="20" height="18" rx="3" fill="color-mix(in srgb, var(--accent) 12%, transparent)" stroke="var(--accent)" strokeWidth="1.5"/>
+      <path d="M8 11h8M8 15h12M8 19h7" stroke="var(--accent)" strokeWidth="1.4" strokeLinecap="round"/>
+      <path d="M18 7l2 2 3-4" stroke="var(--accent-2)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  queue: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <path d="M6 7h11M6 14h16M6 21h8" stroke="var(--accent-3)" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="21" cy="7" r="3" fill="color-mix(in srgb, var(--accent-3) 16%, transparent)" stroke="var(--accent-3)" strokeWidth="1.4"/>
+      <path d="M20 7h2" stroke="var(--accent-3)" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  ),
+  release: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="5" y="6" width="18" height="17" rx="3" fill="color-mix(in srgb, var(--accent-2) 14%, transparent)" stroke="var(--accent-2)" strokeWidth="1.5"/>
+      <path d="M9 4v5M19 4v5M5 11h18" stroke="var(--accent-2)" strokeWidth="1.5" strokeLinecap="round"/>
+      <path d="M10 17l2.5 2.5L18 14" stroke="var(--accent-2)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  overview: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="4" y="5" width="20" height="18" rx="3" fill="color-mix(in srgb, var(--accent) 10%, transparent)" stroke="var(--border-light)" strokeWidth="1.4"/>
+      <path d="M8 17l4-4 3 3 5-7" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M8 21h12" stroke="var(--text-muted)" strokeWidth="1.3" strokeLinecap="round"/>
+    </svg>
+  ),
+  build: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <path d="M14 4l9 5-9 5-9-5 9-5Z" fill="color-mix(in srgb, var(--accent-3) 12%, transparent)" stroke="var(--accent-3)" strokeWidth="1.5" strokeLinejoin="round"/>
+      <path d="M5 14l9 5 9-5M5 19l9 5 9-5" stroke="var(--accent-3)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  ),
+  rerun: (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <path d="M21 10a8 8 0 10.8 6" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round"/>
+      <path d="M21 5v5h-5" stroke="var(--accent)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M12 12l5 3-5 3v-6Z" fill="var(--accent-2)"/>
+    </svg>
+  ),
+}
+
+type CommandTemplate = Dictionary['ai']['templates'][number] & { icon: React.ReactNode }
+
+function TemplateIconFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <span
+      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+      style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}
+    >
+      <span className="flex h-7 w-7 items-center justify-center [&>svg]:h-7 [&>svg]:w-7 [&>svg]:shrink-0">
+        {children}
+      </span>
+    </span>
+  )
 }
 
 function parseTemplate(text: string) {
@@ -165,6 +221,49 @@ function renderTaskLinks(text: string) {
   }
   if (lastIndex < text.length) nodes.push(text.slice(lastIndex))
   return nodes.length ? nodes : text
+}
+
+function OperationCards({
+  templates,
+  t,
+  applyTemplate,
+}: {
+  templates: CommandTemplate[]
+  t: Dictionary
+  applyTemplate: (text: string) => void
+}) {
+  const operations = t.ai.commandCenter.cards
+    .map(card => {
+      const template = templates.find(item => item.id === card.templateId)
+      return template ? { ...card, template } : null
+    })
+    .filter(Boolean) as Array<{ title: string; desc: string; template: CommandTemplate }>
+
+  return (
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      {operations.map(operation => (
+        <button
+          key={operation.template.id}
+          type="button"
+          onClick={() => applyTemplate(operation.template.text)}
+          className="resource-card rounded-xl p-3 text-left transition-colors"
+        >
+          <div className="flex items-start gap-2.5">
+            <TemplateIconFrame>{operation.template.icon}</TemplateIconFrame>
+            <div className="min-w-0">
+              <div className="text-sm font-semibold text-white">{operation.title}</div>
+              <div className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                {operation.desc}
+              </div>
+              <div className="mt-2 text-xs font-medium" style={{ color: 'var(--accent)' }}>
+                {operation.template.label}
+              </div>
+            </div>
+          </div>
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictionary; locale: Locale }) {
@@ -384,7 +483,7 @@ export default function AiPage() {
       el.focus()
       if (idx !== -1 && end !== -1) el.setSelectionRange(idx, end + 1)
     }, 0)
-  }, [])
+  }, [setInput])
 
   function createConversation() {
     const conversation = newConversation(t.ai.newConversation)
@@ -482,34 +581,26 @@ export default function AiPage() {
   }
 
   return (
-    <div className="page-shell flex h-full min-h-0 flex-col gap-4">
-      <section className="console-hero rounded-xl p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center text-xl"
-              style={{ background: 'var(--accent)', color: '#06100C' }}>✦</div>
-            <div>
-              <h1 className="page-title">{t.ai.title}</h1>
-              <p className="page-subtitle">{t.ai.subtitle}</p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {templates.slice(0, 3).map(template => (
-              <button
-                key={template.id}
-                type="button"
-                onClick={() => applyTemplate(template.text)}
-                className="chip-action rounded-lg px-3 py-2 text-xs font-semibold"
-              >
-                {template.label}
-              </button>
-            ))}
-          </div>
+    <div className="page-shell flex min-h-full flex-col gap-4">
+      <section className="data-panel rounded-xl p-5">
+        <div className="mb-4">
+          <h2 className="section-title">{t.ai.commandCenter.title}</h2>
+          <p className="section-subtitle mt-1 hidden md:block">{t.ai.commandCenter.description}</p>
+        </div>
+        <OperationCards templates={templates} t={t} applyTemplate={applyTemplate} />
+        <div className="mt-3 hidden flex-wrap gap-2 lg:flex">
+          {t.ai.commandCenter.contextItems.map(item => (
+            <span key={item.label} className="meta-pill px-3 py-1.5 text-xs">
+              <span style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+              <span className="mx-1.5" style={{ color: 'var(--text-muted)' }}>·</span>
+              <span>{item.value}</span>
+            </span>
+          ))}
         </div>
       </section>
 
-      <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[260px_minmax(0,1fr)_320px]">
-      <aside className="data-panel hidden xl:flex shrink-0 flex-col rounded-xl overflow-hidden">
+      <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_300px]">
+      <aside className="data-panel hidden max-h-[760px] xl:flex shrink-0 flex-col rounded-xl overflow-hidden">
         <div className="p-3" style={{ borderBottom: '1px solid var(--border)' }}>
           <button
             onClick={createConversation}
@@ -549,7 +640,7 @@ export default function AiPage() {
         </div>
       </aside>
 
-      <div className="data-panel flex min-h-0 flex-col rounded-xl p-4">
+      <div className="data-panel flex min-h-[680px] flex-col rounded-xl p-4">
       <div className="mb-4 flex items-center gap-3">
         <button
           onClick={createConversation}
@@ -561,9 +652,28 @@ export default function AiPage() {
           {messages.length ? t.ai.messageCount(messages.length) : t.ai.emptyMessages}
         </div>
       </div>
+      <div className="mb-4 xl:hidden">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+          {t.ai.commandCenter.mobileHistory}
+        </div>
+        <div className="quiet-scrollbar flex gap-2 overflow-x-auto pb-1">
+          {conversations.slice(0, 8).map(conversation => (
+            <button
+              key={conversation.id}
+              type="button"
+              onClick={() => selectConversation(conversation)}
+              className="secondary-action shrink-0 rounded-lg px-3 py-2 text-left text-xs"
+              style={activeId === conversation.id ? { borderColor: 'var(--accent)', color: 'var(--text-primary)' } : undefined}
+            >
+              <span className="block max-w-40 truncate font-semibold">{conversation.title}</span>
+              <span style={{ color: 'var(--text-muted)' }}>{conversation.messages.length ? t.ai.messageCount(conversation.messages.length) : t.ai.emptyMessages}</span>
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Messages */}
-      <div className="quiet-scrollbar flex-1 overflow-y-auto space-y-4 min-h-0 pb-2">
+      <div className="quiet-scrollbar h-[520px] overflow-y-auto space-y-4 pb-2 md:h-[560px] xl:h-[600px]">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center select-none">
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
@@ -654,7 +764,7 @@ export default function AiPage() {
       </div>
       </div>
 
-      <aside className="quiet-scrollbar data-panel hidden xl:block rounded-xl p-4 overflow-y-auto">
+      <aside className="quiet-scrollbar data-panel hidden max-h-[760px] xl:block rounded-xl p-4 overflow-y-auto">
         <div className="section-title">{t.ai.greeting}</div>
         <div className="section-subtitle mt-1">{t.ai.greetingHint}</div>
         <div className="mt-4 space-y-3">
@@ -667,7 +777,7 @@ export default function AiPage() {
                 className="resource-card w-full rounded-xl px-4 py-4 text-left transition-colors"
               >
                 <div className="flex items-center gap-3">
-                  <div className="shrink-0">{template.icon}</div>
+                  <TemplateIconFrame>{template.icon}</TemplateIconFrame>
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-white">{template.label}</div>
                     <div className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>{template.desc}</div>

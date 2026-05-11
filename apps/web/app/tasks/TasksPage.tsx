@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
+import { demoTasks, isLocalDemo } from '@/lib/localDemo'
 
 type TaskRow = {
   id: string; status: string; environment: string; created_at: string
@@ -17,12 +18,16 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const { status } = await searchParams
   const locale = await getLocale()
   const t = await getDictionary()
-  const supabase = await createClient()
-  let query = supabase.from('tasks')
-    .select('id, status, environment, created_at, projects(name), test_suites(name), executors(name)')
-    .order('created_at', { ascending: false }).limit(50)
-  if (status) query = query.eq('status', status)
-  const { data: tasks } = await query
+  const supabase = isLocalDemo() ? null : await createClient()
+  const { data: tasks } = supabase
+    ? await (() => {
+      let query = supabase.from('tasks')
+        .select('id, status, environment, created_at, projects(name), test_suites(name), executors(name)')
+        .order('created_at', { ascending: false }).limit(50)
+      if (status) query = query.eq('status', status)
+      return query
+    })()
+    : { data: status ? demoTasks.filter(task => task.status === status) : demoTasks }
   const taskRows = (tasks ?? []) as TaskRow[]
   const statusCounts = {
     queued: taskRows.filter(task => task.status === 'queued').length,

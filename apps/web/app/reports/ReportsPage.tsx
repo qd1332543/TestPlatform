@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
+import { demoTasks, isLocalDemo } from '@/lib/localDemo'
 
 type ReportRow = {
   id: string
@@ -40,12 +41,14 @@ function firstItem<T>(value: T[] | T | null | undefined): T | null {
 export default async function ReportsPage() {
   const locale = await getLocale()
   const t = await getDictionary()
-  const supabase = await createClient()
-  const { data } = await supabase
-    .from('tasks')
-    .select('id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
-    .order('created_at', { ascending: false })
-    .limit(50)
+  const supabase = isLocalDemo() ? null : await createClient()
+  const { data } = supabase
+    ? await supabase
+      .from('tasks')
+      .select('id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    : { data: demoTasks }
 
   const reports = (data ?? []) as ReportRow[]
   const totalReports = reports.length

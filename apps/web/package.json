@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:local": "node --experimental-strip-types scripts/dev-local.mts",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
