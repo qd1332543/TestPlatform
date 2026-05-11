@@ -65,10 +65,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-preview-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-preview-service-role-key
 DEEPSEEK_API_KEY=可选
 METEORTEST_AGENT_DISABLED=1
-METEORTEST_PUBLIC_PREVIEW=1 完成代码支持后启用
+METEORTEST_PUBLIC_PREVIEW=1
 ```
 
 这些值要配置在 Vercel Project Settings 中，不要提交 `.env.local`。
+
+不要在 Vercel 中配置 `METEORTEST_SMOKE_NO_SUPABASE`。这个变量只给 CI smoke check 使用，用来在没有真实 Supabase 密钥的情况下验证公网预览安全边界。
 
 重要边界：
 
@@ -117,6 +119,14 @@ supabase/seed-preview.sql
 如果后续修改了环境变量，需要重新部署。Vercel 的环境变量变更不会影响已经创建的旧部署。
 
 ## 部署后的第一次 smoke check
+
+部署前后，仓库 CI 会运行：
+
+```bash
+npm run smoke:public-preview
+```
+
+这个本地 smoke check 会用公网预览开关构建 Web 应用，启动隔离的预览服务，验证 `/api/agent/status` 保持 disabled，验证 `/executors` 渲染公网预览边界提示，并扫描本机路径、密钥变量名、堆栈信息或 Agent 启动入口。它会故意使用 `METEORTEST_SMOKE_NO_SUPABASE=1`；真实 Vercel 预览应该使用 Project Settings 中配置的 Supabase 变量。
 
 打开部署 URL，检查：
 

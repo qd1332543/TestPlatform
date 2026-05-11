@@ -36,6 +36,9 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Public preview smoke check
+        run: npm run smoke:public-preview
+
   agent:
     name: Agent smoke tests
     runs-on: ubuntu-latest

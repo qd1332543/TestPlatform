@@ -64,7 +64,7 @@ Use this order when opening MeteorTest Web on the public internet:
    SUPABASE_SERVICE_ROLE_KEY
    DEEPSEEK_API_KEY optional
    METEORTEST_AGENT_DISABLED=1
-   METEORTEST_PUBLIC_PREVIEW=1 once implemented
+   METEORTEST_PUBLIC_PREVIEW=1
    ```
 
 4. Keep `METEORTEST_REPO_ROOT`, `METEORTEST_AGENT_PYTHON`, `METEORTEST_AGENT_INTERVAL`, local repository paths, and local Agent config out of the public Web deployment unless a reviewed execution-safety design exists.
@@ -78,6 +78,14 @@ Use this order when opening MeteorTest Web on the public internet:
    - AI assistant returns a clear unavailable state if `DEEPSEEK_API_KEY` is not configured.
 
 7. Only after the Web preview is stable, decide whether a private Local Agent should poll the preview backend with scoped credentials. Do not expose a machine-local Agent endpoint directly to public traffic.
+
+Public-preview smoke check:
+
+```bash
+npm run smoke:public-preview
+```
+
+The smoke check builds the Web app with public-preview environment flags, starts an isolated local preview server, verifies `/api/agent/status` stays disabled, verifies `/executors` renders the public-preview boundary message, and scans responses for local paths, secret variable names, stack traces, or Agent startup details. It uses `METEORTEST_SMOKE_NO_SUPABASE=1` internally so CI can run without preview Supabase credentials; do not set this flag in Vercel. Real Vercel previews should use the configured preview Supabase environment and safe demo data.
 
 Current follow-up order:
 

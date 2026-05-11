@@ -45,7 +45,10 @@
 - [x] Executors 页面在 public preview 下显示“公网部署不启动 Local Agent；请在私有机器上单独运行 Agent 并轮询后端”
 - [x] Settings 页面在 public preview 下隐藏或禁用 auto-start Agent 控制，避免误导
 - [x] Vercel runbook 明确不要配置 `METEORTEST_REPO_ROOT`、`METEORTEST_AGENT_PYTHON`、`METEORTEST_AGENT_INTERVAL` 或本机路径
-- [ ] Smoke check 覆盖 `/executors` 和 `/api/agent/status`，确认不暴露本机路径、栈信息、密钥或 Agent 启动入口
+- [x] Smoke check 覆盖 `/executors` 和 `/api/agent/status`，确认不暴露本机路径、栈信息、密钥或 Agent 启动入口
+  - `apps/web/scripts/check-public-preview.mts` 使用 public-preview 环境构建并启动独立 smoke server。
+  - CI 通过 `npm run smoke:public-preview` 验证 `/api/agent/status` 禁用 Agent 控制、`/executors` 服务端渲染 public preview 边界提示，并扫描响应中是否出现本机路径、密钥变量、栈信息或 Agent 启动入口。
+  - smoke 使用 `METEORTEST_SMOKE_NO_SUPABASE=1` 跳过 Supabase 查询；Vercel 真实公网预览已配置 Supabase 密钥时仍可正常展示 preview 数据。
 
 ### Authentication And Access Control
 
