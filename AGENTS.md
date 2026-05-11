@@ -70,6 +70,7 @@ The web console should feel like a restrained operations console, with visual in
 - Interactive controls must use control-specific tokens such as `--control-on-bg`, `--control-on-border`, and `--control-on-thumb`; do not bind switches directly to `--accent` when that creates poor contrast in light themes.
 - UI changes must be implemented together with the locale content they display. When adding or changing labels, headings, empty states, helper text, table headers, buttons, status text, or user-facing fallback messages, update `apps/web/content/i18n.ts` in the same change and consume the value through `getDictionary()` or `useLocale()`.
 - Do not merge UI-only wording changes that bypass the i18n layer. Hard-coded UI text is only acceptable for stable product names, technical identifiers, user data, route names, or third-party names.
+- Web-side automation and validation scripts should use TypeScript (`.ts` or `.mts`) when project tooling allows it. Avoid adding ad hoc `.js` or `.mjs` scripts for Web work unless the file is a framework-required config file or there is a documented runtime constraint.
 
 ## Internationalization Direction
 

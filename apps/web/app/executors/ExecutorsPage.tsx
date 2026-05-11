@@ -8,13 +8,30 @@ const statusStyle: Record<string, { bg: string; color: string; dot: string }> = 
   busy:    { bg: '#2A1A0A', color: '#F97316', dot: '#F97316' },
 }
 
+type ExecutorRow = {
+  id: string
+  name: string
+  type: string
+  status: string
+  capabilities: string[] | null
+  last_heartbeat_at: string | null
+}
+
 export default async function ExecutorsPage() {
   const locale = await getLocale()
   const t = await getDictionary()
-  const supabase = await createClient()
-  const { data: executors } = await supabase
-    .from('executors').select('id, name, type, status, capabilities, last_heartbeat_at')
-    .order('status')
+  const isPublicPreview = process.env.METEORTEST_PUBLIC_PREVIEW === '1'
+  const skipSupabaseForSmoke = process.env.METEORTEST_SMOKE_NO_SUPABASE === '1'
+  let executors: ExecutorRow[] = []
+
+  if (!skipSupabaseForSmoke) {
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('executors')
+        .select('id, name, type, status, capabilities, last_heartbeat_at')
+        .order('status')
+    executors = (data ?? []) as ExecutorRow[]
+  }
 
   return (
     <div className="page-shell space-y-6">
@@ -22,6 +39,16 @@ export default async function ExecutorsPage() {
         <h1 className="page-title">{t.pages.executors.title}</h1>
         <p className="page-subtitle">{t.pages.executors.subtitle}</p>
       </div>
+      {isPublicPreview ? (
+        <div className="data-panel rounded-xl p-4" style={{ borderColor: 'var(--accent)' }}>
+          <div className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>
+            {t.agent.unavailable}
+          </div>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {t.agent.publicUnavailableDetail}
+          </p>
+        </div>
+      ) : null}
       <AgentSupervisor />
       <div className="data-panel rounded-xl overflow-hidden">
         <table className="w-full text-sm">

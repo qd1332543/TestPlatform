@@ -65,10 +65,12 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-preview-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-preview-service-role-key
 DEEPSEEK_API_KEY=optional
 METEORTEST_AGENT_DISABLED=1
-METEORTEST_PUBLIC_PREVIEW=1 once implemented
+METEORTEST_PUBLIC_PREVIEW=1
 ```
 
 Use Vercel Project Settings for these values. Do not commit `.env.local`.
+
+Do not configure `METEORTEST_SMOKE_NO_SUPABASE` in Vercel. That flag is only for CI smoke checks that must verify public-preview safety without requiring real Supabase credentials.
 
 Important boundaries:
 
@@ -117,6 +119,14 @@ The seed creates a demo `iOS-Automation-Framework` project, `api_smoke` suite, p
 If an environment variable changes later, redeploy. Vercel environment variable changes do not modify already-created deployments.
 
 ## First Smoke Check After Deployment
+
+Before or after a deployment change, the repository CI runs:
+
+```bash
+npm run smoke:public-preview
+```
+
+This local smoke check builds the Web app with public-preview flags, starts an isolated preview server, verifies `/api/agent/status` stays disabled, verifies `/executors` renders the public-preview boundary, and scans for local paths, secret variable names, stack traces, or Agent startup details. It deliberately uses `METEORTEST_SMOKE_NO_SUPABASE=1`; the live Vercel preview should use the Supabase variables configured in Project Settings.
 
 Open the deployment URL and check:
 
