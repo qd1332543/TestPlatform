@@ -226,6 +226,16 @@ export const dictionaries = {
       emptyResponse: 'Agent 状态接口返回为空',
       invalidResponse: 'Agent 状态接口返回格式异常',
     },
+    previewAccess: {
+      kicker: 'PUBLIC PREVIEW ACCESS',
+      title: '访问 MeteorTest 公网预览',
+      description: '这个预览环境用于验证 Web 控制台和安全 demo 数据。请输入预览访问口令后继续。',
+      tokenLabel: '访问口令',
+      tokenPlaceholder: '输入预览访问口令',
+      invalidToken: '访问口令不正确，请重新输入。',
+      submit: '进入预览',
+      footer: 'Local Agent 执行仍保持私有；公网预览不会直接启动本机执行器。',
+    },
     forms: {
       projectName: '项目名称',
       projectKey: '项目标识',
@@ -576,6 +586,16 @@ export const dictionaries = {
       checkFailed: 'Unable to check Agent status',
       emptyResponse: 'Agent status API returned an empty response',
       invalidResponse: 'Agent status API returned an invalid response',
+    },
+    previewAccess: {
+      kicker: 'PUBLIC PREVIEW ACCESS',
+      title: 'Access the MeteorTest public preview',
+      description: 'This preview environment is for validating the Web console and safe demo data. Enter the preview access token to continue.',
+      tokenLabel: 'Access token',
+      tokenPlaceholder: 'Enter preview access token',
+      invalidToken: 'The access token is incorrect. Please try again.',
+      submit: 'Enter preview',
+      footer: 'Local Agent execution remains private; the public preview does not start machine-local executors.',
     },
     forms: {
       projectName: 'Project name',

@@ -125,7 +125,8 @@ For public Web preview work:
 - For Vercel deployment, follow `docs/vercel-public-preview.md` and `docs/vercel-public-preview.zh-CN.md`.
 - The current public preview URL is `https://meteortest.jcmeteor.com/`.
 - The current hardening sequence is recorded in `PROGRESS.md`: public preview mode, access protection, preview seed data, task/report experience, then private-Agent online loop.
-- Public preview deployments should set `METEORTEST_AGENT_DISABLED=1`; prefer also setting `METEORTEST_PUBLIC_PREVIEW=1` once the code path is implemented.
+- Public preview deployments should set `METEORTEST_AGENT_DISABLED=1` and `METEORTEST_PUBLIC_PREVIEW=1`.
+- If a public preview should not be openly browseable, set `METEORTEST_PREVIEW_ACCESS_TOKEN` in the deployment provider. Do not commit it, expose it as `NEXT_PUBLIC_*`, or paste it into issues, PRs, screenshots, or docs.
 - In public preview mode, `/api/agent/status` and the Executors page must never attempt to start a machine-local Agent. They should show a clear disabled/unavailable state and instruct the operator to run the Agent privately.
 - Do not add public Web preview links to the personal website without preserving this boundary: Web preview is online, Local Agent execution is private, and public connected execution is deferred.
 
@@ -381,6 +382,8 @@ Keep `MeteorTest` as the engineering/product English name.
 ### Next.js Route File Structure
 
 Next.js App Router requires route entry files such as `page.tsx`; do not rename those files directly or routes will break.
+
+For app-wide request interception in Next.js 16, use `apps/web/proxy.ts`. Do not add new `middleware.ts` files; that convention is deprecated in the current Next.js version.
 
 For non-trivial pages, keep `page.tsx` as a thin route entry and move business UI into a named sibling component, for example:
 
