@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
+import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
   queued:    { bg: '#1a2438', color: '#64748B' },
@@ -23,19 +24,6 @@ type TaskParameters = {
     deselected?: number
     exit_code?: number
   }
-}
-
-function markdownValue(value: unknown) {
-  if (value == null || value === '') return '-'
-  return String(value).replace(/\r\n/g, '\n').trim() || '-'
-}
-
-function markdownLink(label: string, url?: string | null) {
-  return url ? `[${label}](${url})` : '-'
-}
-
-function markdownDataUrl(markdown: string) {
-  return `data:text/markdown;charset=utf-8,${encodeURIComponent(markdown)}`
 }
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -74,56 +62,30 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     ...(task.started_at ? [{ label: t.common.startedAt, value: formatDateTime(task.started_at, locale) }] : []),
     ...(task.finished_at ? [{ label: t.common.finishedAt, value: formatDateTime(task.finished_at, locale) }] : []),
   ]
-  const exportMarkdown = [
-    `# MeteorTest Task Analysis Package / MeteorTest 任务分析包`,
-    ``,
-    `## Task / 任务信息`,
-    ``,
-    `| Field | Value |`,
-    `|---|---|`,
-    `| Task ID | ${task.id} |`,
-    `| Project | ${markdownValue(task.projects?.name)} |`,
-    `| Suite | ${markdownValue(task.test_suites?.name)} |`,
-    `| Environment | ${markdownValue(task.environment)} |`,
-    `| Status | ${markdownValue(statusLabel)} |`,
-    `| Executor | ${markdownValue(task.executors?.name)} |`,
-    `| Created At | ${markdownValue(formatDateTime(task.created_at, locale))} |`,
-    `| Started At | ${markdownValue(task.started_at ? formatDateTime(task.started_at, locale) : null)} |`,
-    `| Finished At | ${markdownValue(task.finished_at ? formatDateTime(task.finished_at, locale) : null)} |`,
-    ``,
-    `## Execution Command / 执行命令`,
-    ``,
-    '```bash',
-    markdownValue(task.test_suites?.command),
-    '```',
-    ``,
-    `## Test Report / 测试报告`,
-    ``,
-    `- Summary: ${markdownValue(report?.summary)}`,
-    `- 摘要：${markdownValue(report?.summary)}`,
-    `- Log: ${markdownLink(t.reports.log, report?.log_url)}`,
-    `- 日志：${markdownLink(t.reports.log, report?.log_url)}`,
-    `- Allure: ${markdownLink(t.reports.allure, report?.allure_url)}`,
-    `- Allure 报告：${markdownLink(t.reports.allure, report?.allure_url)}`,
-    ``,
-    `## AI Analysis / AI 分析`,
-    ``,
-    `- Failure Reason: ${markdownValue(analysis?.failure_reason)}`,
-    `- 失败原因：${markdownValue(analysis?.failure_reason)}`,
-    `- Impact: ${markdownValue(analysis?.impact)}`,
-    `- 影响范围：${markdownValue(analysis?.impact)}`,
-    `- Suggestion: ${markdownValue(analysis?.suggestion)}`,
-    `- 修复建议：${markdownValue(analysis?.suggestion)}`,
-    `- Flaky Probability: ${analysis?.flaky_probability != null ? `${(analysis.flaky_probability * 100).toFixed(0)}%` : '-'}`,
-    `- Flaky 概率：${analysis?.flaky_probability != null ? `${(analysis.flaky_probability * 100).toFixed(0)}%` : '-'}`,
-    ``,
-    `## Prompt Hint / 分析提示词`,
-    ``,
-    `Please analyze this MeteorTest task package. Focus on likely failure cause, impact, next debugging steps, and whether this looks like test instability, environment failure, or product defect.`,
-    ``,
-    `请分析这个 MeteorTest 任务分析包。请重点判断：可能失败原因、影响范围、下一步排查动作，以及它更像测试脚本问题、环境问题、产品缺陷还是偶发不稳定。请用中文输出，并保留必要英文技术术语。`,
-    ``,
-  ].join('\n')
+  const exportMarkdown = buildAnalysisPackageMarkdown({
+    title: t.analysisPackage.taskTitle,
+    taskId: task.id,
+    project: task.projects?.name,
+    suite: task.test_suites?.name,
+    environment: task.environment,
+    status: statusLabel,
+    executor: task.executors?.name,
+    createdAt: formatDateTime(task.created_at, locale),
+    startedAt: task.started_at ? formatDateTime(task.started_at, locale) : null,
+    finishedAt: task.finished_at ? formatDateTime(task.finished_at, locale) : null,
+    command: task.test_suites?.command,
+    report: {
+      summary: report?.summary,
+      logUrl: report?.log_url,
+      allureUrl: report?.allure_url,
+    },
+    analysis: {
+      failureReason: analysis?.failure_reason,
+      impact: analysis?.impact,
+      suggestion: analysis?.suggestion,
+      flakyProbability: analysis?.flaky_probability,
+    },
+  }, t)
   const exportFilename = `meteortest-task-${task.id}.md`
 
   return (
