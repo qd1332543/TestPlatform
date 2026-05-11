@@ -74,7 +74,9 @@
 - [x] 任务详情增加 preview 任务标识、执行摘要、Pytest 摘要、失败分类和无报告状态说明
 - [x] 报告列表增强 preview 任务标识、display name、Pytest 摘要和失败分类展示
 - [x] AI 分析结果绑定 task/report 上下文，而不是只作为独立聊天内容
-- [ ] 增加“导出分析包”或等价信息包入口，便于二次 AI 分析
+- [x] 增加“导出分析包”入口，便于二次 AI 分析
+  - 报告列表和任务详情均可导出 Markdown 分析包。
+  - 分析包内容由 `apps/web/lib/analysisPackage.ts` 统一生成，并通过 i18n 文案输出当前语言版本。
 - [ ] 让一个 demo failed task 能在不看数据库的情况下说明发生了什么、为什么失败、下一步该做什么
 
 ### Private Agent Online Loop

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
+import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
 
 type ReportRow = {
   id: string
@@ -34,19 +35,6 @@ function relationName(value: { name: string } | { name: string }[] | null) {
 function firstItem<T>(value: T[] | T | null | undefined): T | null {
   if (!value) return null
   return Array.isArray(value) ? value[0] ?? null : value
-}
-
-function markdownValue(value: unknown) {
-  if (value == null || value === '') return '-'
-  return String(value).replace(/\r\n/g, '\n').trim() || '-'
-}
-
-function markdownLink(label: string, url?: string | null) {
-  return url ? `[${label}](${url})` : '-'
-}
-
-function markdownDataUrl(markdown: string) {
-  return `data:text/markdown;charset=utf-8,${encodeURIComponent(markdown)}`
 }
 
 export default async function ReportsPage() {
@@ -114,49 +102,28 @@ export default async function ReportsPage() {
                   pytest.exit_code != null ? `exit ${pytest.exit_code}` : null,
                 ].filter(Boolean).join(', ')
               : ''
-            const exportMarkdown = [
-              `# MeteorTest Report Analysis Package / MeteorTest 报告分析包`,
-              ``,
-              `## Task / 任务信息`,
-              ``,
-              `| Field | Value |`,
-              `|---|---|`,
-              `| Task ID | ${report.id} |`,
-              `| Project | ${markdownValue(relationName(report.projects))} |`,
-              `| Suite | ${markdownValue(relationName(report.test_suites))} |`,
-              `| Environment | ${markdownValue(report.environment)} |`,
-              `| Status | ${markdownValue(statusLabel)} |`,
-              `| Created At | ${markdownValue(formatDateTime(report.created_at, locale))} |`,
-              `| Started At | ${markdownValue(report.started_at ? formatDateTime(report.started_at, locale) : null)} |`,
-              `| Finished At | ${markdownValue(report.finished_at ? formatDateTime(report.finished_at, locale) : null)} |`,
-              ``,
-              `## Test Report / 测试报告`,
-              ``,
-              `- Summary: ${markdownValue(taskReport?.summary)}`,
-              `- 摘要：${markdownValue(taskReport?.summary)}`,
-              `- Log: ${markdownLink(t.reports.log, taskReport?.log_url)}`,
-              `- 日志：${markdownLink(t.reports.log, taskReport?.log_url)}`,
-              `- Allure: ${markdownLink(t.reports.allure, taskReport?.allure_url)}`,
-              `- Allure 报告：${markdownLink(t.reports.allure, taskReport?.allure_url)}`,
-              ``,
-              `## AI Analysis / AI 分析`,
-              ``,
-              `- Failure Reason: ${markdownValue(analysis?.failure_reason)}`,
-              `- 失败原因：${markdownValue(analysis?.failure_reason)}`,
-              `- Impact: ${markdownValue(analysis?.impact)}`,
-              `- 影响范围：${markdownValue(analysis?.impact)}`,
-              `- Suggestion: ${markdownValue(analysis?.suggestion)}`,
-              `- 修复建议：${markdownValue(analysis?.suggestion)}`,
-              `- Flaky Probability: ${analysis?.flaky_probability != null ? `${(analysis.flaky_probability * 100).toFixed(0)}%` : '-'}`,
-              `- Flaky 概率：${analysis?.flaky_probability != null ? `${(analysis.flaky_probability * 100).toFixed(0)}%` : '-'}`,
-              ``,
-              `## Prompt Hint / 分析提示词`,
-              ``,
-              `Please analyze this MeteorTest report package. Focus on failure cause, impact, debugging priority, and whether the issue looks like a test problem, environment problem, or product defect.`,
-              ``,
-              `请分析这个 MeteorTest 报告分析包。请重点判断：失败原因、影响范围、排查优先级，以及它更像测试脚本问题、环境问题、产品缺陷还是偶发不稳定。请用中文输出，并保留必要英文技术术语。`,
-              ``,
-            ].join('\n')
+            const exportMarkdown = buildAnalysisPackageMarkdown({
+              title: t.analysisPackage.reportTitle,
+              taskId: report.id,
+              project: relationName(report.projects),
+              suite: relationName(report.test_suites),
+              environment: report.environment,
+              status: statusLabel,
+              createdAt: formatDateTime(report.created_at, locale),
+              startedAt: report.started_at ? formatDateTime(report.started_at, locale) : null,
+              finishedAt: report.finished_at ? formatDateTime(report.finished_at, locale) : null,
+              report: {
+                summary: taskReport?.summary,
+                logUrl: taskReport?.log_url,
+                allureUrl: taskReport?.allure_url,
+              },
+              analysis: {
+                failureReason: analysis?.failure_reason,
+                impact: analysis?.impact,
+                suggestion: analysis?.suggestion,
+                flakyProbability: analysis?.flaky_probability,
+              },
+            }, t)
             return (
               <div key={report.id} className="data-panel rounded-xl p-5 space-y-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
