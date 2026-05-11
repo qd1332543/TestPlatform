@@ -77,7 +77,8 @@
 - [x] 增加“导出分析包”入口，便于二次 AI 分析
   - 报告列表和任务详情均可导出 Markdown 分析包。
   - 分析包内容由 `apps/web/lib/analysisPackage.ts` 统一生成，并通过 i18n 文案输出当前语言版本。
-- [ ] 让一个 demo failed task 能在不看数据库的情况下说明发生了什么、为什么失败、下一步该做什么
+- [x] 让一个 demo failed task 能在不看数据库的情况下说明发生了什么、为什么失败、下一步该做什么
+  - 任务详情页为 failed/timeout 任务增加“失败诊断摘要”，聚合 report summary、Pytest 摘要、失败分类、AI 失败原因、排查动作和日志/Allure/分析包入口。
 
 ### Private Agent Online Loop
 
