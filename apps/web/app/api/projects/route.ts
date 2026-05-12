@@ -1,11 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { requireRole } from '@/lib/auth/roles'
 
 export async function POST(req: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const access = await requireRole('admin')
+  if (!access.ok) return access.response
+
+  const supabase = createAdminClient()
   const body = await req.json()
   const { key, name, repo_url, description } = body
   if (!key || !name) return NextResponse.json({ error: '项目名称和标识必填' }, { status: 400 })

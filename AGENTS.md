@@ -27,6 +27,7 @@ Before making non-trivial changes, read the relevant source plus:
 - `README.md` and `README.zh-CN.md` for setup, architecture, and validation flow.
 - `DESIGN.md` for product and protocol intent.
 - `PROGRESS.md` for current implementation status.
+- `docs/platform-architecture-roadmap.md` and `docs/platform-architecture-roadmap.zh-CN.md` for Auth/RLS, Agent preview loop, and architecture boundary decisions.
 - `agent/README.md` before changing Local Agent behavior.
 - `docs/meteortest.example.yml` before changing suite import or contract parsing.
 
@@ -136,7 +137,7 @@ For public Web preview work:
 - The current public preview URL is `https://meteortest.jcmeteor.com/`.
 - The current hardening sequence is recorded in `PROGRESS.md`: public preview mode, access protection, preview seed data, task/report experience, then private-Agent online loop.
 - Public preview deployments should set `METEORTEST_AGENT_DISABLED=1` and `METEORTEST_PUBLIC_PREVIEW=1`.
-- If a public preview should not be openly browseable, set `METEORTEST_PREVIEW_ACCESS_TOKEN` in the deployment provider. Do not commit it, expose it as `NEXT_PUBLIC_*`, or paste it into issues, PRs, screenshots, or docs.
+- Public preview access control is handled by Supabase Auth and RLS. Do not reintroduce a separate shared preview-token gate unless the access model is redesigned and documented.
 - In public preview mode, `/api/agent/status` and the Executors page must never attempt to start a machine-local Agent. They should show a clear disabled/unavailable state and instruct the operator to run the Agent privately.
 - Do not add public Web preview links to the personal website without preserving this boundary: Web preview is online, Local Agent execution is private, and public connected execution is deferred.
 

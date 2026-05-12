@@ -47,16 +47,15 @@
 - [x] Vercel runbook 明确不要配置 `METEORTEST_REPO_ROOT`、`METEORTEST_AGENT_PYTHON`、`METEORTEST_AGENT_INTERVAL` 或本机路径
 - [x] Smoke check 覆盖 `/executors` 和 `/api/agent/status`，确认不暴露本机路径、栈信息、密钥或 Agent 启动入口
   - `apps/web/scripts/check-public-preview.mts` 使用 public-preview 环境构建并启动独立 smoke server。
-  - CI 通过 `npm run smoke:public-preview` 验证 preview access gate、`/api/agent/status` 禁用 Agent 控制、`/executors` 服务端渲染 public preview 边界提示，并扫描响应中是否出现本机路径、密钥变量、栈信息或 Agent 启动入口。
+  - CI 通过 `npm run smoke:public-preview` 验证 `/api/agent/status` 禁用 Agent 控制、受保护页面跳转登录页，并扫描响应中是否出现本机路径、密钥变量、栈信息或 Agent 启动入口。
   - smoke 使用 `METEORTEST_SMOKE_NO_SUPABASE=1` 跳过 Supabase 查询；Vercel 真实公网预览已配置 Supabase 密钥时仍可正常展示 preview 数据。
 
 ### Authentication And Access Control
 
-- [ ] 短期：启用 Vercel Deployment Protection、Vercel Password 或等价访问保护
-- [x] 增加应用级 `METEORTEST_PREVIEW_ACCESS_TOKEN` 访问门禁，供公网预览在 Vercel 环境变量中启用
-- [x] 在 `docs/vercel-public-preview.md` 和中文文档中记录访问保护方式与 token 边界
-- [ ] 中期：设计 Supabase Auth 登录页、会话状态、API route 鉴权和 viewer/operator/admin 角色边界
-- [ ] 长期：把任务创建、构建登记、AI 分析、执行器控制等操作拆分权限
+- [x] 使用 Supabase Auth + RLS 作为公网预览和平台控制台访问边界
+- [x] 新增用户名/手机号密码登录页、个人信息页和 viewer/operator/admin 角色边界
+- [x] API 写操作按角色校验；数据库层启用 RLS
+- [ ] 后续：项目级权限、团队/组织模型、反馈管理后台
 
 ### Preview Data Initialization
 
@@ -167,6 +166,8 @@
 - [x] 导航、设置、AI 模板、空状态、表单提示和页面标题接入多语言
 - [x] 设置页支持语言切换，语言状态通过 `meteortest.locale` cookie 驱动 Web UI
 - [x] README / DESIGN / PROGRESS 保持中英文文档同步
+- [x] Phase 11 Auth/RLS/Agent 加固第一轮：新增登录页、个人信息页、Supabase profiles/feedbacks/RLS、API 角色检查、Allure URL 修复、private Agent loop 半自动验证脚本和 Agent config 启动前校验
+- [x] 新增平台架构与路线文档：`docs/platform-architecture-roadmap.md` 和 `docs/platform-architecture-roadmap.zh-CN.md`
 
 ## 远期：独立 Agent 与高级执行能力
 

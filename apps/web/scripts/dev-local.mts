@@ -104,7 +104,6 @@ function startVisibleWindowsServer(nextPath: string, env: NodeJS.ProcessEnv) {
     batchSet('METEORTEST_PUBLIC_PREVIEW', env.METEORTEST_PUBLIC_PREVIEW),
     batchSet('METEORTEST_AGENT_DISABLED', env.METEORTEST_AGENT_DISABLED),
     batchSet('METEORTEST_LOCAL_DEMO', env.METEORTEST_LOCAL_DEMO),
-    batchSet('METEORTEST_PREVIEW_ACCESS_TOKEN', ''),
     'echo MeteorTest WebUI local preview',
     `echo URL: ${previewUrl}`,
     `echo AI page: ${previewUrl}ai`,
@@ -171,8 +170,6 @@ const env: NodeJS.ProcessEnv = {
   METEORTEST_AGENT_DISABLED: process.env.METEORTEST_AGENT_DISABLED || '1',
   METEORTEST_LOCAL_DEMO: process.env.METEORTEST_LOCAL_DEMO || '1',
 }
-
-delete env.METEORTEST_PREVIEW_ACCESS_TOKEN
 
 if (process.platform === 'win32') {
   const windowPid = startVisibleWindowsServer(nextPath, env)

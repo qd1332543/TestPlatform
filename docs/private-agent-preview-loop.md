@@ -1,5 +1,27 @@
 # Private Agent Preview Loop
 
+## Semi-Automated Validation Script
+
+The Web package now includes:
+
+```bash
+cd apps/web
+npm run validate:private-agent-loop
+```
+
+The script uses `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to create a private preview task, then polls task status, log URL, and Allure URL.
+
+Optional environment variables:
+
+```text
+METEORTEST_LOOP_PROJECT_KEY=yunlu-ios
+METEORTEST_LOOP_SUITE_KEY=smoke
+METEORTEST_LOOP_ENVIRONMENT=dev
+METEORTEST_LOOP_TIMEOUT_SECONDS=600
+```
+
+Make sure the private Local Agent is running, or start it immediately after the script creates the task.
+
 This runbook validates the safe connected-preview path:
 
 ```text

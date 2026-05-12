@@ -55,6 +55,12 @@ Local JSON tasks can pass either `parameters.app_path` or `parameters.app_url`. 
 
 Suite logs are always written locally under the configured artifact root. In Supabase mode, if `artifacts.supabase_bucket` is configured, the reporter uploads `output.log` and a zipped `allure-results` archive to Supabase Storage and stores the resulting URLs in `reports`.
 
+If a suite command explicitly provides `--alluredir`, the Agent now uses that actual path when packaging Allure results. This supports both `--alluredir=path` and `--alluredir path`. If the command does not provide `--alluredir` and the contract enables `report.allure`, the Agent injects the default task artifact path.
+
+## Config Validation
+
+The Agent validates config before polling tasks. Startup fails early with a grouped error message when required sections, Supabase env vars, repository paths, contract files, or artifact output roots are missing. This keeps new project onboarding failures close to the actual configuration problem instead of surfacing later as task execution errors.
+
 ## Supabase Task Filters
 
 For connected preview validation, the Agent can restrict which queued tasks it claims:

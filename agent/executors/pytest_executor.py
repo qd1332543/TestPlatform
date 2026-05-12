@@ -57,6 +57,21 @@ def _prepare_command(command: str, repo_path: str, parameters: dict) -> list[str
     return tokens
 
 
+def _resolve_allure_dir(command_tokens: list[str], repo_path: str) -> str | None:
+    for index, token in enumerate(command_tokens):
+        value = None
+        if token == "--alluredir" and index + 1 < len(command_tokens):
+            value = command_tokens[index + 1]
+        elif token.startswith("--alluredir="):
+            value = token.split("=", 1)[1]
+        if value:
+            path = Path(value)
+            if not path.is_absolute():
+                path = Path(repo_path) / path
+            return str(path)
+    return None
+
+
 def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
               parameters: dict | None = None) -> dict:
     """
@@ -80,11 +95,13 @@ def run_suite(suite: dict, repo_path: str, output_dir: str, task_id: str,
     # 如果 suite 有 allure 报告且命令未显式声明 --alluredir，则注入默认目录。
     allure_dir = None
     if suite.get("report", {}).get("allure"):
-        allure_dir = str(out_path / "allure-results")
         if "--alluredir" not in command:
+            allure_dir = str(out_path / "allure-results")
             command = f"{command} --alluredir={allure_dir}"
 
     command_tokens = _prepare_command(command, repo_path, parameters)
+    if suite.get("report", {}).get("allure"):
+        allure_dir = _resolve_allure_dir(command_tokens, repo_path) or allure_dir
 
     env = os.environ.copy()
     env.update({

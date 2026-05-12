@@ -67,10 +67,9 @@ Use this order when opening MeteorTest Web on the public internet:
    DEEPSEEK_API_KEY optional
    METEORTEST_AGENT_DISABLED=1
    METEORTEST_PUBLIC_PREVIEW=1
-   METEORTEST_PREVIEW_ACCESS_TOKEN optional
    ```
 
-4. Optionally set `METEORTEST_PREVIEW_ACCESS_TOKEN` to enable an app-level access gate for the public preview. Visitors must enter this token before pages load; API callers can send it through the `x-meteortest-preview-token` header.
+4. Apply the Auth/RLS migration and create an admin account before treating the public preview as usable. Public access control is handled by Supabase Auth and RLS.
 5. Keep `METEORTEST_REPO_ROOT`, `METEORTEST_AGENT_PYTHON`, `METEORTEST_AGENT_INTERVAL`, local repository paths, and local Agent config out of the public Web deployment unless a reviewed execution-safety design exists.
 6. Deploy `apps/web` with Node.js 22, `npm ci`, and `npm run build`.
 7. Smoke-check the public URL:
@@ -89,12 +88,12 @@ Public-preview smoke check:
 npm run smoke:public-preview
 ```
 
-The smoke check builds the Web app with public-preview environment flags, starts an isolated local preview server, verifies the optional preview access gate, verifies `/api/agent/status` stays disabled, verifies `/executors` renders the public-preview boundary message, and scans responses for local paths, secret variable names, stack traces, or Agent startup details. It uses `METEORTEST_SMOKE_NO_SUPABASE=1` internally so CI can run without preview Supabase credentials; do not set this flag in Vercel. Real Vercel previews should use the configured preview Supabase environment and safe demo data.
+The smoke check builds the Web app with public-preview environment flags, starts an isolated local preview server, verifies `/api/agent/status` stays disabled, verifies protected pages redirect to login, and scans responses for local paths, secret variable names, stack traces, or Agent startup details. It uses `METEORTEST_SMOKE_NO_SUPABASE=1` internally so CI can run without preview Supabase credentials; do not set this flag in Vercel. Real Vercel previews should use the configured preview Supabase environment and safe demo data.
 
 Current follow-up order:
 
 1. Harden public preview mode so public deployments never try to start a machine-local Agent.
-2. Enable access protection before treating the preview as a long-lived public console. Use Vercel Deployment Protection, `METEORTEST_PREVIEW_ACCESS_TOKEN`, or both.
+2. Apply Auth/RLS and create at least one admin account before treating the preview as a long-lived public console.
 3. Seed safe demo data for dashboard, projects, tasks, reports, executors, and builds.
 4. Improve task detail and report analysis surfaces around status, logs, failure category, AI analysis, and next actions.
 5. Run a private Local Agent against the preview backend only after the preview boundary is stable.

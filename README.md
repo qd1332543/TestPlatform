@@ -38,6 +38,11 @@ MeteorTest is a general-purpose automation testing platform for managing multipl
 - [Cost Notes](#cost-notes)
 - [Roadmap](#roadmap)
 
+Additional docs:
+
+- [Platform architecture and roadmap](docs/platform-architecture-roadmap.md)
+- [Private Agent preview loop](docs/private-agent-preview-loop.md)
+
 ## Maintainer
 
 MeteorTest is initiated and maintained by **Meteor**.
@@ -82,6 +87,7 @@ sequenceDiagram
 - Report center: record logs, Allure artifacts, execution summaries, and task status.
 - AI assistant: support contextual Q&A, project creation, task creation, task detail lookup, and result analysis.
 - Settings: configure platform name, UI language, theme, information density, AI model, default environment, notification strategy, and Agent launch behavior.
+- Account access: supports username or phone password sign-in, profile management, feedback, and viewer/operator/admin role boundaries.
 
 ## Capability Overview
 
@@ -111,6 +117,7 @@ Current capabilities around this loop:
 - **Executors**: view Local Agent status, capability tags, heartbeats, and launch entry points.
 - **Report Center**: view execution logs, Allure artifacts, summaries, and task results.
 - **AI Assistant**: create tasks, query task details, analyze results, and answer contextual questions.
+- **Account access**: username or phone password sign-in, profile, feedback, and role boundaries.
 
 Supporting management capabilities:
 

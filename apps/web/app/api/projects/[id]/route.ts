@@ -1,11 +1,9 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { requireRole } from '@/lib/auth/roles'
 
 function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  )
+  return createAdminClient()
 }
 
 function publicPreviewResponse() {
@@ -14,6 +12,9 @@ function publicPreviewResponse() {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const access = await requireRole('admin')
+  if (!access.ok) return access.response
+
   const preview = publicPreviewResponse()
   if (preview) return preview
 
@@ -36,6 +37,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const access = await requireRole('admin')
+  if (!access.ok) return access.response
+
   const preview = publicPreviewResponse()
   if (preview) return preview
 

@@ -1,15 +1,16 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import yaml from 'js-yaml'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { requireRole } from '@/lib/auth/roles'
 
 type SuiteEntry = { id?: string; key?: string; suite_key?: string; name?: string; type?: string; command?: string }
 type Contract = { suites?: SuiteEntry[] }
 
 export async function POST(req: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const access = await requireRole('admin')
+  if (!access.ok) return access.response
+
+  const supabase = createAdminClient()
   const { project_id, yml } = await req.json()
   if (!project_id || !yml) return NextResponse.json({ error: '参数缺失' }, { status: 400 })
 
