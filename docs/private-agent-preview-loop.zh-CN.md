@@ -1,5 +1,27 @@
 # 私有 Agent 预览闭环
 
+## 半自动验证脚本
+
+Web 项目新增脚本：
+
+```bash
+cd apps/web
+npm run validate:private-agent-loop
+```
+
+脚本会使用 `NEXT_PUBLIC_SUPABASE_URL` 和 `SUPABASE_SERVICE_ROLE_KEY` 创建一条 private preview task，并轮询任务状态、日志 URL 和 Allure URL。
+
+可选环境变量：
+
+```text
+METEORTEST_LOOP_PROJECT_KEY=yunlu-ios
+METEORTEST_LOOP_SUITE_KEY=smoke
+METEORTEST_LOOP_ENVIRONMENT=dev
+METEORTEST_LOOP_TIMEOUT_SECONDS=600
+```
+
+运行脚本前，确保私有机器上的 Local Agent 已启动，或在脚本创建任务后立即启动 Agent。
+
 这个 runbook 用来验证安全的联网预览路径：
 
 ```text

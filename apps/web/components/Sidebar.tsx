@@ -116,6 +116,8 @@ export default function Sidebar() {
     ? { background: 'var(--surface-soft)', color: 'var(--text-primary)', fontWeight: 600, border: '1px solid var(--border)' }
     : { color: 'var(--text-secondary)' }
 
+  if (pathname.startsWith('/login')) return null
+
   return (
     <>
     <header
@@ -124,10 +126,10 @@ export default function Sidebar() {
     >
       <div className="flex items-center gap-3 px-3 py-3">
         <span className="brand-orbit" />
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{platformName}</div>
-          <div className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{t.common.automationPlatform}</div>
-        </div>
+          <Link href="/profile" className="min-w-0 flex-1 rounded-lg">
+            <div className="text-sm font-bold truncate" style={{ color: 'var(--text-primary)' }}>{platformName}</div>
+            <div className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{t.common.automationPlatform}</div>
+          </Link>
         <Link
           href={aiItem.href}
           className="shrink-0 rounded-lg px-3 py-2 text-xs font-semibold"
@@ -167,13 +169,13 @@ export default function Sidebar() {
     >
       <div className="flex items-center justify-between px-3 mb-7 h-10">
         {!collapsed && (
-          <div className="flex items-center gap-3 overflow-hidden">
+          <Link href="/profile" className="flex items-center gap-3 overflow-hidden rounded-xl">
             <span className="brand-orbit" />
             <div className="min-w-0">
               <div className="text-white font-bold text-sm tracking-wide whitespace-nowrap truncate">{platformName}</div>
             <div className="text-xs whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>{t.common.automationPlatform}</div>
             </div>
-          </div>
+          </Link>
         )}
         <button
           onClick={() => setCollapsed(c => !c)}

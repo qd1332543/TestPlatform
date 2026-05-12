@@ -1,38 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
-import {
-  isPreviewAccessEnabled,
-  isValidPreviewAccessToken,
-  previewAccessCookieName,
-  previewAccessTokenHeader,
-} from '@/lib/previewAccess'
+import { createServerClient } from '@supabase/ssr'
 
-const publicPaths = new Set(['/preview-access', '/api/preview-access', '/favicon.ico'])
+const publicPaths = new Set(['/login', '/api/auth/logout', '/favicon.ico'])
+const authOptionalPaths = new Set(['/api/agent/status'])
 
-function hasPreviewAccess(request: NextRequest) {
-  const cookieToken = request.cookies.get(previewAccessCookieName)?.value
-  const headerToken = request.headers.get(previewAccessTokenHeader)
-  return isValidPreviewAccessToken(cookieToken) || isValidPreviewAccessToken(headerToken)
+async function getSessionResponse(request: NextRequest) {
+  let response = NextResponse.next({ request })
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !anonKey) return { response, user: null }
+
+  const supabase = createServerClient(supabaseUrl, anonKey, {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll()
+      },
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+        response = NextResponse.next({ request })
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
+      },
+    },
+  })
+
+  const { data } = await supabase.auth.getUser()
+  return { response, user: data.user ?? null }
 }
 
-export function proxy(request: NextRequest) {
-  if (!isPreviewAccessEnabled()) return NextResponse.next()
-
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl
-  if (publicPaths.has(pathname) || pathname.startsWith('/_next/')) {
-    return NextResponse.next()
-  }
+  const isPublicPath = publicPaths.has(pathname) || pathname.startsWith('/_next/')
 
-  if (hasPreviewAccess(request)) return NextResponse.next()
+  if (isPublicPath) return NextResponse.next()
+
+  const { response, user } = await getSessionResponse(request)
+  if (authOptionalPaths.has(pathname)) return response
+  if (user) return response
 
   if (pathname.startsWith('/api/')) {
-    return NextResponse.json({ error: 'Preview access required' }, { status: 401 })
+    return NextResponse.json({ error: 'Authentication required' }, { status: 401 })
   }
 
-  const redirectUrl = request.nextUrl.clone()
-  redirectUrl.pathname = '/preview-access'
-  redirectUrl.search = ''
-  redirectUrl.searchParams.set('next', `${pathname}${search}`)
-  return NextResponse.redirect(redirectUrl)
+  const loginUrl = request.nextUrl.clone()
+  loginUrl.pathname = '/login'
+  loginUrl.search = ''
+  loginUrl.searchParams.set('next', `${pathname}${search}`)
+  return NextResponse.redirect(loginUrl)
 }
 
 export const config = {

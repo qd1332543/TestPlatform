@@ -5,7 +5,8 @@ import time
 from pathlib import Path
 
 from agent.agent import run_agent
-from agent.executors.pytest_executor import _prepare_command, _repo_python_candidates
+from agent.executors.pytest_executor import _prepare_command, _repo_python_candidates, _resolve_allure_dir
+from agent.services.config_validator import ConfigValidationError, validate_config
 
 
 def _write_sample_repo(repo_path: Path) -> None:
@@ -137,3 +138,43 @@ def test_python_command_can_be_configured_per_task(tmp_path):
     )
 
     assert command[0] == r"C:\Python313\python.exe"
+
+
+def test_allure_dir_resolves_explicit_relative_path(tmp_path):
+    repo_path = tmp_path / "sample-repo"
+    repo_path.mkdir()
+
+    allure_dir = _resolve_allure_dir(
+        ["python", "-m", "pytest", "--alluredir=Reports/platform/task-1/allure-results"],
+        str(repo_path),
+    )
+
+    assert allure_dir == str(repo_path / "Reports/platform/task-1/allure-results")
+
+
+def test_allure_dir_resolves_explicit_split_arg(tmp_path):
+    repo_path = tmp_path / "sample-repo"
+    repo_path.mkdir()
+
+    allure_dir = _resolve_allure_dir(
+        ["python", "-m", "pytest", "--alluredir", "Reports/platform/task-1/allure-results"],
+        str(repo_path),
+    )
+
+    assert allure_dir == str(repo_path / "Reports/platform/task-1/allure-results")
+
+
+def test_config_validation_reports_missing_repository(tmp_path):
+    config = {
+        "agent": {"name": "local-test-agent", "type": "local_mac"},
+        "platform": {"mode": "local", "local_task_store": "tasks.json"},
+        "artifacts": {"local_output_root": str(tmp_path / "artifacts")},
+        "repositories": [{"key": "missing", "path": str(tmp_path / "missing"), "contract": "meteortest.yml"}],
+    }
+
+    try:
+        validate_config(config, str(tmp_path / "config.yaml"))
+    except ConfigValidationError as exc:
+        assert "repositories[0].path does not exist" in str(exc)
+    else:
+        raise AssertionError("Expected ConfigValidationError")

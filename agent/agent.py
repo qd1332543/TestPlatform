@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 from agent.services.contract_reader import load_contract, get_suite
 from agent.executors.pytest_executor import run_suite
+from agent.services.config_validator import validate_config
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ def _setup_supabase_env(config: dict):
 
 def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
     config = load_config(config_path)
+    validate_config(config, config_path)
     agent_cfg = config["agent"]
     agent_name = agent_cfg["name"]
     mode = config["platform"]["mode"]

@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "smoke:public-preview": "node --experimental-strip-types scripts/check-public-preview.mts"
+    "smoke:public-preview": "node --experimental-strip-types scripts/check-public-preview.mts",
+    "validate:private-agent-loop": "node --experimental-strip-types scripts/validate-private-agent-loop.mts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.10.2",

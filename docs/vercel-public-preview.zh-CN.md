@@ -66,12 +66,11 @@ SUPABASE_SERVICE_ROLE_KEY=your-preview-service-role-key
 DEEPSEEK_API_KEY=可选
 METEORTEST_AGENT_DISABLED=1
 METEORTEST_PUBLIC_PREVIEW=1
-METEORTEST_PREVIEW_ACCESS_TOKEN=可选的共享预览口令
 ```
 
 这些值要配置在 Vercel Project Settings 中，不要提交 `.env.local`。
 
-`METEORTEST_PREVIEW_ACCESS_TOKEN` 会启用应用级预览访问门禁。它和 `METEORTEST_PUBLIC_PREVIEW=1` 同时存在时，访问者需要先输入口令才能加载页面。API 调用方可以通过 `x-meteortest-preview-token` 请求头传入同一个值。只有在 Vercel Deployment Protection 或其他访问控制已经启用的短期预览中，才建议留空。
+公网访问控制由 Supabase Auth 和 RLS 负责。长期使用公网预览前，先执行最新迁移并创建 admin 账号。
 
 不要在 Vercel 中配置 `METEORTEST_SMOKE_NO_SUPABASE`。这个变量只给 CI smoke check 使用，用来在没有真实 Supabase 密钥的情况下验证公网预览安全边界。
 
@@ -82,7 +81,6 @@ METEORTEST_PREVIEW_ACCESS_TOKEN=可选的共享预览口令
 - 不要给 service-role key 或 AI 服务 key 加 `NEXT_PUBLIC_` 前缀。
 - 不要在公网部署中配置 `METEORTEST_REPO_ROOT`、`METEORTEST_AGENT_PYTHON`、`METEORTEST_AGENT_INTERVAL`、本地仓库路径或本机 Agent 配置，除非已经完成执行安全设计。
 - 公网预览部署不得尝试启动 Local Agent。`/executors` 和 `/api/agent/status` 应显示 disabled/unavailable 状态。
-- 如果配置了 `METEORTEST_PREVIEW_ACCESS_TOKEN`，它只能放在 Vercel Project Settings 服务端环境中，不要粘贴到 issue、PR 描述、截图或客户端代码里。
 
 ## Supabase 预览环境
 
@@ -130,7 +128,7 @@ supabase/seed-preview.sql
 npm run smoke:public-preview
 ```
 
-这个本地 smoke check 会用公网预览开关构建 Web 应用，启动隔离的预览服务，验证预览访问门禁，验证 `/api/agent/status` 保持 disabled，验证 `/executors` 渲染公网预览边界提示，并扫描本机路径、密钥变量名、堆栈信息或 Agent 启动入口。它会故意使用 `METEORTEST_SMOKE_NO_SUPABASE=1`；真实 Vercel 预览应该使用 Project Settings 中配置的 Supabase 变量。
+这个本地 smoke check 会用公网预览开关构建 Web 应用，启动隔离的预览服务，验证 `/api/agent/status` 保持 disabled，验证受保护页面跳转登录页，并扫描本机路径、密钥变量名、堆栈信息或 Agent 启动入口。它会故意使用 `METEORTEST_SMOKE_NO_SUPABASE=1`；真实 Vercel 预览应该使用 Project Settings 中配置的 Supabase 变量。
 
 打开部署 URL，检查：
 
@@ -157,7 +155,7 @@ npm run smoke:public-preview
 然后按这个顺序继续加固：
 
 1. 公网预览模式：确保公网部署不可能启动本机 Agent，并记录不可用状态。
-2. 访问保护：长期公开前启用 Vercel Deployment Protection、`METEORTEST_PREVIEW_ACCESS_TOKEN` 或等价保护。
+2. 访问保护：长期公开前执行 Auth/RLS 并创建 admin 账号。
 3. 预览数据：执行 `supabase/seed-preview.sql` 初始化安全 demo 项目、suite、任务、报告、执行器和构建数据。
 4. 任务/报告体验：通过状态、日志、失败分类、AI 分析和下一步建议，让 failed task 可读。
 5. 私有 Agent 闭环：上述稳定后，按照 `docs/private-agent-preview-loop.zh-CN.md` 让私有 Local Agent 连接 preview backend。

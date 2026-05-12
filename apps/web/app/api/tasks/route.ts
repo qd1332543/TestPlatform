@@ -1,11 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { requireRole } from '@/lib/auth/roles'
 
 export async function POST(req: NextRequest) {
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
+  const access = await requireRole('operator')
+  if (!access.ok) return access.response
+
+  const supabase = createAdminClient()
   const body = await req.json()
   const { project_id, suite_id, environment, app_build_id } = body
   if (!project_id || !suite_id) return NextResponse.json({ error: '参数缺失' }, { status: 400 })
@@ -16,6 +17,7 @@ export async function POST(req: NextRequest) {
     environment,
     status: 'queued',
     app_build_id: app_build_id || null,
+    created_by: access.role,
     parameters: {
       source: 'web-console',
       private_agent_preview: process.env.METEORTEST_PUBLIC_PREVIEW === '1',

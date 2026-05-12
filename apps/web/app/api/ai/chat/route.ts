@@ -1,7 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
 import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
 import { demoExecutors, demoProjects, demoTasks, isLocalDemo } from '@/lib/localDemo'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { requireRole } from '@/lib/auth/roles'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
@@ -20,10 +21,7 @@ type TaskSnapshot = {
 }
 
 function serviceClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  )
+  return createAdminClient()
 }
 
 function normalize(value?: string | null) {
@@ -254,6 +252,9 @@ async function getTaskDetail(args: Record<string, unknown>): Promise<ToolResult>
 }
 
 async function createProject(args: Record<string, unknown>): Promise<ToolResult> {
+  const access = await requireRole('admin')
+  if (!access.ok) return { ok: false, error: '创建项目需要 admin 权限。' }
+
   const key = String(args.key ?? '').trim()
   const name = String(args.name ?? '').trim()
   const repoUrl = String(args.repo_url ?? '').trim()
@@ -272,6 +273,9 @@ async function createProject(args: Record<string, unknown>): Promise<ToolResult>
 }
 
 async function createTask(args: Record<string, unknown>): Promise<ToolResult> {
+  const access = await requireRole('operator')
+  if (!access.ok) return { ok: false, error: '创建任务需要 operator 权限。' }
+
   const supabase = serviceClient()
   const projectId = String(args.project_id ?? '').trim()
   const projectName = String(args.project_name ?? '').trim()
