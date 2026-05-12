@@ -14,7 +14,10 @@ Open `http://127.0.0.1:3000/`.
 ## Viewports
 
 - Mobile: `390 x 844`
-- Desktop: `1280 x 900`
+- Small browser screen, 12-14 inch laptop class: `1280 x 800`
+- Regular desktop: `1440 x 900`
+- Wide desktop: `2560 x 1100`
+- 4K-style desktop: `3560 x 1100`
 
 ## Pages
 
@@ -46,3 +49,4 @@ Check at least these themes when UI colors change:
 - Primary actions, selected states, links, status badges, forms, and AI message cards use semantic tokens instead of hard-coded page colors.
 - Text contrast follows the actual component background: dark backgrounds use light text, light backgrounds use dark text.
 - Settings changes that affect theme, language, density, or layout are reflected in both code and documentation.
+- Desktop layouts use proportional columns for main content and side panels; mobile remains single-column unless a page has a deliberate mobile-specific pattern.

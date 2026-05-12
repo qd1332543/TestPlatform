@@ -56,6 +56,20 @@ export default async function ReportsPage() {
   const failedCount = reports.filter(r => r.status === 'failed' || r.status === 'timeout').length
   const analyzedCount = reports.filter(r => firstItem(r.ai_analyses)).length
   const missingReportCount = reports.filter(r => !firstItem(r.reports)).length
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayReports = reports.filter(r => new Date(r.created_at) >= todayStart)
+  const todaySucceededCount = todayReports.filter(r => r.status === 'succeeded').length
+  const todayFailedCount = todayReports.filter(r => r.status === 'failed' || r.status === 'timeout').length
+  const successRate = totalReports > 0 ? `${Math.round((succeededCount / totalReports) * 100)}%` : '-'
+  const aiCoverage = totalReports > 0 ? `${Math.round((analyzedCount / totalReports) * 100)}%` : '-'
+  const qualityItems = [
+    { label: t.reports.todaySucceeded, value: String(todaySucceededCount), tone: 'status-succeeded' },
+    { label: t.reports.todayFailed, value: String(todayFailedCount), tone: 'status-failed' },
+    { label: t.reports.successRate, value: successRate, tone: 'status-running' },
+    { label: t.reports.aiCoverage, value: aiCoverage, tone: 'status-running' },
+    { label: t.reports.missingReports, value: String(missingReportCount), tone: missingReportCount > 0 ? 'status-queued' : 'status-succeeded' },
+  ]
 
   return (
     <div className="page-shell space-y-6">
@@ -89,8 +103,8 @@ export default async function ReportsPage() {
           <div className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{t.pages.reports.empty}</div>
         </div>
       ) : (
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-4">
+        <div className="proportional-layout">
+          <div className="order-2 space-y-4 xl:order-none">
           {reports.map(report => {
             const taskReport = firstItem(report.reports)
             const analysis = firstItem(report.ai_analyses)
@@ -212,28 +226,26 @@ export default async function ReportsPage() {
             )
           })}
           </div>
-          <aside className="data-panel rounded-xl p-5 h-fit space-y-5">
-            <div>
-              <div className="section-title">{t.reports.aiAnalysis}</div>
-              <div className="section-subtitle mt-1">{t.pages.reports.subtitle}</div>
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <span style={{ color: 'var(--text-muted)' }}>{t.reports.noReport}</span>
-                <span className="text-lg font-bold text-white">{missingReportCount}</span>
+          <aside className="order-1 self-start space-y-3 xl:order-none" style={{ alignSelf: 'start' }}>
+            <div className="reports-insight-panel data-panel h-fit rounded-xl p-5">
+              <div>
+                <div className="section-title">{t.reports.qualityOverview}</div>
+                <div className="section-subtitle mt-1">{t.reports.qualityOverviewDesc}</div>
               </div>
-              <div className="flex items-center justify-between gap-4">
-                <span style={{ color: 'var(--text-muted)' }}>{t.reports.analyzed}</span>
-                <span className="text-lg font-bold text-white">{analyzedCount}</span>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <span style={{ color: 'var(--text-muted)' }}>{t.reports.failed}</span>
-                <span className="text-lg font-bold text-white">{failedCount}</span>
+              <div className="reports-quality-grid mt-5">
+                {qualityItems.map((item, index) => (
+                  <div key={item.label} className={`reports-quality-card panel-inner rounded-lg ${index === qualityItems.length - 1 ? 'is-wide' : ''}`}>
+                    <div className={`status-badge ${item.tone} px-2 py-0.5`}>{item.label}</div>
+                    <div className="mt-2 text-2xl font-bold text-white min-[1800px]:mt-3 min-[1800px]:text-3xl">{item.value}</div>
+                  </div>
+                ))}
               </div>
             </div>
-            <Link href="/ai" className="primary-action inline-flex w-full justify-center rounded-lg px-4 py-2 text-sm font-semibold">
-              {t.common.aiAssistant}
-            </Link>
+            <div className="reports-insight-footer flex h-[68px] items-center rounded-xl px-3">
+              <Link href="/ai" className="reports-ai-link primary-action inline-flex h-11 w-full items-center justify-center rounded-lg px-4 text-sm font-semibold leading-none">
+                {t.reports.openAiTriage}
+              </Link>
+            </div>
           </aside>
         </div>
       )}

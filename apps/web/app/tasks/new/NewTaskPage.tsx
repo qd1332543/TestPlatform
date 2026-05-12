@@ -12,7 +12,7 @@ export default async function NewTaskPage() {
   ])
 
   return (
-    <div className="space-y-6 w-full max-w-6xl">
+    <div className="space-y-6 w-full">
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
@@ -25,7 +25,7 @@ export default async function NewTaskPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="proportional-layout">
         <NewTaskForm projects={projects ?? []} builds={builds ?? []} />
         <aside className="data-panel rounded-xl p-5 space-y-4">
           <div>

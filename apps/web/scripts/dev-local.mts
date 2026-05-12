@@ -12,6 +12,7 @@ const healthUrl = `http://${host}:${port}/ai`
 const nextDir = join(webRoot, '.next')
 const pidFile = join(nextDir, 'dev-local.pid')
 const logFile = join(nextDir, 'dev-local.log')
+const windowScriptFile = join(nextDir, 'dev-local-window.cmd')
 
 function run(command: string, args: string[]) {
   return execFileSync(command, args, {
@@ -81,10 +82,63 @@ function requestStatus(url: string) {
   })
 }
 
+function batchSet(name: string, value: string | undefined) {
+  return `set "${name}=${value ?? ''}"`
+}
+
+function batchQuoted(value: string) {
+  return `"${value.replaceAll('"', '""')}"`
+}
+
+function powershellQuoted(value: string) {
+  return `'${value.replaceAll("'", "''")}'`
+}
+
+function startVisibleWindowsServer(nextPath: string, env: NodeJS.ProcessEnv) {
+  writeFileSync(windowScriptFile, [
+    '@echo off',
+    `title MeteorTest WebUI - ${previewUrl}`,
+    `cd /d ${batchQuoted(webRoot)}`,
+    batchSet('NEXT_PUBLIC_SUPABASE_URL', env.NEXT_PUBLIC_SUPABASE_URL),
+    batchSet('NEXT_PUBLIC_SUPABASE_ANON_KEY', env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    batchSet('METEORTEST_PUBLIC_PREVIEW', env.METEORTEST_PUBLIC_PREVIEW),
+    batchSet('METEORTEST_AGENT_DISABLED', env.METEORTEST_AGENT_DISABLED),
+    batchSet('METEORTEST_LOCAL_DEMO', env.METEORTEST_LOCAL_DEMO),
+    batchSet('METEORTEST_PREVIEW_ACCESS_TOKEN', ''),
+    'echo MeteorTest WebUI local preview',
+    `echo URL: ${previewUrl}`,
+    `echo AI page: ${previewUrl}ai`,
+    'echo Press Ctrl+C to stop the server, or close this window after previewing.',
+    'echo.',
+    `call ${batchQuoted(nextPath)} dev --webpack -H ${host} -p ${port}`,
+    'echo.',
+    'echo MeteorTest WebUI server exited. Press any key to close this window.',
+    'pause >nul',
+    '',
+  ].join('\r\n'), 'utf8')
+
+  const command = [
+    '$p = Start-Process',
+    "-FilePath 'cmd.exe'",
+    `-ArgumentList @('/k', ${powershellQuoted(windowScriptFile)})`,
+    `-WorkingDirectory ${powershellQuoted(webRoot)}`,
+    '-PassThru;',
+    '$p.Id',
+  ].join(' ')
+
+  const output = execFileSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', command], {
+    cwd: webRoot,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'inherit'],
+  })
+
+  return output.trim()
+}
+
 async function waitForHealthyServer() {
   for (let attempt = 0; attempt < 45; attempt += 1) {
     const status = await requestStatus(healthUrl)
-    if (status >= 200 && status < 500) return
+    if (pidsListeningOnPort().length > 0 && status >= 200 && status < 400) return
     await new Promise(resolve => setTimeout(resolve, 1000))
   }
 
@@ -120,20 +174,24 @@ const env: NodeJS.ProcessEnv = {
 
 delete env.METEORTEST_PREVIEW_ACCESS_TOKEN
 
-const logFd = openSync(logFile, 'a')
-const child = spawn(nextPath, ['dev', '-H', host, '-p', port], {
-  cwd: webRoot,
-  detached: true,
-  env,
-  shell: process.platform === 'win32',
-  stdio: ['ignore', logFd, logFd],
-})
+if (process.platform === 'win32') {
+  const windowPid = startVisibleWindowsServer(nextPath, env)
+  writeFileSync(pidFile, windowPid, 'utf8')
+} else {
+  const logFd = openSync(logFile, 'a')
+  const child = spawn(nextPath, ['dev', '--webpack', '-H', host, '-p', port], {
+    cwd: webRoot,
+    detached: true,
+    env,
+    stdio: ['ignore', logFd, logFd],
+  })
 
-child.unref()
-writeFileSync(pidFile, String(child.pid ?? ''), 'utf8')
+  child.unref()
+  writeFileSync(pidFile, String(child.pid ?? ''), 'utf8')
+}
 
 await waitForHealthyServer()
 
 console.log(`MeteorTest WebUI local preview is running at ${previewUrl}`)
 console.log(`AI page: ${previewUrl}ai`)
-console.log(`Logs: ${logFile}`)
+console.log(process.platform === 'win32' ? 'Server output is in the external MeteorTest WebUI window.' : `Logs: ${logFile}`)

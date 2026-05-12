@@ -198,6 +198,8 @@
 ### 平台产品化体验
 
 - [ ] 主题系统扩展为完整设计令牌，覆盖表格、图表、状态、表单和 AI 消息卡片
+- [x] 桌面端主内容与侧栏改为比例布局，移动端继续保持单列或移动端专用卡片模式
+  - Dashboard、Reports、Settings、AI、详情页局部分析区和新建 Project / Task / Build 表单页已移除固定像素侧栏
 - [ ] 支持用户级语言、主题、密度等偏好配置
 - [x] 增加 Web 控制台交互截图或视觉验收说明
   - `docs/webui-visual-checklist.md` 和 `docs/webui-visual-checklist.zh-CN.md` 记录本地预览、视口、页面、主题和验收标准

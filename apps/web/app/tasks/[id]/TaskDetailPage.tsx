@@ -275,7 +275,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   </div>
                 ))}
               </div>
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="proportional-layout">
                 <div className="panel-inner rounded-lg p-4">
                   <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.reports.nextSteps}</div>
                   <ul className="space-y-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>

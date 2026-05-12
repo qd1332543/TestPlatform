@@ -298,7 +298,7 @@ body {
 
 .page-shell {
   width: 100%;
-  max-width: 1280px;
+  max-width: none;
 }
 
 .console-hero {
@@ -443,6 +443,133 @@ body {
   border: 1px solid var(--border);
 }
 
+.settings-console-grid {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+}
+
+.proportional-layout,
+.proportional-layout-three {
+  display: grid;
+  gap: 20px;
+  width: 100%;
+}
+
+.ai-page-shell {
+  min-height: calc(100vh - 48px);
+}
+
+.ai-workspace-grid {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  transition: grid-template-columns 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-side-panel,
+.ai-chat-panel,
+.ai-template-panel {
+  min-height: 0;
+}
+
+.ai-chat-panel {
+  min-height: clamp(860px, 96vh, 1040px);
+}
+
+.ai-side-panel {
+  min-width: 0;
+}
+
+.ai-side-panel-body {
+  min-width: 220px;
+  transform: translateX(0);
+  transition: transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-workspace-grid.is-history-collapsed .ai-side-panel {
+  pointer-events: none;
+}
+
+.ai-workspace-grid.is-history-collapsed .ai-side-panel-body {
+  transform: translateX(calc(-100% - 16px));
+}
+
+.ai-chat-panel {
+  transition: margin-left 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-workspace-grid.is-history-collapsed .ai-chat-panel {
+  margin-left: -16px;
+}
+
+.ai-history-collapsed-control {
+  align-self: start;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.ai-history-toggle {
+  animation: ai-toggle-pop 360ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: background 180ms ease, border-color 180ms ease, color 180ms ease, transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-history-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.ai-history-toggle:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.ai-history-toggle svg {
+  transition: transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-history-toggle.is-expand svg {
+  transform: rotate(180deg);
+}
+
+.ai-chat-toolbar {
+  min-height: 36px;
+}
+
+.reports-insight-footer {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-elevated);
+}
+
+.reports-quality-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr;
+}
+
+.reports-quality-card {
+  padding: 12px;
+}
+
+@keyframes ai-toggle-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.settings-panel-grid,
+.settings-side-grid {
+  display: grid;
+  gap: 20px;
+}
+
 .primary-action {
   background: var(--action-primary-bg);
   color: var(--action-primary-text);
@@ -549,6 +676,92 @@ body {
 .field-input option {
   background: var(--bg-base);
   color: var(--text-primary);
+}
+
+@media (min-width: 1280px) {
+  .proportional-layout {
+    grid-template-columns: minmax(0, 7fr) minmax(360px, 3fr);
+  }
+
+  .proportional-layout-three {
+    grid-template-columns: minmax(220px, 1.5fr) minmax(0, 5.7fr) minmax(280px, 2.8fr);
+  }
+
+  .ai-workspace-grid {
+    grid-template-columns: clamp(220px, 11.5%, 340px) minmax(0, 1fr) clamp(260px, 18.5%, 520px);
+    min-height: max(640px, calc(100vh - 196px));
+  }
+
+  .ai-workspace-grid.is-history-collapsed {
+    grid-template-columns: 0px minmax(0, 1fr) clamp(260px, 18.5%, 520px);
+  }
+
+  .ai-side-panel:not(.ai-history-collapsed-control),
+  .ai-chat-panel,
+  .ai-template-panel {
+    height: max(640px, calc(100vh - 196px));
+    max-height: none;
+  }
+
+  .ai-chat-panel {
+    min-height: 0;
+  }
+
+  .settings-console-grid {
+    grid-template-columns: minmax(0, 7fr) minmax(360px, 3fr);
+  }
+
+  .reports-insight-panel {
+    align-self: start;
+    max-height: none;
+    overflow: visible;
+  }
+
+}
+
+@media (min-width: 1800px) {
+  .proportional-layout {
+    grid-template-columns: minmax(0, 7fr) minmax(420px, 3fr);
+    align-items: start;
+  }
+
+  .proportional-layout-three {
+    grid-template-columns: minmax(260px, 1.5fr) minmax(0, 5.7fr) minmax(340px, 2.8fr);
+    align-items: start;
+  }
+
+  .ai-workspace-grid {
+    grid-template-columns: clamp(240px, 10.5%, 360px) minmax(0, 1fr) clamp(300px, 16%, 560px);
+  }
+
+  .ai-workspace-grid.is-history-collapsed {
+    grid-template-columns: 0px minmax(0, 1fr) clamp(300px, 16%, 560px);
+  }
+
+  .settings-console-grid {
+    grid-template-columns: minmax(0, 7fr) minmax(420px, 3fr);
+    align-items: start;
+  }
+
+  .reports-quality-grid {
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reports-quality-card {
+    padding: 16px;
+  }
+
+  .reports-quality-card.is-wide {
+    grid-column: span 2;
+  }
+
+}
+
+@media (min-width: 2560px) {
+  .settings-console-grid {
+    gap: 24px;
+  }
 }
 
 .status-badge {
