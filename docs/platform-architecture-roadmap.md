@@ -62,9 +62,70 @@ The login page accepts either username/password or phone/password:
 
 ## Recommended Next Steps
 
-1. Apply `supabase/migrations/004_auth_rls.sql`.
+1. Follow the [Supabase account and account-scoped data SQL runbook](supabase-account-data-runbook.md), then apply the latest `004_auth_rls.sql` and `005_account_preferences_ai_history.sql`.
 2. Create the admin user in Supabase Auth. Username accounts can use an internal email alias such as `admin@users.meteortest.local`; phone accounts should use international phone format such as `+86...`.
 3. Promote the user to `admin` in `profiles`.
-4. Deploy Web and verify `/login`, `/profile`, task creation, project management, and build registration.
+4. Deploy Web and verify `/login`, `/profile`, `/settings`, `/ai`, task creation, project management, and build registration.
 5. Run the private Agent and validate with `npm run validate:private-agent-loop`.
 6. Continue with organization/project-level permissions, feedback admin workflow, task cancel/rerun, and richer Allure visualization.
+
+## Account-Scoped Data Plan
+
+Tracking issue: `#82 [Feature] Add account-scoped preferences and AI conversation history`
+
+### Step 1: Account Preferences
+
+Status: implemented, pending live Supabase verification after `005_account_preferences_ai_history.sql` is applied.
+
+Goal: move the key user preferences currently stored in `meteortest.settings.v1` localStorage to account-scoped Supabase data.
+
+Table: `user_preferences`
+
+Fields:
+
+- `user_id`
+- `locale`
+- `theme`
+- `density`
+- `default_environment`
+- `ai_model`
+- `ai_base_url`
+- `auto_analyze_failures`
+
+Rules:
+
+- Read preferences after sign-in.
+- Save preferences from Settings to Supabase and mirror them to local storage.
+- Keep local storage as a fallback for signed-out, pre-load, or network-failure states.
+- Keep the locale cookie for Next.js first paint and server dictionary selection; sync it when account preferences are saved.
+
+Acceptance:
+
+- Settings loads theme, locale, density, default environment, and AI config from account preferences.
+- Preferences survive refresh after saving.
+- `npm run lint`, `npm run build`, and `npm run smoke:public-preview` pass.
+
+### Step 2: AI Conversation History
+
+Status: account API and Web integration implemented, pending live Supabase verification after `005_account_preferences_ai_history.sql` is applied.
+
+Goal: move AI chat history from browser localStorage to account-scoped conversations.
+
+Tables:
+
+- `ai_conversations`
+- `ai_messages`
+
+Rules:
+
+- Persist conversation creation, user messages, and assistant replies.
+- Show account history in the AI page sidebar.
+- Support delete, rename, and continue conversation.
+- Use localStorage only as a temporary fallback for unauthenticated or failed-load states.
+
+Acceptance:
+
+- AI history remains after page refresh.
+- Delete, rename, and continue actions sync to Supabase.
+- Failed AI sends do not corrupt existing history.
+- `npm run lint`, `npm run build`, and `npm run smoke:public-preview` pass.

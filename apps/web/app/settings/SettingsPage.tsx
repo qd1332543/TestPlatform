@@ -2,26 +2,26 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { dictionaries, supportedLocales, type Locale } from '@/content/i18n'
-import { useLocale } from '@/lib/useLocale'
+import { setLocaleCookie, useLocale } from '@/lib/useLocale'
+import {
+  defaultAccountPreferences,
+  normalizeAccountPreferences,
+  preferenceStorageKey,
+  settingsUpdatedEvent,
+  type AccountPreferences,
+} from '@/lib/account/preferences'
 
-type Settings = {
-  platformName: string
-  theme: 'meteor' | 'indigo' | 'dune' | 'aurora' | 'parchment' | 'sky' | 'glacier' | 'sakura'
-  defaultEnvironment: 'dev' | 'staging' | 'prod'
+type Settings = AccountPreferences & {
   taskTimeout: number
   maxParallelTasks: number
   retryCount: number
   reportRetentionDays: number
   autoStartAgent: boolean
   aiProvider: 'deepseek' | 'openai' | 'custom'
-  aiModel: string
-  aiBaseUrl: string
-  autoAnalyzeFailures: boolean
   notifyOnFailure: boolean
   notifyOnRecovery: boolean
   webhookUrl: string
   emailRecipients: string
-  density: 'comfortable' | 'compact'
 }
 
 type AgentStatus = {
@@ -30,41 +30,23 @@ type AgentStatus = {
   disabledReason?: string
 }
 
-const storageKey = 'meteortest.settings.v1'
-const settingsUpdatedEvent = 'meteortest-settings-updated'
-
 const defaultSettings: Settings = {
-  platformName: '星流测试台',
-  theme: 'meteor',
-  defaultEnvironment: 'dev',
+  ...defaultAccountPreferences,
   taskTimeout: 1800,
   maxParallelTasks: 4,
   retryCount: 1,
   reportRetentionDays: 30,
   autoStartAgent: true,
   aiProvider: 'deepseek',
-  aiModel: 'deepseek-v4-pro',
-  aiBaseUrl: 'https://api.deepseek.com',
-  autoAnalyzeFailures: true,
   notifyOnFailure: true,
   notifyOnRecovery: false,
   webhookUrl: '',
   emailRecipients: '',
-  density: 'comfortable',
 }
 
 function normalizeSettings(value: Partial<Settings>): Settings {
-  const settings = { ...defaultSettings, ...value }
-  if (!['meteor', 'indigo', 'dune', 'aurora', 'parchment', 'sky', 'glacier', 'sakura'].includes(settings.theme)) {
-    settings.theme = defaultSettings.theme
-  }
-  if (!settings.platformName?.trim()) {
-    settings.platformName = defaultSettings.platformName
-  }
-  if (!settings.aiModel?.trim() || settings.aiModel === 'deepseek-chat') {
-    settings.aiModel = defaultSettings.aiModel
-  }
-  return settings
+  const preferences = normalizeAccountPreferences(value)
+  return { ...defaultSettings, ...value, ...preferences }
 }
 
 const inputClass = 'field-input px-3 py-2.5 text-sm'
@@ -115,7 +97,7 @@ function Panel({ title, description, children }: { title: string; description: s
 }
 
 export default function SettingsPage() {
-  const { locale, dictionary: t, setLocale } = useLocale()
+  const { locale, dictionary: t } = useLocale()
   const [settings, setSettings] = useState<Settings>(defaultSettings)
   const [savedSettings, setSavedSettings] = useState<Settings>(defaultSettings)
   const [loaded, setLoaded] = useState(false)
@@ -126,11 +108,11 @@ export default function SettingsPage() {
   const agentControlsDisabled = agentStatus?.available === false
 
   useEffect(() => {
-    const raw = window.localStorage.getItem(storageKey)
+    const raw = window.localStorage.getItem(preferenceStorageKey)
     if (raw) {
       try {
         const parsed = normalizeSettings(JSON.parse(raw) as Partial<Settings>)
-        window.localStorage.setItem(storageKey, JSON.stringify(parsed))
+        window.localStorage.setItem(preferenceStorageKey, JSON.stringify(parsed))
         queueMicrotask(() => {
           setSettings(parsed)
           setSavedSettings(parsed)
@@ -143,6 +125,32 @@ export default function SettingsPage() {
       }
     }
     queueMicrotask(() => setLoaded(true))
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPreferences() {
+      try {
+        const res = await fetch('/api/preferences', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json() as { preferences?: Partial<AccountPreferences> }
+        if (cancelled || !data.preferences) return
+        const merged = normalizeSettings({ ...settings, ...data.preferences })
+        window.localStorage.setItem(preferenceStorageKey, JSON.stringify(merged))
+        applyTheme(merged.theme)
+        setSettings(merged)
+        setSavedSettings(merged)
+        window.dispatchEvent(new Event(settingsUpdatedEvent))
+      } catch {}
+    }
+
+    loadPreferences()
+    return () => {
+      cancelled = true
+    }
+  // Load account preferences once after local fallback initialization.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -203,14 +211,22 @@ export default function SettingsPage() {
     setSavedAt(null)
   }
 
-  function save() {
+  async function save() {
     const normalized = normalizeSettings(settings)
-    window.localStorage.setItem(storageKey, JSON.stringify(normalized))
+    window.localStorage.setItem(preferenceStorageKey, JSON.stringify(normalized))
+    setLocaleCookie(normalized.locale)
     applyTheme(normalized.theme)
     window.dispatchEvent(new Event(settingsUpdatedEvent))
     setSettings(normalized)
     setSavedSettings(normalized)
     setSavedAt(new Date().toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', second: '2-digit' }))
+    try {
+      await fetch('/api/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(normalized),
+      })
+    } catch {}
   }
 
   function reset() {
@@ -437,8 +453,8 @@ export default function SettingsPage() {
                 <button
                   key={option}
                   type="button"
-                  onClick={() => setLocale(option as Locale)}
-                  className={`h-10 rounded-lg text-sm font-medium transition-colors ${locale === option ? 'chip-action is-active' : 'chip-action'}`}
+                  onClick={() => update('locale', option as Locale)}
+                  className={`h-10 rounded-lg text-sm font-medium transition-colors ${settings.locale === option ? 'chip-action is-active' : 'chip-action'}`}
                 >
                   {dictionaries[option].localeName}
                 </button>
@@ -491,9 +507,10 @@ export default function SettingsPage() {
 
           <Panel title={t.settings.currentConfig} description={t.settings.currentConfigDesc}>
             <dl className="space-y-3 text-sm">
-              {[
-                [t.settings.defaultEnvironment, settings.defaultEnvironment],
-                [t.settings.taskTimeout, `${settings.taskTimeout}s`],
+                  {[
+                    [t.settings.defaultEnvironment, settings.defaultEnvironment],
+                    [t.settings.languagePanel, dictionaries[settings.locale].localeName],
+                    [t.settings.taskTimeout, `${settings.taskTimeout}s`],
                 [t.settings.maxParallel, String(settings.maxParallelTasks)],
                 [t.settings.aiModel, settings.aiModel],
                 [t.settings.retention, `${settings.reportRetentionDays} ${t.settings.days}`],
