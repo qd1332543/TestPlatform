@@ -200,14 +200,14 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 w-full max-w-6xl">
-      <div className="sticky -top-6 z-20 -mx-6 flex flex-col gap-4 px-6 py-4 backdrop-blur md:flex-row md:items-end md:justify-between"
+    <div className="page-shell space-y-6">
+      <div className="sticky -top-4 z-20 -mx-3 flex flex-col gap-4 px-3 py-4 backdrop-blur sm:-mx-4 sm:px-4 md:-top-6 md:-mx-6 md:flex-row md:items-end md:justify-between md:px-6"
         style={{ background: 'color-mix(in srgb, var(--bg-base) 92%, transparent)', borderBottom: '1px solid var(--border)' }}>
         <div>
           <h1 className="text-2xl font-bold text-white">{t.settings.title}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{t.settings.subtitle}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
             onClick={exportJson}
@@ -415,7 +415,7 @@ export default function SettingsPage() {
           <Panel title={t.settings.display} description={t.settings.displayDesc}>
             <div>
               <div className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>{t.settings.theme}</div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
                 {[
                   { value: 'meteor' as const, ...t.settings.themes.meteor },
                   { value: 'indigo' as const, ...t.settings.themes.indigo },

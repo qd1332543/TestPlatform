@@ -64,7 +64,7 @@ export default async function ReportsPage() {
           <h1 className="page-title">{t.pages.reports.title}</h1>
           <p className="page-subtitle">{t.pages.reports.subtitle}</p>
         </div>
-        <div className="text-xs text-right" style={{ color: 'var(--text-muted)' }}>
+        <div className="text-xs md:text-right" style={{ color: 'var(--text-muted)' }}>
           <div>{t.reports.resultCount} {totalReports}</div>
           <div>{t.reports.succeeded} {succeededCount} · {t.reports.failed} {failedCount} · {t.reports.analyzed} {analyzedCount}</div>
         </div>
@@ -149,7 +149,7 @@ export default async function ReportsPage() {
                       </div>
                     )}
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  <div className="mobile-action-grid flex shrink-0 flex-wrap items-center gap-2 sm:flex">
                     <a
                       href={markdownDataUrl(exportMarkdown)}
                       download={`meteortest-report-${report.id}.md`}
