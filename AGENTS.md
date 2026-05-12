@@ -319,6 +319,8 @@ When an issue tracks the PR work, link it from the PR body with:
 Closes #<issue-number>
 ```
 
+Place the `Closes #<issue-number>` line at the end of the PR description, after the test plan or validation section.
+
 Do not add `Related PR: #<number>` to the issue body.
 
 Use fresh GitHub data when checking issue or PR state. Prefer `gh api --cache 0s` or direct `gh api` calls before deciding whether an issue or PR already exists.
