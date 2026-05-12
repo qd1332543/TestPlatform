@@ -4,13 +4,19 @@ import Link from 'next/link'
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocale } from '@/lib/useLocale'
 import type { Dictionary, Locale } from '@/content/i18n'
+import {
+  aiHistoryStorageKey,
+  normalizeAiConversation,
+  type AiConversation,
+  type AiMessage,
+  type AiToolResult,
+} from '@/lib/account/aiHistory'
 
-type Suggestion = { label: string; prompt: string }
-type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
-type Message = { role: 'user' | 'assistant'; content: string; suggestions?: Suggestion[]; actions?: ToolResult[] }
-type Conversation = { id: string; title: string; messages: Message[]; updatedAt: number }
+type ToolResult = AiToolResult
+type Message = AiMessage
+type Conversation = AiConversation
 
-const historyKey = 'meteortest.ai.conversations.v1'
+const historyKey = aiHistoryStorageKey
 const settingsKey = 'meteortest.settings.v1'
 const defaultAiSettings = {
   aiModel: 'deepseek-v4-pro',
@@ -154,6 +160,10 @@ function newConversation(title: string): Conversation {
   return { id: crypto.randomUUID(), title, messages: [], updatedAt: Date.now() }
 }
 
+function isConversation(value: Conversation | null): value is Conversation {
+  return value !== null
+}
+
 function titleFromMessage(content: string, fallback: string) {
   const compact = content.trim().replace(/\s+/g, ' ')
   return compact.length > 18 ? `${compact.slice(0, 18)}...` : compact || fallback
@@ -171,6 +181,45 @@ function getAiSettings() {
   } catch {
     return defaultAiSettings
   }
+}
+
+async function fetchAccountConversations() {
+  const response = await fetch('/api/ai/conversations', { cache: 'no-store' })
+  if (!response.ok) return null
+  const data = await response.json() as { conversations?: unknown[] }
+  return (data.conversations ?? []).map(normalizeAiConversation).filter(Boolean) as Conversation[]
+}
+
+async function createAccountConversation(title: string, messages: Message[] = []) {
+  const response = await fetch('/api/ai/conversations', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, messages }),
+  })
+  if (!response.ok) return null
+  const data = await response.json() as { conversation?: unknown }
+  return normalizeAiConversation(data.conversation)
+}
+
+async function updateAccountConversationTitle(id: string, title: string) {
+  await fetch(`/api/ai/conversations/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  })
+}
+
+async function deleteAccountConversation(id: string) {
+  await fetch(`/api/ai/conversations/${id}`, { method: 'DELETE' })
+}
+
+async function appendAccountMessages(id: string, messages: Message[], title?: string) {
+  if (!messages.length) return
+  await fetch(`/api/ai/conversations/${id}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages, title }),
+  })
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -460,35 +509,58 @@ export default function AiPage() {
   const [activeId, setActiveId] = useState('')
   const [loading, setLoading] = useState(false)
   const [historyCollapsed, setHistoryCollapsed] = useState(false)
+  const [renamingId, setRenamingId] = useState('')
+  const [renameValue, setRenameValue] = useState('')
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const remoteConversationIds = useRef<Set<string>>(new Set())
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, loading])
 
   useEffect(() => {
+    let cancelled = false
+    const applyConversations = (items: Conversation[]) => {
+      const next = items.length ? items : [newConversation(t.ai.newConversation)]
+      setConversations(next)
+      setActiveId(next[0].id)
+      setMessages(next[0].messages)
+      window.localStorage.setItem(historyKey, JSON.stringify(next.slice(0, 30)))
+    }
     const raw = window.localStorage.getItem(historyKey)
+    let loadedLocal = false
     if (raw) {
       try {
         const stored = JSON.parse(raw) as Conversation[]
         if (Array.isArray(stored) && stored.length > 0) {
-          const sorted = stored.sort((a, b) => b.updatedAt - a.updatedAt)
+          const sorted = stored.map(normalizeAiConversation).filter(isConversation).sort((a, b) => b.updatedAt - a.updatedAt)
           window.localStorage.setItem(historyKey, JSON.stringify(sorted.slice(0, 30)))
           queueMicrotask(() => {
-            setConversations(sorted)
-            setActiveId(sorted[0].id)
-            setMessages(sorted[0].messages)
+            if (!cancelled) applyConversations(sorted)
           })
-          return
+          loadedLocal = true
         }
       } catch {
         window.localStorage.removeItem(historyKey)
       }
     }
-    const first = newConversation(t.ai.newConversation)
-    queueMicrotask(() => {
-      setConversations([first])
-      setActiveId(first.id)
+    if (!loadedLocal) {
+      queueMicrotask(() => {
+        if (!cancelled) applyConversations([])
+      })
+    }
+    fetchAccountConversations().then(async accountConversations => {
+      if (cancelled || accountConversations === null) return
+      if (accountConversations.length) {
+        remoteConversationIds.current = new Set(accountConversations.map(item => item.id))
+        applyConversations(accountConversations)
+        return
+      }
+      const created = await createAccountConversation(t.ai.newConversation)
+      if (cancelled || !created) return
+      remoteConversationIds.current.add(created.id)
+      applyConversations([created])
     })
+    return () => { cancelled = true }
   }, [t.ai.newConversation])
 
   const applyTemplate = useCallback((text: string) => {
@@ -502,8 +574,10 @@ export default function AiPage() {
     }, 0)
   }, [setInput])
 
-  function createConversation() {
-    const conversation = newConversation(t.ai.newConversation)
+  async function createConversation() {
+    const accountConversation = await createAccountConversation(t.ai.newConversation)
+    const conversation = accountConversation ?? newConversation(t.ai.newConversation)
+    if (accountConversation) remoteConversationIds.current.add(conversation.id)
     setConversations(prev => [conversation, ...prev])
     setActiveId(conversation.id)
     setMessages([])
@@ -517,32 +591,67 @@ export default function AiPage() {
     setInput('')
   }
 
-  function deleteConversation(id: string) {
+  async function deleteConversation(id: string) {
     if (loading) return
-    setConversations(prev => {
-      const remaining = prev.filter(c => c.id !== id)
-      const next = remaining.length ? remaining : [newConversation(t.ai.newConversation)]
-      window.localStorage.setItem(historyKey, JSON.stringify(next))
-      if (id === activeId) {
-        setActiveId(next[0].id)
-        setMessages(next[0].messages)
-      }
-      return next
-    })
+    if (remoteConversationIds.current.has(id)) {
+      deleteAccountConversation(id).catch(() => {})
+      remoteConversationIds.current.delete(id)
+    }
+    const remaining = conversations.filter(c => c.id !== id)
+    let next = remaining
+    if (!next.length) {
+      const accountConversation = await createAccountConversation(t.ai.newConversation)
+      const conversation = accountConversation ?? newConversation(t.ai.newConversation)
+      if (accountConversation) remoteConversationIds.current.add(conversation.id)
+      next = [conversation]
+    }
+    window.localStorage.setItem(historyKey, JSON.stringify(next))
+    setConversations(next)
+    if (id === activeId) {
+      setActiveId(next[0].id)
+      setMessages(next[0].messages)
+    }
   }
 
-  function persistMessages(nextMessages: Message[]) {
+  function startRename(conversation: Conversation) {
+    if (loading) return
+    setRenamingId(conversation.id)
+    setRenameValue(conversation.title)
+  }
+
+  function commitRename(id: string) {
+    const title = renameValue.trim()
+    if (!title) {
+      setRenamingId('')
+      return
+    }
+    setConversations(prev => {
+      const next = prev.map(c => c.id === id ? { ...c, title, updatedAt: Date.now() } : c)
+      window.localStorage.setItem(historyKey, JSON.stringify(next.slice(0, 30)))
+      return next
+    })
+    if (activeId === id) setMessages(prev => prev)
+    if (remoteConversationIds.current.has(id)) updateAccountConversationTitle(id, title).catch(() => {})
+    setRenamingId('')
+  }
+
+  function persistMessages(nextMessages: Message[], messagesToSync: Message[] = []) {
     setMessages(nextMessages)
     setConversations(prev => {
       const next = prev
-        .map(c => c.id === activeId
-          ? {
+        .map(c => {
+          if (c.id !== activeId) return c
+          const title = c.title === t.ai.newConversation && nextMessages[0]?.content ? titleFromMessage(nextMessages[0].content, t.ai.newConversation) : c.title
+          if (messagesToSync.length && remoteConversationIds.current.has(c.id)) {
+            appendAccountMessages(c.id, messagesToSync, title).catch(() => {})
+          }
+          return {
               ...c,
               messages: nextMessages,
-              title: c.title === t.ai.newConversation && nextMessages[0]?.content ? titleFromMessage(nextMessages[0].content, t.ai.newConversation) : c.title,
+              title,
               updatedAt: nextMessages.length ? Date.now() : c.updatedAt,
             }
-          : c)
+        })
         .sort((a, b) => b.updatedAt - a.updatedAt)
       window.localStorage.setItem(historyKey, JSON.stringify(next.slice(0, 30)))
       return next
@@ -575,7 +684,7 @@ export default function AiPage() {
     const history = messages.map(({ role, content }) => ({ role, content }))
     const currentInput = input
     const withUser = [...messages, userMsg]
-    persistMessages(withUser)
+    persistMessages(withUser, [userMsg])
     setInput('')
     setLoading(true)
     try {
@@ -584,14 +693,16 @@ export default function AiPage() {
         body: JSON.stringify({ message: currentInput, history, aiConfig: getAiSettings() }),
       })
       const data = await res.json()
-      persistMessages([...withUser, {
+      const assistantMsg: Message = {
         role: 'assistant',
         content: data.reply ?? data.error ?? t.ai.requestFailed,
         actions: Array.isArray(data.actions) ? data.actions : [],
         suggestions: Array.isArray(data.suggestions) ? data.suggestions : [],
-      }])
+      }
+      persistMessages([...withUser, assistantMsg], [assistantMsg])
     } catch {
-      persistMessages([...withUser, { role: 'assistant', content: t.ai.retryFailed }])
+      const assistantMsg: Message = { role: 'assistant', content: t.ai.retryFailed }
+      persistMessages([...withUser, assistantMsg], [assistantMsg])
     } finally {
       setLoading(false)
     }
@@ -642,19 +753,48 @@ export default function AiPage() {
         <div className="quiet-scrollbar flex-1 overflow-y-auto p-2 space-y-1">
           {conversations.map(c => (
             <div key={c.id} className="group flex items-center gap-1">
-              <button
-                type="button"
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => selectConversation(c)}
+                onKeyDown={event => {
+                  if (event.key === 'Enter' || event.key === ' ') selectConversation(c)
+                }}
                 className="min-w-0 flex-1 rounded-lg px-3 py-2 text-left transition-colors"
                 style={activeId === c.id
                   ? { background: 'var(--surface-soft)', border: '1px solid var(--border-light)' }
                   : { border: '1px solid transparent' }
                 }
               >
-                <div className="truncate text-sm font-medium" style={{ color: activeId === c.id ? '#fff' : 'var(--text-secondary)' }}>{c.title}</div>
+                {renamingId === c.id ? (
+                  <input
+                    className="field-input w-full px-2 py-1 text-sm"
+                    value={renameValue}
+                    autoFocus
+                    aria-label={t.ai.renameConversation}
+                    onClick={event => event.stopPropagation()}
+                    onChange={event => setRenameValue(event.target.value)}
+                    onBlur={() => commitRename(c.id)}
+                    onKeyDown={event => {
+                      if (event.key === 'Enter') commitRename(c.id)
+                      if (event.key === 'Escape') setRenamingId('')
+                    }}
+                  />
+                ) : (
+                  <div className="truncate text-sm font-medium" style={{ color: activeId === c.id ? '#fff' : 'var(--text-secondary)' }}>{c.title}</div>
+                )}
                 <div className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
                   {c.messages.length ? t.ai.messageCount(c.messages.length) : t.ai.emptyMessages}
                 </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => startRename(c)}
+                className="w-7 h-7 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ color: 'var(--text-muted)' }}
+                title={t.ai.renameConversation}
+              >
+                ✎
               </button>
               <button
                 type="button"

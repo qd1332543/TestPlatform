@@ -168,6 +168,9 @@
 - [x] README / DESIGN / PROGRESS 保持中英文文档同步
 - [x] Phase 11 Auth/RLS/Agent 加固第一轮：新增登录页、个人信息页、Supabase profiles/feedbacks/RLS、API 角色检查、Allure URL 修复、private Agent loop 半自动验证脚本和 Agent config 启动前校验
 - [x] 新增平台架构与路线文档：`docs/platform-architecture-roadmap.md` 和 `docs/platform-architecture-roadmap.zh-CN.md`
+- [x] Phase 12 账号级数据第一轮：新增 `user_preferences` 账号偏好、`ai_conversations` / `ai_messages` AI 会话历史、账号级 API、AI 页面历史同步和 Supabase SQL 执行手册
+  - SQL 执行手册：`docs/supabase-account-data-runbook.zh-CN.md` / `docs/supabase-account-data-runbook.md`
+  - 线上验证前需要在 Supabase SQL Editor 执行 `supabase/migrations/005_account_preferences_ai_history.sql`
 
 ## 远期：独立 Agent 与高级执行能力
 

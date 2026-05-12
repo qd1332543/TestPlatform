@@ -41,6 +41,7 @@ MeteorTest 是一个通用自动化测试平台，用来管理多个测试项目
 补充文档：
 
 - [平台架构与推进路线](docs/platform-architecture-roadmap.zh-CN.md)
+- [Supabase 账号与账号级数据 SQL 执行手册](docs/supabase-account-data-runbook.zh-CN.md)
 - [私有 Agent 预览闭环](docs/private-agent-preview-loop.zh-CN.md)
 
 ## 维护者

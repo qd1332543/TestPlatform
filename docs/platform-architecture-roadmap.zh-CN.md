@@ -80,9 +80,70 @@ MeteorTest 当前已经是早期 Beta 形态的通用自动化测试平台。它
 
 ## 下一步建议顺序
 
-1. 在 Supabase SQL Editor 执行 `supabase/migrations/004_auth_rls.sql`。
+1. 按 [Supabase 账号与账号级数据 SQL 执行手册](supabase-account-data-runbook.zh-CN.md) 执行最新版 `004_auth_rls.sql` 和 `005_account_preferences_ai_history.sql`。
 2. 在 Supabase Auth 创建管理员账号。用户名账号可用内部邮箱别名，例如 `admin@users.meteortest.local`；手机号账号使用 `+86...` 这类国际格式。
 3. 在 `profiles` 表把管理员账号角色改为 `admin`。
-4. 部署 Web，验证 `/login`、`/profile`、任务创建、项目管理、构建登记。
+4. 部署 Web，验证 `/login`、`/profile`、`/settings`、`/ai`、任务创建、项目管理、构建登记。
 5. 在私有机器运行 Local Agent，再运行 `npm run validate:private-agent-loop` 验证闭环。
 6. 下一轮推进团队/组织模型、项目级权限、反馈管理后台、任务取消/重跑、报告产物可视化。
+
+## 账号级数据推进计划
+
+跟踪 issue：`#82 [Feature] Add account-scoped preferences and AI conversation history`
+
+### Step 1：账号偏好
+
+状态：已实现，待在 Supabase 执行 `005_account_preferences_ai_history.sql` 后做线上验证。
+
+目标：把当前依赖 `meteortest.settings.v1` localStorage 的关键用户偏好迁移到账号级数据。
+
+数据表：`user_preferences`
+
+字段：
+
+- `user_id`
+- `locale`
+- `theme`
+- `density`
+- `default_environment`
+- `ai_model`
+- `ai_base_url`
+- `auto_analyze_failures`
+
+实现规则：
+
+- 登录后服务端读取账号偏好。
+- 设置页保存时写 Supabase，并同步写本地缓存。
+- 本地缓存保留为未登录、加载前、网络失败时的 fallback。
+- 语言 cookie 仍保留，用于 Next.js 首屏 `html lang` 和服务端字典选择；保存账号偏好时同步 cookie。
+
+验收：
+
+- 设置页可从账号偏好加载主题、语言、密度、默认环境和 AI 配置。
+- 保存后刷新页面仍保持账号偏好。
+- `npm run lint`、`npm run build`、`npm run smoke:public-preview` 通过。
+
+### Step 2：AI 会话历史
+
+状态：已实现账号级 API 与页面接入，待在 Supabase 执行 `005_account_preferences_ai_history.sql` 后做线上验证。
+
+目标：把 AI 对话历史从浏览器 localStorage 迁移到账号级会话记录。
+
+数据表：
+
+- `ai_conversations`
+- `ai_messages`
+
+实现规则：
+
+- 每次创建会话、发送消息、收到 AI 回复后落库。
+- AI 页面左侧显示账号历史会话。
+- 支持删除、重命名、继续会话。
+- localStorage 只作为读取失败或未登录状态的临时 fallback。
+
+验收：
+
+- 刷新页面后 AI 历史仍存在。
+- 删除/重命名/继续会话能同步到 Supabase。
+- AI 发送失败时不能破坏已有历史。
+- `npm run lint`、`npm run build`、`npm run smoke:public-preview` 通过。
