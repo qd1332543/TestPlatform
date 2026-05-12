@@ -29,6 +29,9 @@ capabilities:
     - app
 
 repositories:
+  - key: ios-automation-framework
+    path: ../iOS-Automation-Framework
+    contract: meteortest.yml
   - key: yunlu-ios
     path: ../iOS-Automation-Framework
     contract: meteortest.yml

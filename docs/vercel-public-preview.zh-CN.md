@@ -160,10 +160,11 @@ npm run smoke:public-preview
 2. 访问保护：长期公开前启用 Vercel Deployment Protection、`METEORTEST_PREVIEW_ACCESS_TOKEN` 或等价保护。
 3. 预览数据：执行 `supabase/seed-preview.sql` 初始化安全 demo 项目、suite、任务、报告、执行器和构建数据。
 4. 任务/报告体验：通过状态、日志、失败分类、AI 分析和下一步建议，让 failed task 可读。
-5. 私有 Agent 闭环：上述稳定后，再让私有 Local Agent 连接 preview backend。
+5. 私有 Agent 闭环：上述稳定后，按照 `docs/private-agent-preview-loop.zh-CN.md` 让私有 Local Agent 连接 preview backend。
 
 ## 参考资料
 
 - Vercel project settings: https://vercel.com/docs/project-configuration/project-settings
 - Vercel environment variables: https://vercel.com/docs/projects/environment-variables
 - Next.js environment variables: https://nextjs.org/docs/pages/guides/environment-variables
+- 私有 Agent 预览闭环：`docs/private-agent-preview-loop.zh-CN.md`

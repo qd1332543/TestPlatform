@@ -10,10 +10,17 @@ export async function POST(req: NextRequest) {
   const { project_id, suite_id, environment, app_build_id } = body
   if (!project_id || !suite_id) return NextResponse.json({ error: '参数缺失' }, { status: 400 })
 
-  const { error } = await supabase.from('tasks').insert({
-    project_id, suite_id, environment, status: 'queued',
+  const { data, error } = await supabase.from('tasks').insert({
+    project_id,
+    suite_id,
+    environment,
+    status: 'queued',
     app_build_id: app_build_id || null,
-  })
+    parameters: {
+      source: 'web-console',
+      private_agent_preview: process.env.METEORTEST_PUBLIC_PREVIEW === '1',
+    },
+  }).select('id').single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, task_id: data?.id })
 }

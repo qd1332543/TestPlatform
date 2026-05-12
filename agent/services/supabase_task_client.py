@@ -20,8 +20,14 @@ def _url(table: str) -> str:
 
 
 def get_queued_task() -> dict | None:
-    r = httpx.get(_url("tasks"), headers=_headers(),
-                  params={"status": "eq.queued", "order": "created_at.asc", "limit": "1", "select": "*"})
+    params = {"status": "eq.queued", "order": "created_at.asc", "limit": "1", "select": "*"}
+    task_source = os.environ.get("METEORTEST_AGENT_TASK_SOURCE")
+    if task_source:
+        params["parameters->>source"] = f"eq.{task_source}"
+    if os.environ.get("METEORTEST_AGENT_PRIVATE_PREVIEW_ONLY") == "1":
+        params["parameters->>private_agent_preview"] = "eq.true"
+
+    r = httpx.get(_url("tasks"), headers=_headers(), params=params)
     r.raise_for_status()
     return r.json()[0] if r.json() else None
 
