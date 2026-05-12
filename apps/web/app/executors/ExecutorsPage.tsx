@@ -54,7 +54,8 @@ export default async function ExecutorsPage() {
       ) : null}
       <AgentSupervisor />
       <div className="data-panel rounded-xl overflow-hidden">
-        <table className="w-full text-sm">
+        <div className="desktop-table overflow-x-auto">
+        <table className="w-full min-w-[760px] text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--border)' }}>
               {[t.common.name, t.common.type, t.common.status, t.common.capabilities, t.common.heartbeat].map(h => (
@@ -94,6 +95,36 @@ export default async function ExecutorsPage() {
             })}
           </tbody>
         </table>
+        </div>
+        <div className="mobile-card-list p-3">
+          {!executors?.length ? (
+            <div className="px-5 py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{t.pages.executors.empty}</div>
+          ) : executors.map(e => {
+            const s = statusStyle[e.status] ?? statusStyle.offline
+            return (
+              <div key={e.id} className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{e.name}</div>
+                    <div className="mt-1 text-xs font-mono" style={{ color: 'var(--text-muted)' }}>{e.type}</div>
+                  </div>
+                  <span className={`status-badge status-${e.status} shrink-0 gap-1.5 px-2 py-0.5`} style={{ background: s.bg, color: s.color }}>
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: s.dot }} />
+                    {t.status[e.status as keyof typeof t.status] ?? e.status}
+                  </span>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-1">
+                  {(e.capabilities as string[] | null)?.map(c => (
+                    <span key={c} className="meta-pill px-2 py-0.5 text-xs">{c}</span>
+                  ))}
+                </div>
+                <div className="mt-3 text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {t.common.heartbeat}: {formatDateTime(e.last_heartbeat_at, locale)}
+                </div>
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )

@@ -8,7 +8,7 @@ export default async function NewBuildPage() {
   const supabase = await createClient()
   const { data: projects } = await supabase.from('projects').select('id, name').order('name')
   return (
-    <div className="space-y-6 w-full max-w-6xl">
+    <div className="space-y-6 w-full">
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
@@ -21,7 +21,7 @@ export default async function NewBuildPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="proportional-layout">
         <NewBuildForm projects={projects ?? []} />
         <aside className="data-panel rounded-xl p-5 space-y-4">
           <div>
