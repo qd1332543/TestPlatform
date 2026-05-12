@@ -66,6 +66,34 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const diagnosticNextActions = analysis?.suggestion
     ? [analysis.suggestion, ...t.reports.defaultNextSteps]
     : t.reports.defaultNextSteps
+  const diagnosticScope = analysis?.impact || parameters.failure_category || t.taskDetail.noDiagnosticScope
+  const repairHandoffMarkdown = [
+    `# ${t.taskDetail.aiRepairHandoff}`,
+    '',
+    `## ${t.taskDetail.repairGuidance}`,
+    analysis?.suggestion || t.taskDetail.noRepairGuidance,
+    '',
+    `## ${t.taskDetail.locationAndScope}`,
+    diagnosticScope,
+    '',
+    `## ${t.taskDetail.rootCauseContext}`,
+    analysis?.failure_reason || report?.summary || t.taskDetail.noDiagnosticReason,
+    '',
+    `## ${t.taskDetail.evidence}`,
+    ...(diagnosticEvidence.length
+      ? diagnosticEvidence.map(item => `- ${item.label}: ${item.value}`)
+      : [`- ${t.taskDetail.noDiagnosticEvidence}`]),
+    '',
+    `## ${t.taskDetail.validationPlan}`,
+    ...diagnosticNextActions.map(step => `- ${step}`),
+    '',
+    `## ${t.analysisPackage.commandSection}`,
+    task.test_suites?.command || '-',
+    '',
+    `## ${t.analysisPackage.promptSection}`,
+    t.taskDetail.aiRepairPrompt,
+  ].join('\n')
+  const repairHandoffFilename = `meteortest-ai-repair-${task.id}.md`
 
   const meta = [
     { label: t.common.project, value: task.projects?.name ?? '-' },
@@ -148,10 +176,46 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           <div className="grid gap-4 p-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
             <div className="space-y-4">
               <div className="panel-inner rounded-lg p-4">
-                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.whatHappened}</div>
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.aiRepairHandoff}</div>
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                  {analysis?.failure_reason || report?.summary || t.taskDetail.noDiagnosticReason}
+                  {t.taskDetail.aiRepairHandoffDesc}
                 </p>
+                <a
+                  href={markdownDataUrl(repairHandoffMarkdown)}
+                  download={repairHandoffFilename}
+                  className="secondary-action mt-3 inline-flex rounded-lg px-3 py-2 text-sm font-semibold"
+                >
+                  {t.taskDetail.downloadRepairHandoff}
+                </a>
+              </div>
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.repairGuidance}</div>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  {analysis?.suggestion || t.taskDetail.noRepairGuidance}
+                </p>
+              </div>
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.validationPlan}</div>
+                <ul className="space-y-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  {diagnosticNextActions.map(step => <li key={step}>- {step}</li>)}
+                </ul>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="panel-inner rounded-lg p-4">
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.locationAndScope}</div>
+                <div className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{diagnosticScope}</div>
+                {analysis?.flaky_probability != null ? (
+                  <div className="mt-3">
+                    <div className="mb-2 text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.flakyProbability}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--border)' }}>
+                        <div className="h-1.5 rounded-full" style={{ width: `${(analysis.flaky_probability * 100).toFixed(0)}%`, background: 'var(--accent)' }} />
+                      </div>
+                      <span className="text-sm font-medium" style={{ color: 'var(--accent)' }}>{(analysis.flaky_probability * 100).toFixed(0)}%</span>
+                    </div>
+                  </div>
+                ) : null}
               </div>
               <div className="panel-inner rounded-lg p-4">
                 <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.evidence}</div>
@@ -168,13 +232,11 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
                   <div className="text-sm" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.noDiagnosticEvidence}</div>
                 )}
               </div>
-            </div>
-            <div className="space-y-4">
               <div className="panel-inner rounded-lg p-4">
-                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.nextActions}</div>
-                <ul className="space-y-1.5 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  {diagnosticNextActions.map(step => <li key={step}>- {step}</li>)}
-                </ul>
+                <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.rootCauseContext}</div>
+                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                  {analysis?.failure_reason || report?.summary || t.taskDetail.noDiagnosticReason}
+                </p>
               </div>
               <div className="panel-inner rounded-lg p-4">
                 <div className="text-xs uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.openEvidence}</div>
@@ -247,9 +309,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.waitingForReport}</p>
           )}
           </div>
-        </div>
+      </div>
 
       {/* AI Analysis */}
+      {!shouldShowDiagnostic ? (
       <div className="data-panel rounded-xl overflow-hidden">
         <div className="px-5 py-4 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface-soft)' }}>
           <div className="flex items-center gap-2">
@@ -300,6 +363,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
       </div>
+      ) : null}
     </div>
   )
 }

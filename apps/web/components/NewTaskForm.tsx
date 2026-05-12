@@ -31,7 +31,7 @@ export default function NewTaskForm({ projects, builds }: { projects: Project[],
     })
     const data = await res.json()
     if (!res.ok) { setError(data.error ?? t.forms.createFailed); return }
-    router.push('/tasks')
+    router.push(data.task_id ? `/tasks/${data.task_id}` : '/tasks')
   }
 
   return (

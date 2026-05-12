@@ -81,7 +81,7 @@ Use this order when opening MeteorTest Web on the public internet:
    - Executor controls do not expose a public Local Agent endpoint.
    - AI assistant returns a clear unavailable state if `DEEPSEEK_API_KEY` is not configured.
 
-8. Only after the Web preview is stable, decide whether a private Local Agent should poll the preview backend with scoped credentials. Do not expose a machine-local Agent endpoint directly to public traffic.
+8. Only after the Web preview is stable, decide whether a private Local Agent should poll the preview backend with scoped credentials. Do not expose a machine-local Agent endpoint directly to public traffic. Follow `docs/private-agent-preview-loop.md` for the connected private-Agent validation path.
 
 Public-preview smoke check:
 
@@ -103,6 +103,11 @@ For a detailed Vercel-specific walkthrough, see:
 
 - `docs/vercel-public-preview.md`
 - `docs/vercel-public-preview.zh-CN.md`
+
+For the private-Agent connected preview loop, see:
+
+- `docs/private-agent-preview-loop.md`
+- `docs/private-agent-preview-loop.zh-CN.md`
 
 Preview seed data:
 

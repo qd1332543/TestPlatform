@@ -160,10 +160,11 @@ Then continue hardening in this order:
 2. Access protection: enable Vercel Deployment Protection, `METEORTEST_PREVIEW_ACCESS_TOKEN`, or an equivalent guard before long-lived public use.
 3. Preview data: run `supabase/seed-preview.sql` to seed safe demo projects, suites, tasks, reports, executors, and builds.
 4. Task/report experience: make failed-task analysis readable through status, logs, failure category, AI analysis, and next actions.
-5. Private Agent loop: connect a private Local Agent to the preview backend only after the above is stable.
+5. Private Agent loop: follow `docs/private-agent-preview-loop.md` to connect a private Local Agent to the preview backend only after the above is stable.
 
 ## References
 
 - Vercel project settings: https://vercel.com/docs/project-configuration/project-settings
 - Vercel environment variables: https://vercel.com/docs/projects/environment-variables
 - Next.js environment variables: https://nextjs.org/docs/pages/guides/environment-variables
+- Private Agent preview loop: `docs/private-agent-preview-loop.md`

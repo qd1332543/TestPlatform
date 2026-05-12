@@ -55,6 +55,17 @@ Local JSON tasks can pass either `parameters.app_path` or `parameters.app_url`. 
 
 Suite logs are always written locally under the configured artifact root. In Supabase mode, if `artifacts.supabase_bucket` is configured, the reporter uploads `output.log` and a zipped `allure-results` archive to Supabase Storage and stores the resulting URLs in `reports`.
 
+## Supabase Task Filters
+
+For connected preview validation, the Agent can restrict which queued tasks it claims:
+
+```bash
+export METEORTEST_AGENT_TASK_SOURCE=web-console
+export METEORTEST_AGENT_PRIVATE_PREVIEW_ONLY=1
+```
+
+`METEORTEST_AGENT_TASK_SOURCE` filters queued tasks by `parameters.source`. `METEORTEST_AGENT_PRIVATE_PREVIEW_ONLY=1` filters queued tasks to `parameters.private_agent_preview=true`. Use these filters when validating the public Web preview with a private Agent so stale seed tasks or unrelated queued tasks are not claimed accidentally.
+
 ## Relationship With iOS-Automation-Framework
 
 ```text

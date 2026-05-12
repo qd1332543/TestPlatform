@@ -78,17 +78,22 @@
   - 报告列表和任务详情均可导出 Markdown 分析包。
   - 分析包内容由 `apps/web/lib/analysisPackage.ts` 统一生成，并通过 i18n 文案输出当前语言版本。
 - [x] 让一个 demo failed task 能在不看数据库的情况下说明发生了什么、为什么失败、下一步该做什么
-  - 任务详情页为 failed/timeout 任务增加“失败诊断摘要”，聚合 report summary、Pytest 摘要、失败分类、AI 失败原因、排查动作和日志/Allure/分析包入口。
+  - 任务详情页为 failed/timeout 任务增加“AI 修复诊断”，优先展示 AI 修复建议、验证方式、定位范围，并保留 report summary、Pytest 摘要、失败分类、AI 原因上下文和日志/Allure/分析包入口作为证据链。
+  - 诊断区提供可下载的“AI 修复交接” Markdown，便于把失败上下文直接交给代码 AI 继续修改产品或测试工程代码。
 
 ### Private Agent Online Loop
 
-- [ ] Vercel Web 连接 preview Supabase
-- [ ] 私有机器 Local Agent 连接同一个 preview Supabase
-- [ ] 从 `https://meteortest.jcmeteor.com/` 创建任务
-- [ ] 私有 Agent 轮询 queued 任务并执行 iOS-Automation-Framework smoke suite
-- [ ] Agent 回写 task status、report、artifact/log URL
-- [ ] Web 展示 succeeded/failed、报告摘要和 AI 分析
-- [ ] 完成后，个人官网可以声明 `validated private-agent preview loop`，但仍不能声明 public connected execution
+- [x] Vercel Web 连接 preview Supabase
+- [x] 私有机器 Local Agent 连接同一个 preview Supabase
+- [x] 从 `https://meteortest.jcmeteor.com/` 创建任务
+  - Web 任务创建 API 现在返回 `task_id` 并跳转到新任务详情页，任务参数会标记 `source=web-console` 和 `private_agent_preview`，便于追踪公网 Web + 私有 Agent 闭环。
+  - `docs/private-agent-preview-loop.md` 和中文 runbook 记录私有 Agent 配置、仓库 key 匹配、任务创建、Agent 启动、回写验证和排障步骤。
+- [x] 私有 Agent 轮询 queued 任务并执行 iOS-Automation-Framework smoke suite
+- [x] Agent 回写 task status、report、artifact/log URL
+- [x] Web 展示 succeeded/failed、报告摘要和 AI 分析
+- [x] 完成后，个人官网可以声明 `validated private-agent preview loop`，但仍不能声明 public connected execution
+  - 2026-05-12 验证任务：`79df0670-48f9-4398-832b-c8e70ac562b0`。公网任务详情页和报告页返回 200，私有 Agent `local-mac-01` 领取 preview Supabase queued 任务并执行 `iOS-Automation-Framework` `api_smoke`，最终状态 `succeeded`，report summary 为 `exit_code=0`，日志上传到 Supabase Storage。
+  - 本次成功路径没有生成可上传的 Allure URL；后续若要把 Allure 作为验收项，需要检查 suite 的 `--alluredir` 输出和 reporter 上传条件。
 
 ## 中期：平台调度与多项目接入
 
