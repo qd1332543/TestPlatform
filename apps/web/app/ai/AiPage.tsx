@@ -121,6 +121,22 @@ function TemplateIconFrame({ children }: { children: React.ReactNode }) {
   )
 }
 
+function HistoryPanelIcon({ direction }: { direction: 'collapse' | 'expand' }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <rect x="2.25" y="3" width="13.5" height="12" rx="2.25" stroke="currentColor" strokeWidth="1.35" />
+      <path d="M6.25 3.5v11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.65" />
+      <path
+        d={direction === 'collapse' ? 'M12 6.5L9.5 9l2.5 2.5' : 'M9.5 6.5L12 9l-2.5 2.5'}
+        stroke="currentColor"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  )
+}
+
 function parseTemplate(text: string) {
   const parts: { type: 'text' | 'param'; value: string }[] = []
   const regex = /\[([^\]]+)\]/g
@@ -443,6 +459,7 @@ export default function AiPage() {
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [activeId, setActiveId] = useState('')
   const [loading, setLoading] = useState(false)
+  const [historyCollapsed, setHistoryCollapsed] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -581,8 +598,8 @@ export default function AiPage() {
   }
 
   return (
-    <div className="page-shell flex min-h-full flex-col gap-4">
-      <section className="data-panel rounded-xl p-5">
+    <div className="page-shell ai-page-shell flex flex-col gap-4">
+      <section className="data-panel rounded-xl p-4 md:p-5">
         <div className="mb-4">
           <h2 className="section-title">{t.ai.commandCenter.title}</h2>
           <p className="section-subtitle mt-1 hidden md:block">{t.ai.commandCenter.description}</p>
@@ -599,14 +616,27 @@ export default function AiPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_300px]">
-      <aside className="data-panel hidden max-h-[760px] xl:flex shrink-0 flex-col rounded-xl overflow-hidden">
-        <div className="p-3" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className={`ai-workspace-grid ${historyCollapsed ? 'is-history-collapsed' : ''}`}>
+      <aside
+        className="ai-side-panel data-panel hidden shrink-0 flex-col overflow-hidden rounded-xl xl:flex"
+        aria-hidden={historyCollapsed}
+      >
+        <div className="ai-side-panel-body flex min-h-0 flex-1 flex-col">
+        <div className="flex items-center gap-2 p-3" style={{ borderBottom: '1px solid var(--border)' }}>
+            <button
+              onClick={createConversation}
+              className="primary-action min-w-0 flex-1 px-3 py-2 rounded-lg text-sm font-semibold"
+            >
+              + {t.ai.newConversation}
+            </button>
           <button
-            onClick={createConversation}
-            className="primary-action w-full px-3 py-2 rounded-lg text-sm font-semibold"
+            type="button"
+            onClick={() => setHistoryCollapsed(value => !value)}
+            className="ai-history-toggle is-collapse secondary-action flex h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm"
+            title={t.ai.collapseHistory}
+            aria-label={t.ai.collapseHistory}
           >
-            + {t.ai.newConversation}
+            <HistoryPanelIcon direction="collapse" />
           </button>
         </div>
         <div className="quiet-scrollbar flex-1 overflow-y-auto p-2 space-y-1">
@@ -638,10 +668,22 @@ export default function AiPage() {
             </div>
           ))}
         </div>
+        </div>
       </aside>
 
-      <div className="data-panel flex min-h-[680px] flex-col rounded-xl p-4">
-      <div className="mb-4 flex items-center gap-3">
+      <div className="ai-chat-panel data-panel flex flex-col rounded-xl p-3 md:p-4">
+      <div className="ai-chat-toolbar mb-4 flex items-center gap-3">
+        {historyCollapsed && (
+          <button
+            type="button"
+            onClick={() => setHistoryCollapsed(false)}
+            className="ai-history-toggle is-expand secondary-action hidden h-9 w-9 shrink-0 items-center justify-center rounded-full shadow-sm xl:flex"
+            title={t.ai.expandHistory}
+            aria-label={t.ai.expandHistory}
+          >
+            <HistoryPanelIcon direction="expand" />
+          </button>
+        )}
         <button
           onClick={createConversation}
           className="primary-action xl:hidden px-3 py-1.5 rounded-lg text-xs font-semibold"
@@ -673,7 +715,7 @@ export default function AiPage() {
       </div>
 
       {/* Messages */}
-      <div className="quiet-scrollbar h-[520px] overflow-y-auto space-y-4 pb-2 md:h-[560px] xl:h-[600px]">
+      <div className="quiet-scrollbar min-h-0 flex-1 overflow-y-auto space-y-4 pb-2">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center select-none">
             <div className="w-20 h-20 rounded-3xl flex items-center justify-center text-4xl"
@@ -690,7 +732,7 @@ export default function AiPage() {
               <div className="w-7 h-7 rounded-xl flex items-center justify-center text-xs shrink-0 mt-0.5"
                 style={{ background: 'var(--action-primary-bg)', color: 'var(--action-primary-text)' }}>✦</div>
             )}
-            <div className={`max-w-xl px-4 py-3 rounded-2xl text-sm leading-relaxed ${m.role === 'user' ? 'rounded-tr-sm whitespace-pre-wrap' : 'rounded-tl-sm'}`}
+            <div className={`max-w-[min(54rem,calc(100vw-5.25rem))] px-4 py-3 rounded-2xl text-sm leading-relaxed ${m.role === 'user' ? 'rounded-tr-sm whitespace-pre-wrap' : 'rounded-tl-sm'}`}
               style={m.role === 'user'
                 ? { background: 'var(--action-primary-bg)', color: 'var(--action-primary-text)' }
                 : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
@@ -737,7 +779,7 @@ export default function AiPage() {
           style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}>
           <button className="shrink-0 opacity-40 hover:opacity-70 transition-opacity" title={t.ai.attachment}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M13.5 7.5l-5.5 5.5a4 4 0 01-5.657-5.657l6-6a2.5 2.5 0 013.535 3.535l-6 6a1 1 0 01-1.414-1.414l5.5-5.5" stroke="#94A3B8" strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M13.5 7.5l-5.5 5.5a4 4 0 01-5.657-5.657l6-6a2.5 2.5 0 013.535 3.535l-6 6a1 1 0 01-1.414-1.414l5.5-5.5" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
           </button>
           <input
@@ -754,7 +796,7 @@ export default function AiPage() {
             className="w-8 h-8 rounded-full shrink-0 flex items-center justify-center transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90"
             style={{ background: input.trim() ? 'var(--accent)' : 'var(--surface-soft)' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 11V3M3 7l4-4 4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M7 11V3M3 7l4-4 4 4" stroke="var(--accent-solid-text)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>
         </div>
@@ -764,7 +806,7 @@ export default function AiPage() {
       </div>
       </div>
 
-      <aside className="quiet-scrollbar data-panel hidden max-h-[760px] xl:block rounded-xl p-4 overflow-y-auto">
+      <aside className="ai-template-panel quiet-scrollbar data-panel hidden rounded-xl p-4 overflow-y-auto xl:block">
         <div className="section-title">{t.ai.greeting}</div>
         <div className="section-subtitle mt-1">{t.ai.greetingHint}</div>
         <div className="mt-4 space-y-3">

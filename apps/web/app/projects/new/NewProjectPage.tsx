@@ -38,7 +38,7 @@ export default function NewProjectPage() {
   ]
 
   return (
-    <div className="space-y-6 w-full max-w-6xl">
+    <div className="space-y-6 w-full">
       <div className="flex items-end justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm mb-1" style={{ color: 'var(--text-muted)' }}>
@@ -51,7 +51,7 @@ export default function NewProjectPage() {
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="proportional-layout">
         <form onSubmit={handleSubmit} className="data-panel rounded-xl p-6 space-y-5">
           {fields.map(({ key, label, placeholder, required }) => (
             <div key={key}>

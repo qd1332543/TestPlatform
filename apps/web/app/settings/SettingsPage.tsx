@@ -121,6 +121,8 @@ export default function SettingsPage() {
   const [loaded, setLoaded] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null)
+  const [headerProgress, setHeaderProgress] = useState(0)
+  const [compactHeader, setCompactHeader] = useState(false)
   const agentControlsDisabled = agentStatus?.available === false
 
   useEffect(() => {
@@ -162,6 +164,34 @@ export default function SettingsPage() {
     }
   }, [])
 
+  useEffect(() => {
+    const scrollRoot = document.querySelector('.app-main')
+    const updateHeader = () => {
+      const scrollTop = scrollRoot instanceof HTMLElement ? scrollRoot.scrollTop : window.scrollY
+      setHeaderProgress(Math.min(1, Math.max(0, scrollTop / 48)))
+    }
+
+    updateHeader()
+    scrollRoot?.addEventListener('scroll', updateHeader, { passive: true })
+    window.addEventListener('scroll', updateHeader, { passive: true })
+    return () => {
+      scrollRoot?.removeEventListener('scroll', updateHeader)
+      window.removeEventListener('scroll', updateHeader)
+    }
+  }, [])
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 767px)')
+    const update = () => setCompactHeader(media.matches)
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  const headerBgStrength = compactHeader ? 42 : 64
+  const headerBorderStrength = compactHeader ? 48 : 72
+  const headerBlur = compactHeader ? 10 : 16
+
   const dirty = useMemo(
     () => JSON.stringify(settings) !== JSON.stringify(savedSettings),
     [settings, savedSettings],
@@ -200,14 +230,18 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="space-y-6 w-full max-w-6xl">
-      <div className="sticky -top-6 z-20 -mx-6 flex flex-col gap-4 px-6 py-4 backdrop-blur md:flex-row md:items-end md:justify-between"
-        style={{ background: 'color-mix(in srgb, var(--bg-base) 92%, transparent)', borderBottom: '1px solid var(--border)' }}>
+    <div className="w-full space-y-6">
+      <div className="sticky -top-4 z-20 -mx-3 flex flex-col gap-4 px-3 py-4 transition-[background,border-color,backdrop-filter] duration-300 ease-out sm:-mx-4 sm:px-4 md:-top-6 md:-mx-6 md:flex-row md:items-end md:justify-between md:px-6"
+        style={{
+          background: `color-mix(in srgb, var(--bg-base) ${Math.round(headerProgress * headerBgStrength)}%, transparent)`,
+          borderBottom: `1px solid color-mix(in srgb, var(--border) ${Math.round(headerProgress * headerBorderStrength)}%, transparent)`,
+          backdropFilter: `blur(${Math.round(headerProgress * headerBlur)}px)`,
+        }}>
         <div>
           <h1 className="text-2xl font-bold text-white">{t.settings.title}</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{t.settings.subtitle}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2 sm:flex sm:flex-wrap">
           <button
             type="button"
             onClick={exportJson}
@@ -241,8 +275,8 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="space-y-5">
+      <div className="settings-console-grid">
+        <div className="settings-panel-grid">
           <Panel title={t.settings.platformDefaults} description={t.settings.platformDefaultsDesc}>
             <div className="grid gap-4 md:grid-cols-2">
               <Field label={t.settings.platformName}>
@@ -396,7 +430,7 @@ export default function SettingsPage() {
           </Panel>
         </div>
 
-        <aside className="space-y-5">
+        <aside className="settings-side-grid">
           <Panel title={t.settings.languagePanel} description={t.settings.languagePanelDesc}>
             <div className="grid grid-cols-2 gap-2">
               {supportedLocales.map(option => (
@@ -415,7 +449,7 @@ export default function SettingsPage() {
           <Panel title={t.settings.display} description={t.settings.displayDesc}>
             <div>
               <div className="block text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--text-secondary)' }}>{t.settings.theme}</div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
                 {[
                   { value: 'meteor' as const, ...t.settings.themes.meteor },
                   { value: 'indigo' as const, ...t.settings.themes.indigo },

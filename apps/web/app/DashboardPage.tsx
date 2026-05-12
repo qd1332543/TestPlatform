@@ -52,7 +52,7 @@ export default async function Dashboard() {
   return (
     <div className="page-shell space-y-6">
       <section className="console-hero rounded-xl p-6 overflow-hidden">
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="proportional-layout">
           <div className="space-y-6">
             <div>
               <div className="kicker mb-2">{copy.dashboard.kicker}</div>

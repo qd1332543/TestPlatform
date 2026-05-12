@@ -76,7 +76,7 @@ export default async function BuildsPage() {
           <h1 className="page-title">{t.pages.builds.title}</h1>
           <p className="page-subtitle">{t.pages.builds.subtitle}</p>
         </div>
-        <div className="grid grid-cols-4 gap-2 text-right text-xs" style={{ color: 'var(--text-muted)' }}>
+        <div className="grid grid-cols-2 gap-2 text-left text-xs sm:grid-cols-4 md:text-right" style={{ color: 'var(--text-muted)' }}>
           <div>{t.builds.total} {totalBuilds}</div>
           <div>iOS {iosBuilds}</div>
           <div>Android {androidBuilds}</div>
@@ -98,9 +98,9 @@ export default async function BuildsPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-stretch sm:justify-end">
             <Link href="/builds/new"
-              className="primary-action px-4 py-2 rounded-lg text-sm font-semibold">
+              className="primary-action inline-flex justify-center px-4 py-2 rounded-lg text-sm font-semibold">
               {t.pages.builds.newAction}
             </Link>
           </div>
@@ -136,7 +136,7 @@ export default async function BuildsPage() {
                         const s = statusStyle[task.status] ?? statusStyle.queued
                         const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
                         return (
-                          <Link key={task.id} href={`/tasks/${task.id}`} className="soft-panel flex items-center justify-between gap-4 rounded-lg px-3 py-2 transition-colors">
+                          <Link key={task.id} href={`/tasks/${task.id}`} className="soft-panel flex flex-col gap-3 rounded-lg px-3 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{relationName(task.projects) ?? '-'}</div>
                               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'} · {formatDateTime(task.created_at, locale)}</div>

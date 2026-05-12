@@ -68,9 +68,14 @@ The web console should feel like a restrained operations console, with visual in
 - Theme ordering should group dark themes first, then light themes: `meteor`, `indigo`, `dune`, `aurora`, `parchment`, `sky`, `glacier`, `sakura`.
 - New pages should support theme changes automatically by using CSS variables such as `--bg-card`, `--border`, `--accent`, `--text-secondary`, and shared classes like `data-panel`, `primary-action`, `secondary-action`, `chip-action`, `toggle-control`, `quiet-scrollbar`, `field-input`, `status-badge`, and `link-action`.
 - Interactive controls must use control-specific tokens such as `--control-on-bg`, `--control-on-border`, and `--control-on-thumb`; do not bind switches directly to `--accent` when that creates poor contrast in light themes.
+- Desktop WebUI layouts should use proportional columns instead of fixed pixel sidebars. Prefer shared classes such as `proportional-layout`, `proportional-layout-three`, and page-specific proportional variants; mobile layouts remain single-column unless a page has a deliberate mobile card/table pattern.
+- Do not reintroduce fixed desktop sidebar columns such as `320px`, `360px`, or `xl:grid-cols-[minmax(0,1fr)_320px]` for main page structure. If a control needs a fixed intrinsic size, keep it inside the proportional column rather than making the page layout fixed-width.
 - WebUI changes should include a basic mobile/responsive pass. If proper mobile adaptation would materially expand the change, split it into a separate task or PR and record that follow-up instead of burying the gap.
+- In this project, "small screen" means a 12-14 inch laptop browser window, not a phone. Treat "large screen" as 27/31 inch desktop or wider. Only interpret "phone", "mobile", or "手机屏/移动端" as phone-sized layouts.
 - Mobile WebUI must remain inspectable after layout changes: the app shell should not rely on a permanent desktop sidebar below tablet width, tables should have a card or otherwise readable mobile representation when they are central to the workflow, and action buttons must wrap or stack without being clipped.
 - Dashboard, Projects, and Tasks should continue moving toward the engineering testing console direction: Dashboard shows current operating state, Projects show integration readiness and next action, and Tasks show execution queue health before raw rows.
+- After WebUI layout, theme, or responsive changes, use `docs/webui-visual-checklist.md` and `docs/webui-visual-checklist.zh-CN.md` as the visual acceptance checklist. Keep the checklist aligned when validation expectations change.
+- Theme token work should distinguish between page theme brightness and actual component background. If a component uses a dark action background inside a light theme, use light foreground text; if it uses a light action background, use dark foreground text. Prefer semantic tokens such as `--action-primary-bg`, `--action-primary-text`, `--action-selected-bg`, `--action-selected-text`, and `--accent-solid-text`.
 - UI changes must be implemented together with the locale content they display. When adding or changing labels, headings, empty states, helper text, table headers, buttons, status text, or user-facing fallback messages, update `apps/web/content/i18n.ts` in the same change and consume the value through `getDictionary()` or `useLocale()`.
 - Do not merge UI-only wording changes that bypass the i18n layer. Hard-coded UI text is only acceptable for stable product names, technical identifiers, user data, route names, or third-party names.
 - Web-side automation and validation scripts should use TypeScript (`.ts` or `.mts`) when project tooling allows it. Avoid adding ad hoc `.js` or `.mjs` scripts for Web work unless the file is a framework-required config file or there is a documented runtime constraint.
@@ -313,6 +318,8 @@ When an issue tracks the PR work, link it from the PR body with:
 ```text
 Closes #<issue-number>
 ```
+
+Place the `Closes #<issue-number>` line at the end of the PR description, after the test plan or validation section.
 
 Do not add `Related PR: #<number>` to the issue body.
 
