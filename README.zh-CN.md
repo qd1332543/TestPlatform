@@ -44,6 +44,7 @@ MeteorTest 是一个通用自动化测试平台，用来管理多个测试项目
 - [AI 与 LangChain 渐进改造方案](docs/ai-langchain-modernization-plan.zh-CN.md)
 - [Supabase 账号与账号级数据 SQL 执行手册](docs/supabase-account-data-runbook.zh-CN.md)
 - [私有 Agent 预览闭环](docs/private-agent-preview-loop.zh-CN.md)
+- [Local Agent 运维方式](docs/local-agent-operations.zh-CN.md)
 
 ## 维护者
 
@@ -343,6 +344,33 @@ $env:SUPABASE_ARTIFACT_BUCKET="test-artifacts"
 ```
 
 ### 3. 启动 Agent
+
+本机日常使用推荐在仓库根目录运行：
+
+```bash
+./scripts/start-local-agent.sh
+```
+
+这个脚本会读取 `apps/web/.env.local`，复用 `agent/config.yaml`，并默认只领取 Web 控制台创建的 private preview 任务。
+
+如果希望 Agent 常驻，macOS 推荐安装用户级 `launchd` 服务：
+
+```bash
+./scripts/install-local-agent-launchd.sh
+```
+
+安装后会在登录时自动启动，并在进程退出时自动拉起。常用管理命令：
+
+```bash
+launchctl list | grep com.meteortest.local-agent
+./scripts/check-local-agent.sh
+./scripts/restart-local-agent-launchd.sh
+./scripts/uninstall-local-agent-launchd.sh
+tail -f .meteortest-agent/logs/launchd.out.log
+tail -f .meteortest-agent/logs/launchd.err.log
+```
+
+如需手动启动：
 
 ```bash
 python -m agent.agent --config agent/config.yaml --interval 10
