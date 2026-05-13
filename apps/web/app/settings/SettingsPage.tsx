@@ -17,6 +17,7 @@ type Settings = AccountPreferences & {
   retryCount: number
   reportRetentionDays: number
   autoStartAgent: boolean
+  taskCheckIntervalSeconds: number
   aiProvider: 'deepseek' | 'openai' | 'custom'
   notifyOnFailure: boolean
   notifyOnRecovery: boolean
@@ -37,6 +38,7 @@ const defaultSettings: Settings = {
   retryCount: 1,
   reportRetentionDays: 30,
   autoStartAgent: true,
+  taskCheckIntervalSeconds: 300,
   aiProvider: 'deepseek',
   notifyOnFailure: true,
   notifyOnRecovery: false,
@@ -81,6 +83,74 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       {children}
       {hint && <span className="block text-xs mt-1.5" style={{ color: 'var(--text-muted)' }}>{hint}</span>}
     </label>
+  )
+}
+
+const TASK_CHECK_STEPS = [
+  { seconds: 30, label: '30s' },
+  { seconds: 60, label: '1m' },
+  { seconds: 300, label: '5m' },
+  { seconds: 600, label: '10m' },
+  { seconds: 900, label: '15m' },
+  { seconds: 1800, label: '30min' },
+  { seconds: 2700, label: '45min' },
+  { seconds: 3600, label: '60min' },
+]
+
+function TaskCheckFrequencySlider({ value, onChange, t }: {
+  value: number
+  onChange: (v: number) => void
+  t: { taskCheckFrequency: string; taskCheckFrequencyDesc: string; taskCheckFrequencyActive: (l: string) => string; taskCheckFrequencyFaster: string; taskCheckFrequencySaving: string }
+}) {
+  const idx = TASK_CHECK_STEPS.findIndex(s => s.seconds === value)
+  const activeIdx = idx === -1 ? 2 : idx
+  const activeLabel = TASK_CHECK_STEPS[activeIdx].label
+  const pct = (activeIdx / (TASK_CHECK_STEPS.length - 1)) * 100
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-baseline justify-between">
+        <div className="text-sm font-medium text-white">{t.taskCheckFrequency}</div>
+        <div className="text-xs font-medium" style={{ color: 'var(--accent)' }}>{activeLabel}</div>
+      </div>
+      <div className="px-1">
+        <div className="relative">
+          <input
+            type="range"
+            min={0}
+            max={TASK_CHECK_STEPS.length - 1}
+            step={1}
+            value={activeIdx}
+            onChange={e => onChange(TASK_CHECK_STEPS[Number(e.target.value)].seconds)}
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, var(--accent) ${pct}%, var(--border) ${pct}%)`,
+            }}
+          />
+        </div>
+        <div className="relative mt-1.5" style={{ height: '1.25rem' }}>
+          {TASK_CHECK_STEPS.map((step, i) => {
+            const pctPos = (i / (TASK_CHECK_STEPS.length - 1)) * 100
+            return (
+              <span
+                key={step.seconds}
+                className="absolute text-xs -translate-x-1/2"
+                style={{
+                  left: `${pctPos}%`,
+                  color: i === activeIdx ? 'var(--accent)' : 'var(--text-muted)',
+                }}
+              >
+                {step.label}
+              </span>
+            )
+          })}
+        </div>
+      </div>
+      <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        {t.taskCheckFrequencyActive(activeLabel)}
+        {activeIdx <= 1 ? ` · ${t.taskCheckFrequencyFaster}` : activeIdx >= 5 ? ` · ${t.taskCheckFrequencySaving}` : ''}
+      </div>
+    </div>
   )
 }
 
@@ -227,6 +297,13 @@ export default function SettingsPage() {
         body: JSON.stringify(normalized),
       })
     } catch {}
+    try {
+      await fetch('/api/agent/runtime-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task_check_interval_seconds: normalized.taskCheckIntervalSeconds }),
+      })
+    } catch {}
   }
 
   function reset() {
@@ -371,6 +448,11 @@ export default function SettingsPage() {
                 disabled={agentControlsDisabled}
               />
             </div>
+            <TaskCheckFrequencySlider
+              value={settings.taskCheckIntervalSeconds}
+              onChange={v => update('taskCheckIntervalSeconds', v)}
+              t={t.settings}
+            />
           </Panel>
 
           <Panel title={t.settings.aiPanel} description={t.settings.aiPanelDesc}>
