@@ -2,9 +2,11 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { demoTasks, isLocalDemo } from '@/lib/localDemo'
+import { taskRef } from '@/lib/viewModels/displayRefs'
 
 type TaskRow = {
-  id: string; status: string; environment: string; created_at: string
+  id: string; display_id?: string | null; status: string; environment: string; created_at: string
+  parameters?: { display_name?: string } | null
   projects: { name: string } | { name: string }[] | null
   test_suites: { name: string } | { name: string }[] | null
   executors: { name: string } | { name: string }[] | null
@@ -22,7 +24,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const { data: tasks } = supabase
     ? await (() => {
       let query = supabase.from('tasks')
-        .select('id, status, environment, created_at, projects(name), test_suites(name), executors(name)')
+        .select('id, display_id, status, environment, parameters, created_at, projects(name), test_suites(name), executors(name)')
         .order('created_at', { ascending: false }).limit(50)
       if (status) query = query.eq('status', status)
       return query
@@ -126,6 +128,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               <tr><td colSpan={7} className="px-5 py-10 text-center" style={{ color: 'var(--text-muted)' }}>{t.pages.tasks.empty}</td></tr>
             ) : taskRows.map((task) => {
               const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
+              const ref = taskRef(task)
               return (
                 <tr key={task.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="px-5 py-3 font-medium text-white">{relationName(task.projects) ?? '-'}</td>
@@ -137,7 +140,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                   <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{relationName(task.executors) ?? '-'}</td>
                   <td className="px-5 py-3" style={{ color: 'var(--text-muted)' }}>{formatDateTime(task.created_at, locale)}</td>
                   <td className="px-5 py-3">
-                    <Link href={`/tasks/${task.id}`} className="link-action text-sm">{t.common.detailsArrow}</Link>
+                    <Link href={`/tasks/${ref}`} className="link-action text-sm">{t.common.detailsArrow}</Link>
                   </td>
                 </tr>
               )
@@ -150,8 +153,9 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
             <div className="px-5 py-10 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{t.pages.tasks.empty}</div>
           ) : taskRows.map((task) => {
             const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
+            const ref = taskRef(task)
             return (
-              <Link key={task.id} href={`/tasks/${task.id}`} className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+              <Link key={task.id} href={`/tasks/${ref}`} className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{relationName(task.projects) ?? '-'}</div>

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 type ProjectValues = {
-  id: string
+  key: string
   name: string
   repo_url: string
   description: string
@@ -42,7 +42,7 @@ export default function ProjectManagementPanel({ project, copy }: { project: Pro
     setSaving(true)
     setMessage(null)
     try {
-      const res = await fetch(`/api/projects/${project.id}`, {
+      const res = await fetch(`/api/projects/${project.key}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -98,7 +98,7 @@ export default function ProjectManagementPanel({ project, copy }: { project: Pro
   )
 }
 
-export function ProjectDangerZone({ projectId, copy }: { projectId: string; copy: Pick<Copy, 'dangerTitle' | 'dangerDescription' | 'deleteAction' | 'deleting' | 'deleteConfirm' | 'deleteFailed'> }) {
+export function ProjectDangerZone({ projectKey, copy }: { projectKey: string; copy: Pick<Copy, 'dangerTitle' | 'dangerDescription' | 'deleteAction' | 'deleting' | 'deleteConfirm' | 'deleteFailed'> }) {
   const router = useRouter()
   const [deleting, setDeleting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -108,7 +108,7 @@ export function ProjectDangerZone({ projectId, copy }: { projectId: string; copy
     setDeleting(true)
     setMessage(null)
     try {
-      const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/projects/${projectKey}`, { method: 'DELETE' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || copy.deleteFailed)
       router.push('/projects')

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from '@/lib/useLocale'
 
-export default function ImportSuitesForm({ projectId }: { projectId: string }) {
+export default function ImportSuitesForm({ projectKey }: { projectKey: string }) {
   const { dictionary: t } = useLocale()
   const [yml, setYml] = useState('')
   const [status, setStatus] = useState('')
@@ -26,7 +26,7 @@ export default function ImportSuitesForm({ projectId }: { projectId: string }) {
       const res = await fetch('/api/projects/import-suites', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ project_id: projectId, yml }),
+        body: JSON.stringify({ project_key: projectKey, yml }),
       })
       const data = await res.json()
       if (!res.ok) { setStatus(t.forms.importError(data.error)); return }

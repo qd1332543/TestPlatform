@@ -55,7 +55,7 @@ export default async function ProjectsPage() {
           <div className="px-5 py-12 text-center text-sm" style={{ color: 'var(--text-muted)' }}>{t.pages.projects.empty}</div>
         ) : (
           projectRows.map(project => (
-            <Link key={project.id} href={`/projects/${project.id}`} className="resource-card rounded-xl p-5 transition-colors">
+            <Link key={project.key} href={`/projects/${project.key}`} className="resource-card rounded-xl p-5 transition-colors">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <div className="section-title truncate">{project.name}</div>

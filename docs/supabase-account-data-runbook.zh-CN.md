@@ -9,6 +9,7 @@
 - 不重复执行 `001` / `002` / `003` 旧初始化 SQL，除非你明确要重建基础业务表和 demo 数据。
 - 如果之前已经执行过旧版 `004_auth_rls.sql`，可以重新执行最新版 `004_auth_rls.sql`。该文件使用 `create table if not exists`、`add column if not exists` 和 `drop policy if exists`，用于补齐 Auth/RLS 和策略。
 - 本阶段新增账号偏好和 AI 历史统一执行 `005_account_preferences_ai_history.sql`。
+- 内部 ID 暴露治理需要执行 `008_display_refs.sql`，用于给任务和构建产物补齐公开显示 ID。
 - Supabase SQL Editor 出现 RLS 或 destructive operation 提示时，先确认 SQL 内容是不是本文列出的文件；确认无误后再执行。
 
 ## 推荐执行顺序
@@ -18,9 +19,10 @@
 3. 打开 `SQL Editor`。
 4. 执行最新版 `supabase/migrations/004_auth_rls.sql`。
 5. 执行 `supabase/migrations/005_account_preferences_ai_history.sql`。
-6. 在 `Authentication > Users` 创建管理员账号。
-7. 在 `Table Editor > profiles` 中找到该用户，把 `role` 改成 `admin`。
-8. 登录 `https://meteortest.jcmeteor.com/` 验证页面和权限。
+6. 执行 `supabase/migrations/008_display_refs.sql`。
+7. 在 `Authentication > Users` 创建管理员账号。
+8. 在 `Table Editor > profiles` 中找到该用户，把 `role` 改成 `admin`。
+9. 登录 `https://meteortest.jcmeteor.com/` 验证页面和权限。
 
 ## 004_auth_rls.sql 做什么
 
@@ -47,6 +49,18 @@
 - 用户只能读取、创建、更新自己的偏好。
 - 用户只能读取、创建、重命名、删除自己的 AI 会话。
 - 用户只能向自己的 AI 会话写入消息。
+
+## 008_display_refs.sql 做什么
+
+该文件负责内部 ID 暴露治理需要的公开引用：
+
+- 给 `tasks` 增加 `display_id`，格式类似 `MT-20260513-0001`。
+- 给 `app_builds` 增加 `display_id`，格式类似 `BLD-20260513-0001`。
+- 为已有任务和构建产物回填显示 ID。
+- 创建唯一索引，保证显示 ID 不重复。
+- 创建 `public.next_display_id(prefix, table_name)`，供服务端创建新任务和构建产物时生成显示 ID。
+
+该迁移不会删除业务表或清空数据。Supabase 如果提示 destructive operations，主要来自函数替换或索引/策略类 DDL，执行前确认文件内容来自本仓库即可。
 
 ## 管理员账号创建建议
 

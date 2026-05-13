@@ -5,21 +5,41 @@ import ImportSuitesForm from '@/components/ImportSuitesForm'
 import ProjectManagementPanel, { ProjectDangerZone } from '@/components/ProjectManagementPanel'
 import { getDictionary } from '@/lib/i18n'
 import { isLocalDemo, demoProjects } from '@/lib/localDemo'
+import { isUuid } from '@/lib/viewModels/displayRefs'
 
-type TestSuiteRow = { id: string; name: string; type: string; command: string }
+type TestSuiteRow = { suite_key: string; name: string; type: string; command: string }
+type ProjectView = {
+  key: string
+  name: string
+  repo_url?: string | null
+  description?: string | null
+  test_suites?: TestSuiteRow[] | null
+}
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+  const { id: routeRef } = await params
   const t = await getDictionary()
 
-  let project: (typeof demoProjects[0] & { description?: string; repo_url?: string }) | null = null
+  let project: ProjectView | null = null
 
   if (isLocalDemo()) {
-    project = demoProjects.find(p => p.id === id) ?? null
+    const demoProject = demoProjects.find(p => p.key === routeRef || p.id === routeRef)
+    project = demoProject
+      ? {
+          key: demoProject.key,
+          name: demoProject.name,
+          repo_url: demoProject.repo_url,
+          description: demoProject.description,
+          test_suites: demoProject.test_suites.map(({ suite_key, name, type, command }) => ({ suite_key, name, type, command })),
+        }
+      : null
   } else {
     const supabase = await createClient()
-    const { data } = await supabase
-      .from('projects').select('*, test_suites(*)').eq('id', id).single()
+    const query = supabase
+      .from('projects').select('key, name, repo_url, description, created_at, test_suites(suite_key, name, type, command)')
+    const { data } = isUuid(routeRef)
+      ? await query.eq('id', routeRef).single()
+      : await query.eq('key', routeRef).single()
     project = data
   }
 
@@ -36,7 +56,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </div>
           <h1 className="text-2xl font-bold text-white">{project.name}</h1>
         </div>
-        <Link href={`/tasks/new?project_id=${project.id}`}
+        <Link href={`/tasks/new?project_key=${project.key}`}
           className="primary-action px-4 py-2 rounded-lg text-sm font-semibold">
           {t.projectDetail.createTask}
         </Link>
@@ -82,7 +102,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             </thead>
             <tbody>
               {(project.test_suites as TestSuiteRow[]).map((s) => (
-                <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                <tr key={s.suite_key} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="px-5 py-3 font-medium text-white">{s.name}</td>
                   <td className="px-5 py-3"><span className="meta-pill px-2 py-0.5 text-xs">{s.type}</span></td>
                   <td className="px-5 py-3 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{s.command}</td>
@@ -95,10 +115,10 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
 
       {/* 底部两列等高 */}
       <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
-        <ImportSuitesForm projectId={project.id} />
+        <ImportSuitesForm projectKey={project.key} />
         <ProjectManagementPanel
           project={{
-            id: project.id,
+            key: project.key,
             name: project.name,
             repo_url: project.repo_url ?? '',
             description: project.description ?? '',
@@ -108,7 +128,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       </div>
 
       {/* 危险区：全宽 */}
-      <ProjectDangerZone projectId={project.id} copy={t.projectDetail.management} />
+      <ProjectDangerZone projectKey={project.key} copy={t.projectDetail.management} />
     </div>
   )
 }
