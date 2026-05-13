@@ -2,17 +2,27 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ImportSuitesForm from '@/components/ImportSuitesForm'
-import ProjectManagementPanel from '@/components/ProjectManagementPanel'
+import ProjectManagementPanel, { ProjectDangerZone } from '@/components/ProjectManagementPanel'
 import { getDictionary } from '@/lib/i18n'
+import { isLocalDemo, demoProjects } from '@/lib/localDemo'
 
 type TestSuiteRow = { id: string; name: string; type: string; command: string }
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const t = await getDictionary()
-  const supabase = await createClient()
-  const { data: project } = await supabase
-    .from('projects').select('*, test_suites(*)').eq('id', id).single()
+
+  let project: (typeof demoProjects[0] & { description?: string; repo_url?: string }) | null = null
+
+  if (isLocalDemo()) {
+    project = demoProjects.find(p => p.id === id) ?? null
+  } else {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('projects').select('*, test_suites(*)').eq('id', id).single()
+    project = data
+  }
+
   if (!project) notFound()
 
   return (
@@ -32,25 +42,29 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         </Link>
       </div>
 
-      <div className="data-panel rounded-xl p-5 space-y-3">
-        <div className="flex items-center gap-3">
-          <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t.projectDetail.identifier}</span>
-          <span className="code-pill px-2 py-0.5 text-xs font-mono">{project.key}</span>
+      {/* 项目信息：横向卡片 */}
+      <div className="data-panel rounded-xl p-5">
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t.projectDetail.identifier}</span>
+            <span className="code-pill px-2 py-0.5 text-xs font-mono">{project.key}</span>
+          </div>
+          {project.repo_url && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t.projectDetail.repository}</span>
+              <a href={project.repo_url} target="_blank" className="link-action text-sm">{project.repo_url}</a>
+            </div>
+          )}
+          {project.description && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t.projectDetail.description}</span>
+              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{project.description}</span>
+            </div>
+          )}
         </div>
-        {project.repo_url && (
-          <div className="flex items-center gap-3">
-            <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t.projectDetail.repository}</span>
-            <a href={project.repo_url} target="_blank" className="link-action text-sm">{project.repo_url}</a>
-          </div>
-        )}
-        {project.description && (
-          <div className="flex items-center gap-3">
-            <span className="text-xs uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{t.projectDetail.description}</span>
-            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{project.description}</span>
-          </div>
-        )}
       </div>
 
+      {/* 测试套件：全宽 */}
       <div className="data-panel rounded-xl overflow-hidden">
         <div className="px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
           <span className="text-sm font-semibold text-white">{t.projectDetail.suites}</span>
@@ -70,9 +84,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {(project.test_suites as TestSuiteRow[]).map((s) => (
                 <tr key={s.id} style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="px-5 py-3 font-medium text-white">{s.name}</td>
-                  <td className="px-5 py-3">
-                    <span className="meta-pill px-2 py-0.5 text-xs">{s.type}</span>
-                  </td>
+                  <td className="px-5 py-3"><span className="meta-pill px-2 py-0.5 text-xs">{s.type}</span></td>
                   <td className="px-5 py-3 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{s.command}</td>
                 </tr>
               ))}
@@ -81,17 +93,22 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
         )}
       </div>
 
-      <ImportSuitesForm projectId={project.id} />
+      {/* 底部两列等高 */}
+      <div className="grid gap-6 lg:grid-cols-2 lg:items-stretch">
+        <ImportSuitesForm projectId={project.id} />
+        <ProjectManagementPanel
+          project={{
+            id: project.id,
+            name: project.name,
+            repo_url: project.repo_url ?? '',
+            description: project.description ?? '',
+          }}
+          copy={t.projectDetail.management}
+        />
+      </div>
 
-      <ProjectManagementPanel
-        project={{
-          id: project.id,
-          name: project.name,
-          repo_url: project.repo_url ?? '',
-          description: project.description ?? '',
-        }}
-        copy={t.projectDetail.management}
-      />
+      {/* 危险区：全宽 */}
+      <ProjectDangerZone projectId={project.id} copy={t.projectDetail.management} />
     </div>
   )
 }

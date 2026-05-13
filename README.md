@@ -41,6 +41,7 @@ MeteorTest is a general-purpose automation testing platform for managing multipl
 Additional docs:
 
 - [Platform architecture and roadmap](docs/platform-architecture-roadmap.md)
+- [AI and LangChain modernization plan](docs/ai-langchain-modernization-plan.md)
 - [Supabase account and account-scoped data SQL runbook](docs/supabase-account-data-runbook.md)
 - [Private Agent preview loop](docs/private-agent-preview-loop.md)
 

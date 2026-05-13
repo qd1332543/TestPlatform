@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --danger: #E05A3A;
   --bg-base: #0C0F10;
   --bg-sidebar: rgba(9, 12, 13, 0.88);
   --bg-card: rgba(23, 29, 32, 0.82);
@@ -39,6 +40,7 @@
 }
 
 [data-theme="indigo"] {
+  --danger: #E05A7A;
   --bg-base: #0B1029;
   --bg-sidebar: rgba(11, 16, 41, 0.9);
   --bg-card: rgba(31, 46, 98, 0.86);
@@ -67,6 +69,7 @@
 }
 
 [data-theme="aurora"] {
+  --danger: #E05A5A;
   --bg-base: #080A12;
   --bg-sidebar: rgba(8, 10, 18, 0.92);
   --bg-card: rgba(18, 25, 38, 0.86);
@@ -95,6 +98,7 @@
 }
 
 [data-theme="dune"] {
+  --danger: #D94F2A;
   --bg-base: #22160D;
   --bg-sidebar: rgba(34, 22, 13, 0.9);
   --bg-card: rgba(90, 62, 37, 0.86);
@@ -123,6 +127,7 @@
 }
 
 [data-theme="parchment"] {
+  --danger: #B03A1E;
   --bg-base: #EFE2C5;
   --bg-sidebar: rgba(255, 248, 230, 0.9);
   --bg-card: rgba(255, 248, 230, 0.86);
@@ -161,6 +166,7 @@
 }
 
 [data-theme="sky"] {
+  --danger: #C0392B;
   --bg-base: #EAF7FF;
   --bg-sidebar: rgba(247, 252, 255, 0.9);
   --bg-card: rgba(255, 255, 255, 0.86);
@@ -189,6 +195,7 @@
 }
 
 [data-theme="glacier"] {
+  --danger: #B03030;
   --bg-base: #EEF6F8;
   --bg-sidebar: rgba(251, 253, 255, 0.9);
   --bg-card: rgba(255, 255, 255, 0.86);
@@ -217,6 +224,7 @@
 }
 
 [data-theme="sakura"] {
+  --danger: #C0304A;
   --bg-base: #FFF0F5;
   --bg-sidebar: rgba(255, 249, 251, 0.9);
   --bg-card: rgba(255, 255, 255, 0.86);

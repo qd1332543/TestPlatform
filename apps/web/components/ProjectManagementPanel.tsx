@@ -36,7 +36,6 @@ export default function ProjectManagementPanel({ project, copy }: { project: Pro
     description: project.description ?? '',
   })
   const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
   async function save() {
@@ -59,12 +58,57 @@ export default function ProjectManagementPanel({ project, copy }: { project: Pro
     }
   }
 
+  return (
+    <section className="data-panel rounded-xl overflow-hidden flex flex-col h-full">
+      <div className="px-5 py-4 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
+        <div>
+          <h2 className="text-sm font-semibold text-white">{copy.title}</h2>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{copy.description}</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {message && <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{message}</span>}
+          <button type="button" onClick={save} disabled={saving || !form.name.trim()}
+            className="primary-action rounded-lg px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50">
+            {saving ? copy.saving : copy.save}
+          </button>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-3 flex-1">
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="block">
+            <span className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--text-secondary)' }}>{copy.nameLabel}</span>
+            <input className="field-input px-3 py-2 text-sm" value={form.name}
+              onChange={event => setForm(prev => ({ ...prev, name: event.target.value }))} />
+          </label>
+          <label className="block">
+            <span className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--text-secondary)' }}>{copy.repoLabel}</span>
+            <input className="field-input px-3 py-2 text-sm" value={form.repo_url}
+              onChange={event => setForm(prev => ({ ...prev, repo_url: event.target.value }))} />
+          </label>
+        </div>
+
+        <label className="block">
+          <span className="block text-xs font-semibold uppercase tracking-wide mb-1" style={{ color: 'var(--text-secondary)' }}>{copy.descriptionLabel}</span>
+          <textarea className="field-input px-3 py-2 text-sm resize-none w-full" rows={3} value={form.description}
+            onChange={event => setForm(prev => ({ ...prev, description: event.target.value }))} />
+        </label>
+      </div>
+    </section>
+  )
+}
+
+export function ProjectDangerZone({ projectId, copy }: { projectId: string; copy: Pick<Copy, 'dangerTitle' | 'dangerDescription' | 'deleteAction' | 'deleting' | 'deleteConfirm' | 'deleteFailed'> }) {
+  const router = useRouter()
+  const [deleting, setDeleting] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+
   async function deleteProject() {
     if (!window.confirm(copy.deleteConfirm)) return
     setDeleting(true)
     setMessage(null)
     try {
-      const res = await fetch(`/api/projects/${project.id}`, { method: 'DELETE' })
+      const res = await fetch(`/api/projects/${projectId}`, { method: 'DELETE' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || copy.deleteFailed)
       router.push('/projects')
@@ -76,65 +120,19 @@ export default function ProjectManagementPanel({ project, copy }: { project: Pro
   }
 
   return (
-    <section className="data-panel rounded-xl p-5 space-y-5">
+    <div className="flex items-center justify-between gap-4 rounded-xl px-5 py-4 border-l-4" style={{ borderColor: 'var(--danger)', background: 'color-mix(in srgb, var(--danger) 20%, var(--bg-card))', outline: '1px solid color-mix(in srgb, var(--danger) 45%, transparent)' }}>
       <div>
-        <h2 className="section-title">{copy.title}</h2>
-        <p className="section-subtitle mt-1">{copy.description}</p>
+        <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>{copy.dangerTitle}</div>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{copy.dangerDescription}</p>
       </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'var(--text-secondary)' }}>{copy.nameLabel}</span>
-          <input
-            className="field-input px-3 py-2.5 text-sm"
-            value={form.name}
-            onChange={event => setForm(prev => ({ ...prev, name: event.target.value }))}
-          />
-        </label>
-        <label className="block">
-          <span className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'var(--text-secondary)' }}>{copy.repoLabel}</span>
-          <input
-            className="field-input px-3 py-2.5 text-sm"
-            value={form.repo_url}
-            onChange={event => setForm(prev => ({ ...prev, repo_url: event.target.value }))}
-          />
-        </label>
-      </div>
-
-      <label className="block">
-        <span className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'var(--text-secondary)' }}>{copy.descriptionLabel}</span>
-        <textarea
-          className="field-input min-h-24 px-3 py-2.5 text-sm"
-          value={form.description}
-          onChange={event => setForm(prev => ({ ...prev, description: event.target.value }))}
-        />
-      </label>
-
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={save}
-          disabled={saving || deleting || !form.name.trim()}
-          className="primary-action rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {saving ? copy.saving : copy.save}
-        </button>
-        {message && <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{message}</span>}
-      </div>
-
-      <div className="rounded-lg p-4" style={{ border: '1px solid var(--status-failed-bg)', background: 'var(--surface-soft)' }}>
-        <div className="text-sm font-semibold" style={{ color: 'var(--status-failed-text)' }}>{copy.dangerTitle}</div>
-        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)' }}>{copy.dangerDescription}</p>
-        <button
-          type="button"
-          onClick={deleteProject}
-          disabled={saving || deleting}
-          className="mt-3 rounded-lg px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ border: '1px solid var(--status-failed-bg)', color: 'var(--status-failed-text)', background: 'transparent' }}
-        >
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {message && <span className="text-xs" style={{ color: 'var(--danger)' }}>{message}</span>}
+        <button type="button" onClick={deleteProject} disabled={deleting}
+          className="rounded-lg px-3 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ border: '1px solid color-mix(in srgb, var(--danger) 60%, transparent)', color: 'var(--danger)', background: 'color-mix(in srgb, var(--danger) 12%, transparent)' }}>
           {deleting ? copy.deleting : copy.deleteAction}
         </button>
       </div>
-    </section>
+    </div>
   )
 }

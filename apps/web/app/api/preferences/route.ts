@@ -15,7 +15,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('user_preferences')
-    .select('platform_name, locale, theme, density, default_environment, ai_model, ai_base_url, auto_analyze_failures')
+    .select('platform_name, locale, theme, density, default_environment, ai_model, ai_base_url, auto_analyze_failures, webhook_url, notify_on_failure, notify_on_recovery')
     .eq('user_id', user.id)
     .maybeSingle()
 

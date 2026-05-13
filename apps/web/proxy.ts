@@ -33,6 +33,9 @@ export async function proxy(request: NextRequest) {
 
   if (isPublicPath) return NextResponse.next()
 
+  // UI_PREVIEW_BYPASS: skip auth in local demo mode
+  if (process.env.METEORTEST_LOCAL_DEMO === '1') return NextResponse.next()
+
   const { response, user } = await getSessionResponse(request)
   if (authOptionalPaths.has(pathname)) return response
   if (user) return response

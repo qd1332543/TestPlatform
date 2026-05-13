@@ -17,3 +17,5 @@ pytest-cache-files-*/
 # Agent local config (contains sensitive paths)
 agent/config.yaml
 agent/.venv/
+.vercel
+.env*.local
