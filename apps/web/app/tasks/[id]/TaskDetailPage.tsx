@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
+import { isUuid, taskRef } from '@/lib/viewModels/displayRefs'
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
   queued:    { bg: 'var(--status-queued-bg)', color: 'var(--status-queued-text)' },
@@ -32,29 +33,35 @@ function isDiagnosticStatus(status: string) {
 }
 
 export default async function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+  const { id: routeRef } = await params
   const locale = await getLocale()
   const t = await getDictionary()
   const supabase = await createClient()
-  const { data: task } = await supabase
+  const query = supabase
     .from('tasks')
-    .select('*, projects(name), test_suites(name, command), executors(name), reports(*), ai_analyses(*)')
-    .eq('id', id).single()
+    .select('id, display_id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name, command), executors(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
+  const { data: task } = isUuid(routeRef)
+    ? await query.eq('id', routeRef).single()
+    : await query.eq('display_id', routeRef).single()
   if (!task) notFound()
 
-  const report = task.reports?.[0]
-  const analysis = task.ai_analyses?.[0]
+  const project = Array.isArray(task.projects) ? task.projects[0] : task.projects
+  const suite = Array.isArray(task.test_suites) ? task.test_suites[0] : task.test_suites
+  const executor = Array.isArray(task.executors) ? task.executors[0] : task.executors
+  const report = Array.isArray(task.reports) ? task.reports[0] : task.reports
+  const analysis = Array.isArray(task.ai_analyses) ? task.ai_analyses[0] : task.ai_analyses
   const s = statusStyle[task.status] ?? statusStyle.queued
   const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
   const parameters = (task.parameters ?? {}) as TaskParameters
-  const displayName = parameters.display_name || task.id
+  const displayRef = taskRef(task)
+  const displayName = parameters.display_name || displayRef
   const pytest = parameters.pytest
   const pytestSummary = pytest
     ? [
-        pytest.passed != null ? `${pytest.passed} passed` : null,
-        pytest.failed != null ? `${pytest.failed} failed` : null,
-        pytest.deselected != null ? `${pytest.deselected} deselected` : null,
-        pytest.exit_code != null ? `exit ${pytest.exit_code}` : null,
+        pytest.passed != null ? `${pytest.passed} ${t.taskDetail.pytestPassed}` : null,
+        pytest.failed != null ? `${pytest.failed} ${t.taskDetail.pytestFailed}` : null,
+        pytest.deselected != null ? `${pytest.deselected} ${t.taskDetail.pytestDeselected}` : null,
+        pytest.exit_code != null ? `${t.taskDetail.pytestExit} ${pytest.exit_code}` : null,
       ].filter(Boolean).join(', ')
     : ''
   const shouldShowDiagnostic = isDiagnosticStatus(task.status)
@@ -88,34 +95,34 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     ...diagnosticNextActions.map(step => `- ${step}`),
     '',
     `## ${t.analysisPackage.commandSection}`,
-    task.test_suites?.command || '-',
+    suite?.command || '-',
     '',
     `## ${t.analysisPackage.promptSection}`,
     t.taskDetail.aiRepairPrompt,
   ].join('\n')
-  const repairHandoffFilename = `meteortest-ai-repair-${task.id}.md`
+  const repairHandoffFilename = `meteortest-ai-repair-${displayRef}.md`
 
   const meta = [
-    { label: t.common.project, value: task.projects?.name ?? '-' },
-    { label: t.common.suite, value: task.test_suites?.name ?? '-' },
+    { label: t.common.project, value: project?.name ?? '-' },
+    { label: t.common.suite, value: suite?.name ?? '-' },
     { label: t.common.environment, value: task.environment },
-    { label: t.common.executor, value: task.executors?.name ?? '-' },
+    { label: t.common.executor, value: executor?.name ?? '-' },
     { label: t.common.createdAt, value: formatDateTime(task.created_at, locale) },
     ...(task.started_at ? [{ label: t.common.startedAt, value: formatDateTime(task.started_at, locale) }] : []),
     ...(task.finished_at ? [{ label: t.common.finishedAt, value: formatDateTime(task.finished_at, locale) }] : []),
   ]
   const exportMarkdown = buildAnalysisPackageMarkdown({
     title: t.analysisPackage.taskTitle,
-    taskId: task.id,
-    project: task.projects?.name,
-    suite: task.test_suites?.name,
+    taskId: displayRef,
+    project: project?.name,
+    suite: suite?.name,
     environment: task.environment,
     status: statusLabel,
-    executor: task.executors?.name,
+    executor: executor?.name,
     createdAt: formatDateTime(task.created_at, locale),
     startedAt: task.started_at ? formatDateTime(task.started_at, locale) : null,
     finishedAt: task.finished_at ? formatDateTime(task.finished_at, locale) : null,
-    command: task.test_suites?.command,
+    command: suite?.command,
     report: {
       summary: report?.summary,
       logUrl: report?.log_url,
@@ -128,7 +135,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
       flakyProbability: analysis?.flaky_probability,
     },
   }, t)
-  const exportFilename = `meteortest-task-${task.id}.md`
+  const exportFilename = `meteortest-task-${displayRef}.md`
 
   return (
     <div className="page-shell space-y-6">
@@ -267,10 +274,10 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
             </div>
           ))}
         </div>
-        {task.test_suites?.command && (
+        {suite?.command && (
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
             <div className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>{t.taskDetail.command}</div>
-            <code className="panel-inner text-xs font-mono px-3 py-2 rounded-lg block" style={{ color: 'var(--accent)' }}>{task.test_suites.command}</code>
+            <code className="panel-inner text-xs font-mono px-3 py-2 rounded-lg block" style={{ color: 'var(--accent)' }}>{suite.command}</code>
           </div>
         )}
         {(pytestSummary || parameters.failure_category) && (

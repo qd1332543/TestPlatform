@@ -3,9 +3,11 @@ import { createClient } from '@/lib/supabase/server'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
 import { demoTasks, isLocalDemo } from '@/lib/localDemo'
+import { taskRef } from '@/lib/viewModels/displayRefs'
 
 type ReportRow = {
   id: string
+  display_id?: string | null
   status: string
   environment: string
   parameters: {
@@ -45,7 +47,7 @@ export default async function ReportsPage() {
   const { data } = supabase
     ? await supabase
       .from('tasks')
-      .select('id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
+      .select('id, display_id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
       .order('created_at', { ascending: false })
       .limit(50)
     : { data: demoTasks }
@@ -110,6 +112,7 @@ export default async function ReportsPage() {
             const analysis = firstItem(report.ai_analyses)
             const statusLabel = t.status[report.status as keyof typeof t.status] ?? report.status
             const parameters = report.parameters ?? {}
+            const ref = taskRef(report)
             const pytest = parameters.pytest
             const pytestSummary = pytest
               ? [
@@ -121,7 +124,7 @@ export default async function ReportsPage() {
               : ''
             const exportMarkdown = buildAnalysisPackageMarkdown({
               title: t.analysisPackage.reportTitle,
-              taskId: report.id,
+              taskId: ref,
               project: relationName(report.projects),
               suite: relationName(report.test_suites),
               environment: report.environment,
@@ -166,12 +169,12 @@ export default async function ReportsPage() {
                   <div className="mobile-action-grid flex shrink-0 flex-wrap items-center gap-2 sm:flex">
                     <a
                       href={markdownDataUrl(exportMarkdown)}
-                      download={`meteortest-report-${report.id}.md`}
+                      download={`meteortest-report-${ref}.md`}
                       className="secondary-action inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold"
                     >
                       {t.reports.exportMarkdown}
                     </a>
-                    <Link href={`/tasks/${report.id}`} className="chip-action inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold">
+                    <Link href={`/tasks/${ref}`} className="chip-action inline-flex h-9 items-center rounded-lg px-3 text-sm font-semibold">
                       {t.reports.taskDetails}
                     </Link>
                   </div>

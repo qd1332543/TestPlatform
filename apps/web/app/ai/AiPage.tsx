@@ -11,6 +11,7 @@ import {
   type AiMessage,
   type AiToolResult,
 } from '@/lib/account/aiHistory'
+import { taskRef } from '@/lib/viewModels/displayRefs'
 
 type ToolResult = AiToolResult
 type Message = AiMessage
@@ -22,7 +23,7 @@ const defaultAiSettings = {
   aiModel: 'deepseek-v4-pro',
   aiBaseUrl: 'https://api.deepseek.com',
 }
-const taskIdPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi
+const taskRefPattern = /\bMT-\d{8}-\d{4}\b/gi
 
 const TemplateIcons = {
   failed: (
@@ -260,7 +261,7 @@ function formatDate(value: unknown, locale: Locale) {
 function renderTaskLinks(text: string) {
   const nodes: React.ReactNode[] = []
   let lastIndex = 0
-  const matches = text.matchAll(taskIdPattern)
+  const matches = text.matchAll(taskRefPattern)
   for (const match of matches) {
     const taskId = match[0]
     const index = match.index ?? 0
@@ -333,14 +334,14 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
       {visibleActions.map((action, index) => {
         const task = taskActionData(action)
         if (task) {
-          const taskId = typeof task.id === 'string' ? task.id : '-'
+          const displayRef = taskRef(task)
           const environment = typeof task.environment === 'string' ? task.environment : '-'
           const status = typeof task.status === 'string' ? task.status : '-'
           const meta = statusMeta(status, t)
           const report = firstRecord(task.reports)
           const analysis = firstRecord(task.ai_analyses)
           const title = action.action === 'create_task' ? t.ai.taskCreated : t.ai.taskStatus
-          const key = `${action.action}-${taskId}-${index}`
+          const key = `${action.action}-${displayRef}-${index}`
           const card = (
             <div className="soft-panel rounded-xl overflow-hidden transition-colors" style={{ border: '1px solid var(--border)' }}>
               <div className="px-4 py-3 flex items-center justify-between gap-3" style={{ borderBottom: '1px solid var(--border)' }}>
@@ -365,7 +366,7 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)' }}>{t.common.taskId}</div>
-                  <div className="mt-1 font-mono text-[11px] truncate" style={{ color: 'var(--accent)' }}>{taskId}</div>
+                  <div className="mt-1 font-mono text-[11px] truncate" style={{ color: 'var(--accent)' }}>{displayRef}</div>
                 </div>
                 {action.action === 'get_task_detail' && (
                   <>
@@ -393,15 +394,15 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
                   {typeof analysis.suggestion === 'string' && <div className="mt-1 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{analysis.suggestion}</div>}
                 </div>
               )}
-              {taskId !== '-' && (
+              {displayRef && (
                 <div className="px-4 py-2 text-xs font-medium transition-colors group-hover:text-white" style={{ borderTop: '1px solid var(--border)', color: 'var(--accent)' }}>
                   {t.ai.openTaskDetail}
                 </div>
               )}
             </div>
           )
-          return taskId !== '-'
-            ? <Link key={key} href={`/tasks/${taskId}`} className="block group rounded-xl focus-visible:outline-none" style={{ outlineColor: 'var(--accent)' }}>{card}</Link>
+          return displayRef
+            ? <Link key={key} href={`/tasks/${displayRef}`} className="block group rounded-xl focus-visible:outline-none" style={{ outlineColor: 'var(--accent)' }}>{card}</Link>
             : <div key={key}>{card}</div>
         }
 
@@ -683,7 +684,7 @@ export default function AiPage() {
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: currentInput, history, aiConfig: getAiSettings() }),
+        body: JSON.stringify({ message: currentInput, history, aiConfig: getAiSettings(), locale }),
       })
       const data = await res.json()
       const assistantMsg: Message = {

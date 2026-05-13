@@ -3,22 +3,27 @@ import { NextRequest, NextResponse } from 'next/server'
 import { demoExecutors, demoProjects, demoTasks, isLocalDemo } from '@/lib/localDemo'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/roles'
+import { isUuid, taskRef } from '@/lib/viewModels/displayRefs'
+import { dictionaries, normalizeLocale, type Dictionary } from '@/content/i18n'
 
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
 type AiConfig = { aiModel?: string; aiBaseUrl?: string }
 type Suggestion = { label: string; prompt: string }
+type AiApiCopy = Dictionary['aiApi']
 type SuiteSnapshot = { name: string; suite_key: string; type?: string }
 type ProjectSnapshot = { name: string; key: string; test_suites?: SuiteSnapshot[] | null }
 type NamedRecord = { name?: string; key?: string; suite_key?: string }
 type NamedRelation = NamedRecord | NamedRecord[] | null
 type TaskSnapshot = {
-  id?: string
+  display_id?: string
   status?: string
   environment?: string
   projects?: NamedRelation
   test_suites?: NamedRelation
+  parameters?: unknown
 }
+type PlatformSnapshot = { projects: ProjectSnapshot[]; recentTasks?: TaskSnapshot[]; executors?: unknown[] }
 
 function serviceClient() {
   return createAdminClient()
@@ -32,40 +37,50 @@ function sameText(a?: string | null, b?: string | null) {
   return Boolean(normalize(a) && normalize(a) === normalize(b))
 }
 
-async function getPlatformSnapshot() {
+async function getPlatformSnapshot(): Promise<PlatformSnapshot> {
   if (isLocalDemo()) {
-    return { projects: demoProjects, recentTasks: demoTasks, executors: demoExecutors }
+    return {
+      projects: demoProjects.map(({ key, name, repo_url, description, test_suites }) => ({ key, name, repo_url, description, test_suites })),
+      recentTasks: demoTasks.map(task => ({
+        display_id: 'display_id' in task && typeof task.display_id === 'string' ? task.display_id : undefined,
+        status: task.status,
+        environment: task.environment,
+        projects: task.projects,
+        test_suites: task.test_suites,
+        parameters: task.parameters,
+      })),
+      executors: demoExecutors.map(({ name, type, status, capabilities, last_heartbeat_at }) => ({ name, type, status, capabilities, last_heartbeat_at })),
+    }
   }
 
   const supabase = serviceClient()
   const [{ data: projects }, { data: tasks }, { data: executors }] = await Promise.all([
     supabase
       .from('projects')
-      .select('id, key, name, repo_url, description, test_suites(id, suite_key, name, type, command), app_builds(id, platform, version, build_number)')
+      .select('key, name, repo_url, description, test_suites(suite_key, name, type, command), app_builds(display_id, platform, version, build_number)')
       .order('created_at', { ascending: false })
       .limit(30),
     supabase
       .from('tasks')
-      .select('id, status, environment, created_at, projects(name, key), test_suites(name, suite_key), reports(summary, log_url), ai_analyses(failure_reason, suggestion, flaky_probability)')
+      .select('display_id, status, environment, created_at, projects(name, key), test_suites(name, suite_key), reports(summary, log_url), ai_analyses(failure_reason, suggestion, flaky_probability)')
       .order('created_at', { ascending: false })
       .limit(20),
     supabase
       .from('executors')
-      .select('id, name, type, status, capabilities, last_heartbeat_at')
+      .select('name, type, status, capabilities, last_heartbeat_at')
       .order('status'),
   ])
 
   return { projects: projects ?? [], recentTasks: tasks ?? [], executors: executors ?? [] }
 }
 
-function getTaskId(action: ToolResult) {
+function getTaskActionRef(action: ToolResult) {
   if (!action.ok || !['create_task', 'get_task_detail'].includes(action.action ?? '') || !action.data || typeof action.data !== 'object') return null
-  const data = action.data as { id?: unknown }
-  return typeof data.id === 'string' ? data.id : null
+  return taskRef(action.data as { id?: unknown; display_id?: unknown; parameters?: unknown })
 }
 
 function extractTaskId(text: string) {
-  return text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]
+  return text.match(/\bMT-\d{8}-\d{4}\b/i)?.[0] ?? text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]
 }
 
 function uniqueSuggestions(suggestions: Suggestion[]) {
@@ -82,54 +97,61 @@ function relationLabel(value: NamedRelation) {
   return item?.name ?? item?.key ?? item?.suite_key ?? ''
 }
 
-function taskLabel(task: TaskSnapshot) {
+function taskLabel(task: TaskSnapshot, copy: AiApiCopy) {
   const project = relationLabel(task.projects ?? null)
   const suite = relationLabel(task.test_suites ?? null)
-  return [project, suite].filter(Boolean).join(' / ') || task.id?.slice(0, 8) || '任务'
+  return [project, suite].filter(Boolean).join(' / ') || taskRef(task) || copy.taskFallback
 }
 
-function buildTaskListSuggestions(snapshot: { recentTasks?: TaskSnapshot[] }) {
+function hasPublicTaskRef(task?: TaskSnapshot) {
+  return Boolean(task && taskRef(task) !== 'TASK-')
+}
+
+function buildTaskListSuggestions(snapshot: { recentTasks?: TaskSnapshot[] }, copy: AiApiCopy) {
   const tasks = snapshot.recentTasks ?? []
   const first = tasks[0]
   const failed = tasks.find(task => ['failed', 'timeout'].includes(task.status ?? ''))
   const running = tasks.find(task => ['queued', 'running'].includes(task.status ?? ''))
 
   const suggestions: Suggestion[] = []
-  if (first?.id) {
+  if (hasPublicTaskRef(first)) {
+    const ref = taskRef(first!)
     suggestions.push({
-      label: `查看 ${taskLabel(first)} 详情`,
-      prompt: `查询任务 ${first.id} 的执行状态和最新报告`,
+      label: copy.viewTaskDetail(taskLabel(first, copy)),
+      prompt: copy.queryTaskStatus(ref),
     })
   }
-  if (failed?.id) {
+  if (hasPublicTaskRef(failed)) {
+    const ref = taskRef(failed!)
     suggestions.push({
-      label: `分析失败任务`,
-      prompt: `分析任务 ${failed.id} 的报告、失败原因和改进建议`,
+      label: copy.analyzeFailedTask,
+      prompt: copy.analyzeTask(ref),
     })
-    const project = relationLabel(failed.projects ?? null)
-    const suite = relationLabel(failed.test_suites ?? null)
+    const project = relationLabel(failed!.projects ?? null)
+    const suite = relationLabel(failed!.test_suites ?? null)
     if (project && suite) {
       suggestions.push({
-        label: `重跑失败套件`,
-        prompt: `请帮我重新创建 ${project} 项目的 ${suite} 套件在 ${failed.environment ?? 'dev'} 环境的测试任务`,
+        label: copy.rerunFailedSuite,
+        prompt: copy.rerunSuitePrompt(project, suite, failed!.environment ?? 'dev'),
       })
     }
   }
-  if (running?.id && running.id !== first?.id) {
+  if (hasPublicTaskRef(running) && taskRef(running!) !== (first ? taskRef(first) : '')) {
+    const ref = taskRef(running!)
     suggestions.push({
-      label: `跟踪运行中任务`,
-      prompt: `查询任务 ${running.id} 的执行状态和最新报告`,
+      label: copy.trackRunningTask,
+      prompt: copy.queryTaskStatus(ref),
     })
   }
   suggestions.push(
-    { label: '查看执行器状态', prompt: '列出当前所有执行器状态和最近心跳' },
-    { label: '分析今日报告', prompt: '分析今天的测试执行情况和主要失败原因' },
+    { label: copy.executorStatus, prompt: copy.executorStatusPrompt },
+    { label: copy.todayReport, prompt: copy.todayReportPrompt },
   )
 
   return uniqueSuggestions(suggestions)
 }
 
-function buildSuiteTaskSuggestions(text: string, snapshot: { projects: ProjectSnapshot[] }) {
+function buildSuiteTaskSuggestions(text: string, snapshot: { projects: ProjectSnapshot[] }, copy: AiApiCopy) {
   const matchedProjects = snapshot.projects.filter(project => {
     const name = normalize(project.name)
     const key = normalize(project.key)
@@ -146,135 +168,136 @@ function buildSuiteTaskSuggestions(text: string, snapshot: { projects: ProjectSn
     const suites = matchedSuites.length ? matchedSuites : (project.test_suites ?? []).slice(0, 3)
     return suites.flatMap(suite => [
       {
-        label: `创建 ${project.name} / ${suite.name} / dev`,
-        prompt: `请帮我创建 ${project.name} 项目的 ${suite.name} 套件在 dev 环境的测试任务`,
+        label: copy.createSuiteTaskLabel(project.name, suite.name, 'dev'),
+        prompt: copy.createSuiteTaskPrompt(project.name, suite.name, 'dev'),
       },
       {
-        label: `创建 ${project.name} / ${suite.name} / staging`,
-        prompt: `请帮我创建 ${project.name} 项目的 ${suite.name} 套件在 staging 环境的测试任务`,
+        label: copy.createSuiteTaskLabel(project.name, suite.name, 'staging'),
+        prompt: copy.createSuiteTaskPrompt(project.name, suite.name, 'staging'),
       },
     ])
   })
 }
 
-function buildSuggestions(message: string, reply: string, snapshot: { projects: ProjectSnapshot[]; recentTasks?: TaskSnapshot[] }, actions: ToolResult[], history: ChatMessage[] = []): Suggestion[] {
+function buildSuggestions(message: string, reply: string, snapshot: { projects: ProjectSnapshot[]; recentTasks?: TaskSnapshot[] }, actions: ToolResult[], copy: AiApiCopy, history: ChatMessage[] = []): Suggestion[] {
   const historyText = normalize(history.slice(-4).map(item => item.content).join(' ')) ?? ''
   const text = normalize(`${historyText} ${message} ${reply}`) ?? ''
   const currentText = normalize(`${message} ${reply}`) ?? ''
-  const activeTaskId = actions.map(getTaskId).find(Boolean) ?? extractTaskId(text)
+  const activeTaskId = actions.map(getTaskActionRef).find(Boolean) ?? extractTaskId(text)
   const hasCreatedTask = actions.some(action => action.ok && action.action === 'create_task')
   const hasTaskDetail = actions.some(action => action.ok && action.action === 'get_task_detail')
-  const latestTaskId = activeTaskId ?? snapshot.recentTasks?.[0]?.id
+  const latestTaskId = activeTaskId ?? (snapshot.recentTasks?.[0] ? taskRef(snapshot.recentTasks[0]) : null)
 
   if (hasCreatedTask && activeTaskId) {
     return [
-      { label: '查询这个任务状态', prompt: `查询任务 ${activeTaskId} 的执行状态和最新报告` },
-      { label: '查看最近任务', prompt: '列出最近 10 个测试任务的状态' },
-      { label: '分析今日报告', prompt: '分析今天的测试执行情况和主要失败原因' },
+      { label: copy.queryThisTask, prompt: copy.queryTaskStatus(activeTaskId) },
+      { label: copy.recentTasks, prompt: copy.recentTasksPrompt },
+      { label: copy.todayReport, prompt: copy.todayReportPrompt },
     ]
   }
 
   if (hasTaskDetail && activeTaskId) {
     return [
-      { label: '分析这个任务结果', prompt: `分析任务 ${activeTaskId} 的报告、失败原因和改进建议` },
-      { label: '查看相关套件', prompt: `查看任务 ${activeTaskId} 对应项目下的测试套件` },
-      { label: '查看最近任务', prompt: '列出最近 10 个测试任务的状态' },
+      { label: copy.analyzeThisTask, prompt: copy.analyzeTask(activeTaskId) },
+      { label: copy.relatedSuites, prompt: copy.relatedSuitesPrompt(activeTaskId) },
+      { label: copy.recentTasks, prompt: copy.recentTasksPrompt },
     ]
   }
 
   if (actions.some(action => action.ok && action.action === 'create_project')) {
     return [
-      { label: '查看项目套件', prompt: '列出这个项目下所有测试套件' },
-      { label: '导入套件说明', prompt: '告诉我如何为这个项目导入测试套件' },
-      { label: '创建测试任务', prompt: '帮我为这个项目选择套件并创建一个 dev 环境测试任务' },
+      { label: copy.projectSuites, prompt: copy.projectSuitesPrompt },
+      { label: copy.importSuites, prompt: copy.importSuitesPrompt },
+      { label: copy.createTask, prompt: copy.createTaskPrompt },
     ]
   }
 
   if (/(最近|latest|recent|列表|list|列出|查看).*(任务|task)|任务.*(列表|list|最近|latest|recent)/.test(currentText)) {
-    return buildTaskListSuggestions(snapshot)
+    return buildTaskListSuggestions(snapshot, copy)
   }
 
   if (/套件|suite|测试集|用例集/.test(text)) {
     return uniqueSuggestions([
-      ...buildSuiteTaskSuggestions(text, snapshot),
-      { label: '查看执行器状态', prompt: '列出当前所有执行器状态和能力标签' },
+      ...buildSuiteTaskSuggestions(text, snapshot, copy),
+      { label: copy.executorStatus, prompt: copy.executorCapabilitiesPrompt },
     ])
   }
 
   if (/(任务|状态|运行|结果|queued|running|succeeded|failed|timeout)/.test(currentText) && latestTaskId) {
     return [
-      { label: '查看任务详情', prompt: `查询任务 ${latestTaskId} 的执行状态和最新报告` },
-      { label: '分析任务结果', prompt: `分析任务 ${latestTaskId} 的报告、失败原因和改进建议` },
-      { label: '查看执行器状态', prompt: '列出当前所有执行器状态和最近心跳' },
+      { label: copy.viewTaskDetail(latestTaskId), prompt: copy.queryTaskStatus(latestTaskId) },
+      { label: copy.analyzeThisTask, prompt: copy.analyzeTask(latestTaskId) },
+      { label: copy.executorStatus, prompt: copy.executorStatusPrompt },
     ]
   }
 
   if (/失败|failed|报告|report|分析/.test(currentText)) {
     return [
-      { label: '查看失败任务', prompt: '查询最近失败的任务，列出失败原因和修复建议' },
-      { label: '执行器状态', prompt: '列出当前所有执行器状态和最近心跳' },
-      { label: '今日测试概览', prompt: '总结今天的测试成功率、失败数和平均耗时' },
+      { label: copy.failedTasks, prompt: copy.failedTasksPrompt },
+      { label: copy.executorStatus, prompt: copy.executorStatusPrompt },
+      { label: copy.todayOverview, prompt: copy.todayOverviewPrompt },
     ]
   }
 
   const wantsTask = /任务|执行|运行|触发|创建|新建|套件|suite/.test(text)
   if (!wantsTask) return []
 
-  return uniqueSuggestions(buildSuiteTaskSuggestions(text, snapshot))
+  return uniqueSuggestions(buildSuiteTaskSuggestions(text, snapshot, copy))
 }
 
-function finalReplyForActions(actions: ToolResult[]) {
+function finalReplyForActions(actions: ToolResult[], copy: AiApiCopy) {
   if (actions.some(action => action.ok && action.action === 'create_task')) {
-    return '测试任务已创建成功，已进入执行队列。'
+    return copy.taskCreatedReply
   }
   if (actions.some(action => action.ok && action.action === 'create_project')) {
-    return '项目已创建成功。'
+    return copy.projectCreatedReply
   }
   if (actions.some(action => action.ok && action.action === 'get_task_detail')) {
-    return '这是任务的最新状态。'
+    return copy.taskStatusReply
   }
   return null
 }
 
-async function getTaskDetail(args: Record<string, unknown>): Promise<ToolResult> {
-  const taskId = String(args.task_id ?? args.id ?? '').trim()
-  if (!taskId) return { ok: false, error: '查询任务需要 task_id。' }
+async function getTaskDetail(args: Record<string, unknown>, copy: AiApiCopy): Promise<ToolResult> {
+  const taskId = String(args.task_ref ?? args.task_id ?? args.id ?? '').trim()
+  if (!taskId) return { ok: false, error: copy.missingTaskRef }
 
   const supabase = serviceClient()
-  const { data, error } = await supabase
+  const query = supabase
     .from('tasks')
-    .select('id, project_id, suite_id, environment, status, created_at, started_at, finished_at, projects(name, key), test_suites(name, suite_key), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
-    .eq('id', taskId)
-    .single()
+    .select('display_id, environment, status, created_at, started_at, finished_at, projects(name, key), test_suites(name, suite_key), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
+  const { data, error } = isUuid(taskId)
+    ? await query.eq('id', taskId).single()
+    : await query.eq('display_id', taskId).single()
 
   if (error) return { ok: false, error: error.message }
   return { ok: true, action: 'get_task_detail', data }
 }
 
-async function createProject(args: Record<string, unknown>): Promise<ToolResult> {
+async function createProject(args: Record<string, unknown>, copy: AiApiCopy): Promise<ToolResult> {
   const access = await requireRole('admin')
-  if (!access.ok) return { ok: false, error: '创建项目需要 admin 权限。' }
+  if (!access.ok) return { ok: false, error: copy.createProjectAdminRequired }
 
   const key = String(args.key ?? '').trim()
   const name = String(args.name ?? '').trim()
   const repoUrl = String(args.repo_url ?? '').trim()
   const description = String(args.description ?? '').trim()
-  if (!key || !name) return { ok: false, error: '创建项目需要 name 和 key。' }
+  if (!key || !name) return { ok: false, error: copy.missingProjectNameKey }
 
   const supabase = serviceClient()
   const { data, error } = await supabase
     .from('projects')
     .insert({ key, name, repo_url: repoUrl, description: description || null })
-    .select('id, key, name, repo_url, description')
+    .select('key, name, repo_url, description')
     .single()
 
   if (error) return { ok: false, error: error.message }
   return { ok: true, action: 'create_project', data }
 }
 
-async function createTask(args: Record<string, unknown>): Promise<ToolResult> {
+async function createTask(args: Record<string, unknown>, copy: AiApiCopy): Promise<ToolResult> {
   const access = await requireRole('operator')
-  if (!access.ok) return { ok: false, error: '创建任务需要 operator 权限。' }
+  if (!access.ok) return { ok: false, error: copy.createTaskOperatorRequired }
 
   const supabase = serviceClient()
   const projectId = String(args.project_id ?? '').trim()
@@ -283,6 +306,8 @@ async function createTask(args: Record<string, unknown>): Promise<ToolResult> {
   const suiteName = String(args.suite_name ?? '').trim()
   const environment = String(args.environment ?? 'dev').trim()
   const appBuildId = String(args.app_build_id ?? '').trim()
+  const appBuildRef = String(args.app_build_ref ?? '').trim()
+  const { data: displayId } = await supabase.rpc('next_display_id', { prefix: 'MT', table_name: 'tasks' })
 
   let resolvedProjectId = projectId
   if (!resolvedProjectId && projectName) {
@@ -292,13 +317,13 @@ async function createTask(args: Record<string, unknown>): Promise<ToolResult> {
     if (matches.length !== 1) {
       return {
         ok: false,
-        error: matches.length > 1 ? '找到多个匹配项目，请提供项目 key。' : `没有找到项目：${projectName}`,
+        error: matches.length > 1 ? copy.multipleProjects : copy.projectNotFound(projectName),
       }
     }
     resolvedProjectId = matches[0].id
   }
 
-  if (!resolvedProjectId) return { ok: false, error: '创建任务需要 project_id 或 project_name。' }
+  if (!resolvedProjectId) return { ok: false, error: copy.missingProjectRef }
 
   let resolvedSuiteId = suiteId
   if (!resolvedSuiteId && suiteName) {
@@ -311,103 +336,116 @@ async function createTask(args: Record<string, unknown>): Promise<ToolResult> {
     if (matches.length !== 1) {
       return {
         ok: false,
-        error: matches.length > 1 ? '找到多个匹配套件，请提供 suite_key。' : `没有找到套件：${suiteName}`,
+        error: matches.length > 1 ? copy.multipleSuites : copy.suiteNotFound(suiteName),
       }
     }
     resolvedSuiteId = matches[0].id
   }
 
-  if (!resolvedSuiteId) return { ok: false, error: '创建任务需要 suite_id 或 suite_name。' }
+  if (!resolvedSuiteId) return { ok: false, error: copy.missingSuiteRef }
+
+  let resolvedAppBuildId = appBuildId
+  if (!resolvedAppBuildId && appBuildRef) {
+    const { data: build, error } = await supabase
+      .from('app_builds')
+      .select('id')
+      .eq('display_id', appBuildRef)
+      .maybeSingle()
+    if (error) return { ok: false, error: error.message }
+    resolvedAppBuildId = build?.id ?? ''
+  }
 
   const { data, error } = await supabase
     .from('tasks')
     .insert({
+      display_id: displayId,
       project_id: resolvedProjectId,
       suite_id: resolvedSuiteId,
       environment: environment || 'dev',
       status: 'queued',
-      app_build_id: appBuildId || null,
+      app_build_id: resolvedAppBuildId || null,
       created_by: 'ai',
     })
-    .select('id, project_id, suite_id, environment, status, created_at, projects(name, key), test_suites(name, suite_key)')
+    .select('display_id, environment, status, created_at, projects(name, key), test_suites(name, suite_key)')
     .single()
 
   if (error) return { ok: false, error: error.message }
   return { ok: true, action: 'create_task', data }
 }
 
-const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
-  {
-    type: 'function',
-    function: {
-      name: 'get_platform_snapshot',
-      description: '查询当前测试平台的项目、测试套件、构建、最近任务和执行器状态。',
-      parameters: { type: 'object', properties: {} },
-    },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'create_project',
-      description: '新增测试项目。缺少项目名称或 key 时不要调用，应先向用户确认。',
-      parameters: {
-        type: 'object',
-        properties: {
-          name: { type: 'string', description: '项目名称' },
-          key: { type: 'string', description: '项目唯一标识，只能是简短英文、数字或连字符更合适' },
-          repo_url: { type: 'string', description: '代码仓库地址，可为空' },
-          description: { type: 'string', description: '项目描述，可为空' },
-        },
-        required: ['name', 'key'],
+function buildTools(copy: AiApiCopy): OpenAI.Chat.Completions.ChatCompletionTool[] {
+  return [
+    {
+      type: 'function',
+      function: {
+        name: 'get_platform_snapshot',
+        description: copy.tools.snapshot,
+        parameters: { type: 'object', properties: {} },
       },
     },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'create_task',
-      description: '创建测试任务。可以用项目名称/key 和套件名称/key 解析，也可以直接传 id。',
-      parameters: {
-        type: 'object',
-        properties: {
-          project_id: { type: 'string' },
-          project_name: { type: 'string', description: '项目名称或项目 key' },
-          suite_id: { type: 'string' },
-          suite_name: { type: 'string', description: '套件名称或 suite_key' },
-          environment: { type: 'string', enum: ['dev', 'staging', 'prod'] },
-          app_build_id: { type: 'string', description: '可选构建产物 id' },
+    {
+      type: 'function',
+      function: {
+        name: 'create_project',
+        description: copy.tools.createProject,
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: copy.tools.projectName },
+            key: { type: 'string', description: copy.tools.projectKey },
+            repo_url: { type: 'string', description: copy.tools.repoUrl },
+            description: { type: 'string', description: copy.tools.projectDescription },
+          },
+          required: ['name', 'key'],
         },
       },
     },
-  },
-  {
-    type: 'function',
-    function: {
-      name: 'get_task_detail',
-      description: '按任务 ID 查询任务执行状态、报告摘要和 AI 分析。',
-      parameters: {
-        type: 'object',
-        properties: {
-          task_id: { type: 'string', description: '任务 UUID' },
+    {
+      type: 'function',
+      function: {
+        name: 'create_task',
+        description: copy.tools.createTask,
+        parameters: {
+          type: 'object',
+          properties: {
+            project_name: { type: 'string', description: copy.tools.projectNameOrKey },
+            suite_name: { type: 'string', description: copy.tools.suiteNameOrKey },
+            environment: { type: 'string', enum: ['dev', 'staging', 'prod'] },
+            app_build_ref: { type: 'string', description: copy.tools.appBuildRef },
+          },
         },
-        required: ['task_id'],
       },
     },
-  },
-]
+    {
+      type: 'function',
+      function: {
+        name: 'get_task_detail',
+        description: copy.tools.getTaskDetail,
+        parameters: {
+          type: 'object',
+          properties: {
+            task_ref: { type: 'string', description: copy.tools.taskRef },
+          },
+          required: ['task_ref'],
+        },
+      },
+    },
+  ]
+}
 
-async function runTool(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+async function runTool(name: string, args: Record<string, unknown>, copy: AiApiCopy): Promise<ToolResult> {
   if (name === 'get_platform_snapshot') return { ok: true, action: name, data: await getPlatformSnapshot() }
-  if (name === 'create_project') return createProject(args)
-  if (name === 'create_task') return createTask(args)
-  if (name === 'get_task_detail') return getTaskDetail(args)
-  return { ok: false, error: `未知工具：${name}` }
+  if (name === 'create_project') return createProject(args, copy)
+  if (name === 'create_task') return createTask(args, copy)
+  if (name === 'get_task_detail') return getTaskDetail(args, copy)
+  return { ok: false, error: copy.unknownTool(name) }
 }
 
 export async function POST(req: NextRequest) {
-  const { message, history, aiConfig } = await req.json()
-  if (!message?.trim()) return NextResponse.json({ error: 'empty message' }, { status: 400 })
-  if (!process.env.DEEPSEEK_API_KEY) return NextResponse.json({ error: '缺少 DEEPSEEK_API_KEY' }, { status: 500 })
+  const { message, history, aiConfig, locale } = await req.json()
+  const copy = dictionaries[normalizeLocale(locale)].aiApi
+  if (!message?.trim()) return NextResponse.json({ error: copy.emptyMessage }, { status: 400 })
+  if (!process.env.DEEPSEEK_API_KEY) return NextResponse.json({ error: copy.missingApiKey }, { status: 500 })
   const config = (aiConfig ?? {}) as AiConfig
   const model = config.aiModel?.trim() || 'deepseek-v4-pro'
   const baseURL = config.aiBaseUrl?.trim()
@@ -415,15 +453,8 @@ export async function POST(req: NextRequest) {
     : 'https://api.deepseek.com/v1'
 
   const snapshot = await getPlatformSnapshot()
-  const systemPrompt = `你是 MeteorTest 的 AI 测试中枢。你可以回答测试平台问题，也可以通过工具新增项目、创建测试任务、查询项目/套件/最近任务/任务详情。
-规则：
-1. 回复使用用户的语言，默认中文，语气简洁。
-2. 创建项目必须确认 name 和 key；创建任务必须确认项目、测试套件和环境。
-3. 用户询问任务状态、运行结果、报告或分析且给出任务 ID 时，调用 get_task_detail。
-4. 工具执行成功后，明确给出创建结果和下一步入口。
-5. 信息不足时先追问，不要猜测关键字段。
-6. 最近平台快照如下，必要时可再调用 get_platform_snapshot 获取更完整数据：
-${JSON.stringify(snapshot, null, 2)}`
+  const systemPrompt = copy.systemPrompt(JSON.stringify(snapshot, null, 2))
+  const tools = buildTools(copy)
 
   const chatHistory = (Array.isArray(history) ? history : [])
     .filter((m: ChatMessage) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
@@ -452,7 +483,7 @@ ${JSON.stringify(snapshot, null, 2)}`
 
     if (!choice.tool_calls?.length) {
       const reply = choice.content ?? ''
-      return NextResponse.json({ reply, actions, suggestions: buildSuggestions(message, reply, snapshot, actions, chatHistory) })
+      return NextResponse.json({ reply, actions, suggestions: buildSuggestions(message, reply, snapshot, actions, copy, chatHistory) })
     }
 
     for (const call of choice.tool_calls) {
@@ -463,7 +494,7 @@ ${JSON.stringify(snapshot, null, 2)}`
       } catch {
         args = {}
       }
-      const result = await runTool(call.function.name, args)
+      const result = await runTool(call.function.name, args, copy)
       actions.push(result)
       messages.push({
         role: 'tool',
@@ -472,12 +503,12 @@ ${JSON.stringify(snapshot, null, 2)}`
       })
     }
 
-    const finalReply = finalReplyForActions(actions)
+    const finalReply = finalReplyForActions(actions, copy)
     if (finalReply) {
-      return NextResponse.json({ reply: finalReply, actions, suggestions: buildSuggestions(message, finalReply, snapshot, actions, chatHistory) })
+      return NextResponse.json({ reply: finalReply, actions, suggestions: buildSuggestions(message, finalReply, snapshot, actions, copy, chatHistory) })
     }
   }
 
-  const reply = '我执行了多轮工具调用，但还没有得到最终答复。请缩小一下请求范围。'
-  return NextResponse.json({ reply, actions, suggestions: buildSuggestions(message, reply, snapshot, actions, chatHistory) })
+  const reply = copy.exhaustedReply
+  return NextResponse.json({ reply, actions, suggestions: buildSuggestions(message, reply, snapshot, actions, copy, chatHistory) })
 }

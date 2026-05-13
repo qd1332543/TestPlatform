@@ -2,16 +2,19 @@ import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { demoBuilds, demoTasks, isLocalDemo } from '@/lib/localDemo'
+import { buildRef, taskRef } from '@/lib/viewModels/displayRefs'
 
 type BuildRow = {
-  id: string; platform: string; version: string; build_number: string | null
+  id: string; display_id?: string | null; platform: string; version: string; build_number: string | null
   artifact_url: string; created_at: string
   projects: { name: string } | { name: string }[] | null
 }
 
 type BuildTaskRow = {
   id: string
+  display_id?: string | null
   app_build_id: string | null
+  parameters?: { display_name?: string } | null
   status: string
   created_at: string
   projects: { name: string } | { name: string }[] | null
@@ -43,7 +46,7 @@ export default async function BuildsPage() {
   const supabase = isLocalDemo() ? null : await createClient()
   const { data: builds } = supabase
     ? await supabase
-      .from('app_builds').select('*, projects(name)')
+      .from('app_builds').select('id, display_id, platform, version, build_number, artifact_url, created_at, projects(name)')
       .order('created_at', { ascending: false }).limit(50)
     : { data: demoBuilds }
   const buildList = (builds ?? []) as BuildRow[]
@@ -52,7 +55,7 @@ export default async function BuildsPage() {
   const { data: tasks } = supabase && buildIds.length
     ? await supabase
       .from('tasks')
-      .select('id, app_build_id, status, created_at, projects(name), test_suites(name)')
+      .select('id, display_id, app_build_id, parameters, status, created_at, projects(name), test_suites(name)')
       .in('app_build_id', buildIds)
       .order('created_at', { ascending: false })
     : { data: isLocalDemo() ? demoTasks.map((task, index) => ({ ...task, app_build_id: demoBuilds[index % demoBuilds.length]?.id ?? null })) : [] as BuildTaskRow[] }
@@ -107,6 +110,7 @@ export default async function BuildsPage() {
           {buildList.map((b) => {
             const ps = platformStyle[b.platform?.toLowerCase()] ?? platformStyle.ios
             const relatedTasks = taskMap[b.id] ?? []
+            const ref = buildRef(b)
             return (
               <div key={b.id} className="data-panel rounded-xl p-5 space-y-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -116,6 +120,7 @@ export default async function BuildsPage() {
                       <span className="text-sm font-medium text-white">{relationName(b.projects) ?? '-'}</span>
                       <span className="text-sm" style={{ color: 'var(--text-muted)' }}>·</span>
                       <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t.common.version} {b.version}</span>
+                      <span className="status-badge status-queued px-2 py-0.5">{ref}</span>
                       {b.build_number && <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{t.common.build} {b.build_number}</span>}
                     </div>
                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
@@ -135,8 +140,9 @@ export default async function BuildsPage() {
                       {relatedTasks.slice(0, 4).map(task => {
                         const s = statusStyle[task.status] ?? statusStyle.queued
                         const statusLabel = t.status[task.status as keyof typeof t.status] ?? task.status
+                        const taskDisplayRef = taskRef(task)
                         return (
-                          <Link key={task.id} href={`/tasks/${task.id}`} className="soft-panel flex flex-col gap-3 rounded-lg px-3 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between">
+                          <Link key={task.id} href={`/tasks/${taskDisplayRef}`} className="soft-panel flex flex-col gap-3 rounded-lg px-3 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{relationName(task.projects) ?? '-'}</div>
                               <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'} · {formatDateTime(task.created_at, locale)}</div>

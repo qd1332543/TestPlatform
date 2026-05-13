@@ -6,7 +6,7 @@ import { getDictionary } from '@/lib/i18n'
 export default async function NewBuildPage() {
   const t = await getDictionary()
   const supabase = await createClient()
-  const { data: projects } = await supabase.from('projects').select('id, name').order('name')
+  const { data: projects } = await supabase.from('projects').select('key, name').order('name')
   return (
     <div className="space-y-6 w-full">
       <div className="flex items-end justify-between gap-4">

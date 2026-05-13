@@ -2,9 +2,11 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { demoTasks, isLocalDemo } from '@/lib/localDemo'
+import { taskRef } from '@/lib/viewModels/displayRefs'
 
 type RecentTaskRow = {
-  id: string; status: string; environment: string; created_at: string
+  id: string; display_id?: string | null; status: string; environment: string; created_at: string
+  parameters?: { display_name?: string } | null
   projects: { name: string } | { name: string }[] | null
   test_suites: { name: string } | { name: string }[] | null
 }
@@ -38,7 +40,7 @@ export default async function Dashboard() {
 
   const { data: recentTasks } = supabase
     ? await supabase
-      .from('tasks').select('id, status, environment, created_at, projects(name), test_suites(name)')
+      .from('tasks').select('id, display_id, parameters, status, environment, created_at, projects(name), test_suites(name)')
       .order('created_at', { ascending: false }).limit(10)
     : { data: demoTasks }
 
@@ -179,8 +181,9 @@ export default async function Dashboard() {
           <div className="mobile-card-list p-3">
             {(recentTasks as RecentTaskRow[]).map((task) => {
               const statusLabel = copy.status[task.status as keyof typeof copy.status] ?? task.status
+              const ref = taskRef(task)
               return (
-                <Link key={task.id} href={`/tasks/${task.id}`} className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+                <Link key={task.id} href={`/tasks/${ref}`} className="rounded-xl p-4" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{relationName(task.projects) ?? '-'}</div>

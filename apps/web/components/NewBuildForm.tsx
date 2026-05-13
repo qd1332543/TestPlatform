@@ -2,23 +2,26 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { useLocale } from '@/lib/useLocale'
 
-interface Project { id: string; name: string }
+interface Project { key: string; name: string }
 
 export default function NewBuildForm({ projects }: { projects: Project[] }) {
   const { dictionary: t } = useLocale()
   const router = useRouter()
-  const [form, setForm] = useState({ project_id: '', platform: 'ios', version: '', build_number: '', artifact_url: '', bundle_id: '', package_name: '', git_commit: '' })
+  const [form, setForm] = useState({ project_key: '', platform: 'ios', version: '', build_number: '', artifact_url: '', bundle_id: '', package_name: '', git_commit: '' })
   const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    const supabase = createClient()
-    const { error } = await supabase.from('app_builds').insert(form)
-    if (error) { setError(error.message); return }
+    const res = await fetch('/api/builds', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) { setError(data.error ?? t.forms.createFailed); return }
     router.push('/builds')
   }
 
@@ -39,9 +42,9 @@ export default function NewBuildForm({ projects }: { projects: Project[] }) {
     <form onSubmit={handleSubmit} className="data-panel rounded-xl p-6 space-y-4">
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wide mb-1.5" style={{ color: 'var(--text-secondary)' }}>{t.common.project} {t.common.requiredMark}</label>
-        <select className="field-input px-3 py-2.5 text-sm" value={form.project_id} onChange={e => setForm(f => ({ ...f, project_id: e.target.value }))} required>
+        <select className="field-input px-3 py-2.5 text-sm" value={form.project_key} onChange={e => setForm(f => ({ ...f, project_key: e.target.value }))} required>
           <option value="">{t.forms.selectProject}</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {projects.map(p => <option key={p.key} value={p.key}>{p.name}</option>)}
         </select>
       </div>
       <div>

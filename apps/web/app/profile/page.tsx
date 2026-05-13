@@ -53,7 +53,6 @@ export default async function ProfilePage() {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <Info label={t.profile.userId} value={user.id} />
             <Info label={t.profile.username} value={username || '-'} />
             <Info label={t.profile.phone} value={phone || '-'} />
             <Info label={t.profile.email} value={email || '-'} />

@@ -7,9 +7,19 @@ export default async function NewTaskPage() {
   const t = await getDictionary()
   const supabase = await createClient()
   const [{ data: projects }, { data: builds }] = await Promise.all([
-    supabase.from('projects').select('id, name, test_suites(id, name, project_id)').order('name'),
-    supabase.from('app_builds').select('id, version, build_number, platform, project_id').order('created_at', { ascending: false }),
+    supabase.from('projects').select('key, name, test_suites(suite_key, name)').order('name'),
+    supabase.from('app_builds').select('display_id, version, build_number, platform, projects(key)').order('created_at', { ascending: false }),
   ])
+  const buildOptions = (builds ?? []).map(build => {
+    const relation = Array.isArray(build.projects) ? build.projects[0] : build.projects
+    return {
+      display_id: build.display_id,
+      version: build.version,
+      build_number: build.build_number,
+      platform: build.platform,
+      project_key: relation?.key ?? '',
+    }
+  })
 
   return (
     <div className="space-y-6 w-full">
@@ -26,7 +36,7 @@ export default async function NewTaskPage() {
       </div>
 
       <div className="proportional-layout">
-        <NewTaskForm projects={projects ?? []} builds={builds ?? []} />
+        <NewTaskForm projects={projects ?? []} builds={buildOptions} />
         <aside className="data-panel rounded-xl p-5 space-y-4">
           <div>
             <div className="text-sm font-semibold text-white">{t.pages.newTask.logicTitle}</div>

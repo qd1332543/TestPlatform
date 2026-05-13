@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 type NotificationValues = {
-  id: string
+  key: string
   webhook_url: string
   notify_on_failure: boolean
   notify_on_recovery: boolean
@@ -37,7 +37,7 @@ export default function ProjectNotificationsPanel({ project, copy }: { project: 
     setSaving(true)
     setMessage(null)
     try {
-      const res = await fetch(`/api/projects/${project.id}`, {
+      const res = await fetch(`/api/projects/${project.key}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
