@@ -69,6 +69,25 @@ The login page accepts either username/password or phone/password:
 5. Run the private Agent and validate with `npm run validate:private-agent-loop`.
 6. Continue with organization/project-level permissions, feedback admin workflow, task cancel/rerun, and richer Allure visualization.
 
+## Agent Resource Saving And Platform Management Plan
+
+Goal: treat the local Agent as a private server, reduce resource usage when task volume is low, and keep task results fully written back to Supabase.
+
+First feature: platform-configurable task check frequency.
+
+- Add “Task check frequency” to Settings.
+- Use a segmented slider, not free numeric input.
+- Support these segments: `30s`, `1m`, `5m`, `10m`, `15m`, `30min`, `45min`, `60min`.
+- Recommended default: `5m`.
+- Shorter segments start tasks faster; longer segments reduce local and Supabase requests.
+- This setting only affects new-task check frequency. It does not affect Agent online heartbeat.
+- Recommended fixed Agent heartbeat: `120s`, so the Web console can reliably determine executor online state.
+- Save config to Supabase as platform-level Agent runtime configuration, editable by `admin` only.
+- Keep the Agent resident in the background. While idle, it checks for new tasks according to the configured interval. Results still write back to `tasks`, `reports`, and failed-task `ai_analyses`.
+- Local `launchd` is only the process supervisor. Platform config controls runtime strategy. Web surfaces show status and results.
+
+Details: [Local Agent operations](local-agent-operations.md).
+
 ## Account-Scoped Data Plan
 
 Tracking issue: `#82 [Feature] Add account-scoped preferences and AI conversation history`

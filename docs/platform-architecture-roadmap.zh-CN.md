@@ -87,6 +87,25 @@ MeteorTest 当前已经是早期 Beta 形态的通用自动化测试平台。它
 5. 在私有机器运行 Local Agent，再运行 `npm run validate:private-agent-loop` 验证闭环。
 6. 下一轮推进团队/组织模型、项目级权限、反馈管理后台、任务取消/重跑、报告产物可视化。
 
+## Agent 资源节省与平台化管理计划
+
+目标：把本机 Local Agent 当作一台私有服务器来管理，在任务量不高时减少资源占用，同时保持任务结果完整回写 Supabase。
+
+第一轮功能：平台可调的任务检查频率。
+
+- 设置页新增“任务检查频率”。
+- 使用分段式滑动条，不提供自由数字输入。
+- 支持档位：`30s`、`1m`、`5m`、`10m`、`15m`、`30min`、`45min`、`60min`。
+- 默认档位建议为 `5m`。
+- 档位越短，新任务开始更快；档位越长，本机和 Supabase 请求更少。
+- 该设置只影响新任务检查频率，不影响 Agent 在线心跳。
+- Agent 在线心跳固定建议为 `120s`，用于保持 Web 控制台对执行器在线状态的判断。
+- 配置写入 Supabase 平台级 Agent 运行配置，只有 `admin` 可以修改。
+- Agent 后台常驻，空闲时按配置间隔检查新任务；任务执行结果仍写回 `tasks`、`reports` 和失败任务 `ai_analyses`。
+- 本机 `launchd` 只负责进程常驻；平台配置负责运行策略；Web 页面负责展示状态和结果。
+
+详细方案见 [Local Agent 运维方式](local-agent-operations.zh-CN.md)。
+
 ## 账号级数据推进计划
 
 跟踪 issue：`#82 [Feature] Add account-scoped preferences and AI conversation history`

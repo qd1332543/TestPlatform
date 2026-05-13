@@ -44,6 +44,7 @@ Additional docs:
 - [AI and LangChain modernization plan](docs/ai-langchain-modernization-plan.md)
 - [Supabase account and account-scoped data SQL runbook](docs/supabase-account-data-runbook.md)
 - [Private Agent preview loop](docs/private-agent-preview-loop.md)
+- [Local Agent operations](docs/local-agent-operations.md)
 
 ## Maintainer
 
@@ -343,6 +344,33 @@ $env:SUPABASE_ARTIFACT_BUCKET="test-artifacts"
 ```
 
 ### 3. Start the Agent
+
+For daily local use, run this from the repository root:
+
+```bash
+./scripts/start-local-agent.sh
+```
+
+The script reads `apps/web/.env.local`, reuses `agent/config.yaml`, and defaults to claiming only Web-console private preview tasks.
+
+To keep the Agent running on macOS, install the user-level `launchd` service:
+
+```bash
+./scripts/install-local-agent-launchd.sh
+```
+
+After installation, the Agent starts at login and is restarted if it exits. Common management commands:
+
+```bash
+launchctl list | grep com.meteortest.local-agent
+./scripts/check-local-agent.sh
+./scripts/restart-local-agent-launchd.sh
+./scripts/uninstall-local-agent-launchd.sh
+tail -f .meteortest-agent/logs/launchd.out.log
+tail -f .meteortest-agent/logs/launchd.err.log
+```
+
+For manual startup:
 
 ```bash
 python -m agent.agent --config agent/config.yaml --interval 10
