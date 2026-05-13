@@ -43,4 +43,12 @@ fi
 
 echo "Starting MeteorTest Local Agent with interval=${INTERVAL}s"
 echo "Task filters: source=${METEORTEST_AGENT_TASK_SOURCE}, private_preview_only=${METEORTEST_AGENT_PRIVATE_PREVIEW_ONLY}"
-exec "$PYTHON_BIN" -m agent.agent --config agent/config.yaml --interval "$INTERVAL"
+
+AGENT_CMD=("$PYTHON_BIN" -m agent.agent --config agent/config.yaml --interval "$INTERVAL")
+
+if [ "${METEORTEST_AGENT_CAFFEINATE:-1}" = "1" ] && command -v caffeinate >/dev/null 2>&1; then
+  echo "Using caffeinate to keep macOS awake while Local Agent is running"
+  exec caffeinate -dimsu "${AGENT_CMD[@]}"
+fi
+
+exec "${AGENT_CMD[@]}"

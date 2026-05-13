@@ -23,6 +23,21 @@ This installs a user-level `launchd` service:
 - Uses `scripts/start-local-agent.sh`.
 - Reads environment variables from `apps/web/.env.local`.
 - Reads Agent configuration from `agent/config.yaml`.
+- On macOS, runs through `caffeinate -dimsu` by default so lock-screen sleep does not pause the Agent.
+
+Note: `launchd` keeps the process resident, while `caffeinate` prevents system sleep. Locking the screen does not stop the Agent by itself; the Agent pauses when the Mac enters sleep. The default startup keeps the machine awake while allowing the display to sleep.
+
+To disable this sleep-prevention behavior, set:
+
+```bash
+export METEORTEST_AGENT_CAFFEINATE=0
+```
+
+After changing the script or environment, restart the service:
+
+```bash
+./scripts/restart-local-agent-launchd.sh
+```
 
 ## Platform-Configurable Task Check Frequency
 
