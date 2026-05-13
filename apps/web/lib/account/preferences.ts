@@ -17,6 +17,9 @@ export type AccountPreferences = {
   aiModel: string
   aiBaseUrl: string
   autoAnalyzeFailures: boolean
+  webhookUrl: string
+  notifyOnFailure: boolean
+  notifyOnRecovery: boolean
 }
 
 export type PreferenceRow = {
@@ -28,6 +31,9 @@ export type PreferenceRow = {
   ai_model?: string | null
   ai_base_url?: string | null
   auto_analyze_failures?: boolean | null
+  webhook_url?: string | null
+  notify_on_failure?: boolean | null
+  notify_on_recovery?: boolean | null
 }
 
 export const defaultAccountPreferences: AccountPreferences = {
@@ -39,6 +45,9 @@ export const defaultAccountPreferences: AccountPreferences = {
   aiModel: 'deepseek-v4-pro',
   aiBaseUrl: 'https://api.deepseek.com',
   autoAnalyzeFailures: true,
+  webhookUrl: '',
+  notifyOnFailure: true,
+  notifyOnRecovery: false,
 }
 
 function isTheme(value: unknown): value is Theme {
@@ -65,6 +74,9 @@ export function normalizeAccountPreferences(value: Partial<AccountPreferences> =
     autoAnalyzeFailures: typeof value.autoAnalyzeFailures === 'boolean'
       ? value.autoAnalyzeFailures
       : defaultAccountPreferences.autoAnalyzeFailures,
+    webhookUrl: typeof value.webhookUrl === 'string' ? value.webhookUrl.trim() : defaultAccountPreferences.webhookUrl,
+    notifyOnFailure: typeof value.notifyOnFailure === 'boolean' ? value.notifyOnFailure : defaultAccountPreferences.notifyOnFailure,
+    notifyOnRecovery: typeof value.notifyOnRecovery === 'boolean' ? value.notifyOnRecovery : defaultAccountPreferences.notifyOnRecovery,
   }
 }
 
@@ -78,6 +90,9 @@ export function preferencesFromRow(row: PreferenceRow | null | undefined) {
     aiModel: row?.ai_model ?? undefined,
     aiBaseUrl: row?.ai_base_url ?? undefined,
     autoAnalyzeFailures: row?.auto_analyze_failures ?? undefined,
+    webhookUrl: row?.webhook_url ?? undefined,
+    notifyOnFailure: row?.notify_on_failure ?? undefined,
+    notifyOnRecovery: row?.notify_on_recovery ?? undefined,
   })
 }
 
@@ -92,6 +107,9 @@ export function preferencesToRow(userId: string, preferences: AccountPreferences
     ai_model: preferences.aiModel,
     ai_base_url: preferences.aiBaseUrl,
     auto_analyze_failures: preferences.autoAnalyzeFailures,
+    webhook_url: preferences.webhookUrl,
+    notify_on_failure: preferences.notifyOnFailure,
+    notify_on_recovery: preferences.notifyOnRecovery,
     updated_at: new Date().toISOString(),
   }
 }

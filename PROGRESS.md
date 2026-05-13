@@ -133,6 +133,10 @@
 
 - [x] AI 助手页面
 - [x] 查询任务、报告、分析结果
+- [x] 形成 AI 与 LangChain 渐进改造方案：`docs/ai-langchain-modernization-plan.zh-CN.md` / `docs/ai-langchain-modernization-plan.md`
+- [ ] 拆分 `/api/ai/chat/route.ts` 为 context、prompts、tools、reportQueries、suggestions 和 model 配置模块
+- [ ] 增加 SQL 型报告问答工具，先覆盖最近失败、suite 健康度、报告状态和失败原因汇总
+- [ ] 评估 LangChain JS 局部接入 Web AI 编排层，保持 Agent 失败分析暂不重构
 - [ ] 引入向量索引（pgvector）
 
 ### 多项目接入

@@ -127,18 +127,11 @@ function TemplateIconFrame({ children }: { children: React.ReactNode }) {
   )
 }
 
-function HistoryPanelIcon({ direction }: { direction: 'collapse' | 'expand' }) {
+function HistoryPanelIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
-      <rect x="2.25" y="3" width="13.5" height="12" rx="2.25" stroke="currentColor" strokeWidth="1.35" />
-      <path d="M6.25 3.5v11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.65" />
-      <path
-        d={direction === 'collapse' ? 'M12 6.5L9.5 9l2.5 2.5' : 'M9.5 6.5L12 9l-2.5 2.5'}
-        stroke="currentColor"
-        strokeWidth="1.55"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M11 4.5L7.5 9l3.5 4.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M7 4.5L3.5 9 7 13.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" opacity="0.45"/>
     </svg>
   )
 }
@@ -747,12 +740,12 @@ export default function AiPage() {
             title={t.ai.collapseHistory}
             aria-label={t.ai.collapseHistory}
           >
-            <HistoryPanelIcon direction="collapse" />
+            <HistoryPanelIcon />
           </button>
         </div>
         <div className="quiet-scrollbar flex-1 overflow-y-auto p-2 space-y-1">
           {conversations.map(c => (
-            <div key={c.id} className="group flex items-center gap-1">
+            <div key={c.id} className="group relative">
               <div
                 role="button"
                 tabIndex={0}
@@ -760,7 +753,7 @@ export default function AiPage() {
                 onKeyDown={event => {
                   if (event.key === 'Enter' || event.key === ' ') selectConversation(c)
                 }}
-                className="min-w-0 flex-1 rounded-lg px-3 py-2 text-left transition-colors"
+                className="w-full rounded-lg px-3 py-2 text-left transition-colors"
                 style={activeId === c.id
                   ? { background: 'var(--surface-soft)', border: '1px solid var(--border-light)' }
                   : { border: '1px solid transparent' }
@@ -787,24 +780,26 @@ export default function AiPage() {
                   {c.messages.length ? t.ai.messageCount(c.messages.length) : t.ai.emptyMessages}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => startRename(c)}
-                className="w-7 h-7 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: 'var(--text-muted)' }}
-                title={t.ai.renameConversation}
-              >
-                ✎
-              </button>
-              <button
-                type="button"
-                onClick={() => deleteConversation(c.id)}
-                className="w-7 h-7 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: 'var(--text-muted)' }}
-                title={t.ai.deleteConversation}
-              >
-                ×
-              </button>
+              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  type="button"
+                  onClick={() => startRename(c)}
+                  className="w-7 h-7 rounded-md"
+                  style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}
+                  title={t.ai.renameConversation}
+                >
+                  ✎
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteConversation(c.id)}
+                  className="w-7 h-7 rounded-md"
+                  style={{ color: 'var(--text-muted)', background: 'var(--bg-card)' }}
+                  title={t.ai.deleteConversation}
+                >
+                  ×
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -821,7 +816,7 @@ export default function AiPage() {
             title={t.ai.expandHistory}
             aria-label={t.ai.expandHistory}
           >
-            <HistoryPanelIcon direction="expand" />
+            <HistoryPanelIcon />
           </button>
         )}
         <button
