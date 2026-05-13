@@ -202,11 +202,16 @@ export default function SettingsPage() {
 
     async function loadPreferences() {
       try {
-        const res = await fetch('/api/preferences', { cache: 'no-store' })
-        if (!res.ok) return
-        const data = await res.json() as { preferences?: Partial<AccountPreferences> }
-        if (cancelled || !data.preferences) return
-        const merged = normalizeSettings({ ...settings, ...data.preferences })
+        const [prefRes, runtimeRes] = await Promise.all([
+          fetch('/api/preferences', { cache: 'no-store' }),
+          fetch('/api/agent/runtime-settings', { cache: 'no-store' }),
+        ])
+        if (cancelled) return
+        const prefData = prefRes.ok ? await prefRes.json() as { preferences?: Partial<AccountPreferences> } : {}
+        const runtimeData = runtimeRes.ok ? await runtimeRes.json() as { task_check_interval_seconds?: number } : {}
+        const extra: Partial<Settings> = {}
+        if (runtimeData.task_check_interval_seconds) extra.taskCheckIntervalSeconds = runtimeData.task_check_interval_seconds
+        const merged = normalizeSettings({ ...settings, ...(prefData.preferences ?? {}), ...extra })
         window.localStorage.setItem(preferenceStorageKey, JSON.stringify(merged))
         applyTheme(merged.theme)
         setSettings(merged)
