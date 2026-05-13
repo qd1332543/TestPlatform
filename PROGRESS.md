@@ -112,6 +112,7 @@
 - [ ] 全量页面统一迁移到主题语义类，减少硬编码颜色
   - [x] 增加 action / selected / solid accent 前景色 token，区分深色背景浅字、浅色背景深字的按钮和选中态
   - [x] Reports、Builds、Executors、Settings 和 AI 页面完成第一轮主题语义类与手机端布局补强
+  - [x] 新增 `--danger` 主题语义变量，覆盖全部 8 个主题，危险区背景随主题变化
 
 ### 构建产物与任务调度
 
@@ -147,6 +148,7 @@
 - [x] 支持不同测试框架和执行器能力标签
 - [x] 项目详情页支持修改项目显示名称、仓库地址和描述
 - [x] 项目详情页支持删除项目，并清理该项目下任务、报告、AI 分析、套件和构建记录；公网预览模式禁用该危险操作
+  - 危险区独立为全宽行，位于页面最底部，使用 `--danger` 主题色高亮
 
 ### Web 体验与国际化
 
@@ -175,6 +177,10 @@
 - [x] Phase 12 账号级数据第一轮：新增 `user_preferences` 账号偏好、`ai_conversations` / `ai_messages` AI 会话历史、账号级 API、AI 页面历史同步和 Supabase SQL 执行手册
   - SQL 执行手册：`docs/supabase-account-data-runbook.zh-CN.md` / `docs/supabase-account-data-runbook.md`
   - 线上验证前需要在 Supabase SQL Editor 执行 `supabase/migrations/005_account_preferences_ai_history.sql`
+- [x] 平台级 Webhook 通知：`user_preferences` 新增 `webhook_url` / `notify_on_failure` / `notify_on_recovery`，任务状态变更时触发通知（migrations 006/007）
+- [x] AI 中枢历史面板折叠箭头修复：SVG 单向 + CSS rotate 切换，修复展开/折叠方向不变的问题
+- [x] AI 中枢历史会话卡片宽度修复：操作按钮改为绝对定位，卡片占满全宽
+- [x] AI 中枢折叠按钮图标改为双箭头风格，与侧边栏折叠按钮区分
 
 ## 远期：独立 Agent 与高级执行能力
 
@@ -192,6 +198,7 @@
   - [x] Dashboard / Tasks 表格在手机端提供卡片视图，避免横向表格成为唯一浏览方式
   - [x] Projects 卡片在手机端纵向排列，保留接入状态、套件数量、仓库状态和下一步动作
   - [x] Reports、Builds、Executors、Settings 和 AI 完成第一轮手机端布局检查：操作按钮可换行，核心列表提供卡片或更窄布局，设置页消除手机端负边距风险
+  - [x] 新增 viewport meta（`width=device-width, initialScale=1`）修复移动端缩放
   - [ ] 继续检查详情页和表单页的手机端布局和滚动体验
 - [ ] WebView 封装
 
