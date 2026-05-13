@@ -59,8 +59,10 @@ def run_agent(config_path: str = "config.yaml", poll_interval: int = 10):
         from agent.reporters.supabase_reporter import report
         from agent.services.heartbeat import register_executor, start_heartbeat, set_offline
         from agent.services.artifact_downloader import download_artifact
+        from agent.services.platform_config import fetch_task_check_interval, HEARTBEAT_INTERVAL
         executor_id = register_executor(agent_name, agent_cfg["type"], config.get("capabilities", {}))
-        start_heartbeat(executor_id, agent_cfg.get("heartbeat_interval_seconds", 30))
+        start_heartbeat(executor_id, HEARTBEAT_INTERVAL)
+        poll_interval = fetch_task_check_interval(agent_name, fallback=poll_interval)
         log.info(f"Agent '{agent_name}' registered (supabase, executor_id={executor_id})")
     else:
         from agent.services.task_client import get_queued_task, lock_task, update_task
