@@ -23,6 +23,21 @@ Local Agent 的管理要分成本机进程和平台反馈两部分看：
 - 启动命令来自 `scripts/start-local-agent.sh`。
 - 环境变量读取 `apps/web/.env.local`。
 - Agent 配置读取 `agent/config.yaml`。
+- macOS 上默认通过 `caffeinate -dimsu` 运行，防止锁屏后系统睡眠导致 Agent 暂停。
+
+注意：`launchd` 负责进程常驻，`caffeinate` 负责防止系统睡眠。锁屏本身不会停止 Agent；真正会暂停 Agent 的是 Mac 进入 sleep。默认配置会尽量保持机器唤醒，只关闭屏幕不影响 Agent。
+
+如果你确实希望关闭这个防睡眠行为，可以在启动环境中设置：
+
+```bash
+export METEORTEST_AGENT_CAFFEINATE=0
+```
+
+修改脚本或环境变量后，需要重新安装或重启服务才会生效：
+
+```bash
+./scripts/restart-local-agent-launchd.sh
+```
 
 ## 平台可调的任务检查频率
 
