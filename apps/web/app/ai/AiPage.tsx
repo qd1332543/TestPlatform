@@ -590,7 +590,7 @@ function TaskPickerCard({
           </span>
           {scopeMenuOpen && selectedProject ? (
             <div
-              className="quiet-scrollbar absolute left-0 right-0 top-[calc(100%+4px)] z-20 max-h-56 overflow-y-auto rounded-lg p-1 shadow-xl"
+              className="quiet-scrollbar absolute bottom-[calc(100%+4px)] left-0 right-0 z-20 max-h-36 overflow-y-scroll rounded-lg p-1 shadow-xl"
               style={{ background: 'var(--bg-base)', border: '1px solid var(--border-light)' }}
             >
               {selectedProject.suites.map(suite => (
