@@ -4,6 +4,7 @@ import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
 import { demoTasks, isLocalDemo } from '@/lib/localDemo'
 import { taskRef } from '@/lib/viewModels/displayRefs'
+import { testScopeDisplayName } from '@/lib/viewModels/testScopes'
 
 type ReportRow = {
   id: string
@@ -26,7 +27,7 @@ type ReportRow = {
   started_at: string | null
   finished_at: string | null
   projects: { name: string } | { name: string }[] | null
-  test_suites: { name: string } | { name: string }[] | null
+  test_suites: { name: string; suite_key?: string | null } | { name: string; suite_key?: string | null }[] | null
   reports: { summary: string | null; log_url: string | null; allure_url: string | null; created_at: string }[] | null
   ai_analyses: { failure_reason: string | null; impact: string | null; suggestion: string | null; flaky_probability: number | null }[] | null
 }
@@ -47,7 +48,7 @@ export default async function ReportsPage() {
   const { data } = supabase
     ? await supabase
       .from('tasks')
-      .select('id, display_id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
+      .select('id, display_id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name, suite_key), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
       .order('created_at', { ascending: false })
       .limit(50)
     : { data: demoTasks }
@@ -126,7 +127,7 @@ export default async function ReportsPage() {
               title: t.analysisPackage.reportTitle,
               taskId: ref,
               project: relationName(report.projects),
-              suite: relationName(report.test_suites),
+              suite: testScopeDisplayName(report.test_suites, locale),
               environment: report.environment,
               status: statusLabel,
               createdAt: formatDateTime(report.created_at, locale),
@@ -153,7 +154,7 @@ export default async function ReportsPage() {
                       {parameters.safe_demo ? <span className="status-badge status-running px-2 py-0.5">{t.taskDetail.previewTask}</span> : null}
                       <span className="text-sm text-white font-medium">{relationName(report.projects) ?? '-'}</span>
                       <span className="text-sm" style={{ color: 'var(--text-muted)' }}>·</span>
-                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{relationName(report.test_suites) ?? '-'}</span>
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{testScopeDisplayName(report.test_suites, locale) || '-'}</span>
                     </div>
                     <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                       {parameters.display_name ? `${parameters.display_name} · ` : ''}{t.reports.environment} {report.environment} · {t.reports.created} {formatDateTime(report.created_at, locale)}

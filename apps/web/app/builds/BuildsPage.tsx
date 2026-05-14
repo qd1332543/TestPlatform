@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { demoBuilds, demoTasks, isLocalDemo } from '@/lib/localDemo'
 import { buildRef, taskRef } from '@/lib/viewModels/displayRefs'
+import { testScopeDisplayName } from '@/lib/viewModels/testScopes'
 
 type BuildRow = {
   id: string; display_id?: string | null; platform: string; version: string; build_number: string | null
@@ -18,7 +19,7 @@ type BuildTaskRow = {
   status: string
   created_at: string
   projects: { name: string } | { name: string }[] | null
-  test_suites: { name: string } | { name: string }[] | null
+  test_suites: { name: string; suite_key?: string | null } | { name: string; suite_key?: string | null }[] | null
 }
 
 function relationName(r: { name: string } | { name: string }[] | null) {
@@ -55,7 +56,7 @@ export default async function BuildsPage() {
   const { data: tasks } = supabase && buildIds.length
     ? await supabase
       .from('tasks')
-      .select('id, display_id, app_build_id, parameters, status, created_at, projects(name), test_suites(name)')
+      .select('id, display_id, app_build_id, parameters, status, created_at, projects(name), test_suites(name, suite_key)')
       .in('app_build_id', buildIds)
       .order('created_at', { ascending: false })
     : { data: isLocalDemo() ? demoTasks.map((task, index) => ({ ...task, app_build_id: demoBuilds[index % demoBuilds.length]?.id ?? null })) : [] as BuildTaskRow[] }
@@ -145,7 +146,7 @@ export default async function BuildsPage() {
                           <Link key={task.id} href={`/tasks/${taskDisplayRef}`} className="soft-panel flex flex-col gap-3 rounded-lg px-3 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{relationName(task.projects) ?? '-'}</div>
-                              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'} · {formatDateTime(task.created_at, locale)}</div>
+                              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{testScopeDisplayName(task.test_suites, locale) || '-'} · {formatDateTime(task.created_at, locale)}</div>
                             </div>
                             <span className={`status-badge status-${task.status} px-2 py-0.5 shrink-0`} style={{ background: s.bg, color: s.color }}>{statusLabel}</span>
                           </Link>

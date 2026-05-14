@@ -3,12 +3,13 @@ import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { demoTasks, isLocalDemo } from '@/lib/localDemo'
 import { taskRef } from '@/lib/viewModels/displayRefs'
+import { testScopeDisplayName } from '@/lib/viewModels/testScopes'
 
 type TaskRow = {
   id: string; display_id?: string | null; status: string; environment: string; created_at: string
   parameters?: { display_name?: string } | null
   projects: { name: string } | { name: string }[] | null
-  test_suites: { name: string } | { name: string }[] | null
+  test_suites: { name: string; suite_key?: string | null } | { name: string; suite_key?: string | null }[] | null
   executors: { name: string } | { name: string }[] | null
 }
 
@@ -24,7 +25,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const { data: tasks } = supabase
     ? await (() => {
       let query = supabase.from('tasks')
-        .select('id, display_id, status, environment, parameters, created_at, projects(name), test_suites(name), executors(name)')
+        .select('id, display_id, status, environment, parameters, created_at, projects(name), test_suites(name, suite_key), executors(name)')
         .order('created_at', { ascending: false }).limit(50)
       if (status) query = query.eq('status', status)
       return query
@@ -132,7 +133,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               return (
                 <tr key={task.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="px-5 py-3 font-medium text-white">{relationName(task.projects) ?? '-'}</td>
-                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{relationName(task.test_suites) ?? '-'}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{testScopeDisplayName(task.test_suites, locale) || '-'}</td>
                   <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{task.environment}</td>
                   <td className="px-5 py-3">
                     <span className={`status-badge status-${task.status} px-2 py-0.5`}>{statusLabel}</span>
@@ -159,7 +160,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{relationName(task.projects) ?? '-'}</div>
-                    <div className="mt-1 text-xs truncate" style={{ color: 'var(--text-muted)' }}>{relationName(task.test_suites) ?? '-'}</div>
+                    <div className="mt-1 text-xs truncate" style={{ color: 'var(--text-muted)' }}>{testScopeDisplayName(task.test_suites, locale) || '-'}</div>
                   </div>
                   <span className={`status-badge status-${task.status} shrink-0 px-2 py-0.5`}>{statusLabel}</span>
                 </div>

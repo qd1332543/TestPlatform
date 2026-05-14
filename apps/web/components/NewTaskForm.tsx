@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLocale } from '@/lib/useLocale'
+import { testScopeDisplayName } from '@/lib/viewModels/testScopes'
 
 interface Suite { suite_key: string; name: string }
 interface Project { key: string; name: string; test_suites: Suite[] }
@@ -11,7 +12,7 @@ interface Build { display_id: string; version: string; build_number: string | nu
 const selectCls = "field-input px-3 py-2.5 text-sm disabled:opacity-40"
 
 export default function NewTaskForm({ projects, builds }: { projects: Project[], builds: Build[] }) {
-  const { dictionary: t } = useLocale()
+  const { locale, dictionary: t } = useLocale()
   const router = useRouter()
   const [projectKey, setProjectKey] = useState('')
   const [suiteKey, setSuiteKey] = useState('')
@@ -48,7 +49,7 @@ export default function NewTaskForm({ projects, builds }: { projects: Project[],
           <select className={selectCls} value={suiteKey}
             onChange={e => setSuiteKey(e.target.value)} required disabled={!projectKey}>
             <option value="" disabled>{t.forms.selectSuite}</option>
-            {suites.map(s => <option key={s.suite_key} value={s.suite_key}>{s.name}</option>)}
+            {suites.map(s => <option key={s.suite_key} value={s.suite_key}>{testScopeDisplayName(s, locale)}</option>)}
           </select>
         )},
         { label: t.common.environment, content: (
