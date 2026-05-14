@@ -8,6 +8,7 @@
 
 - 文档总索引：`docs/README.zh-CN.md`
 - 产品与架构意图：`DESIGN.md`
+- 质量与 AI 能力计划：`docs/quality-ai-capability-roadmap.zh-CN.md`
 - AI 编排与 LangChain 计划：`docs/ai-langchain-modernization-plan.zh-CN.md`
 - Supabase 执行手册：`docs/supabase-account-data-runbook.zh-CN.md`
 - Local Agent 运维：`docs/local-agent-operations.zh-CN.md`
@@ -47,7 +48,17 @@ MeteorTest 当前是早期 Beta 形态的通用自动化测试平台，已经跑
 
 ## 当前主线
 
-下一阶段会继续围绕测试质量、AI 修复、任务操作和报告分析能力推进。详细阶段计划应放在对应 roadmap 文档中，本文件只保留状态和入口。
+下一阶段主线是把平台从“任务调度和报告展示”升级为“测试质量与 AI 修复平台”：
+
+1. 结构化测试结果与用例级报告。
+2. AI 失败定位与修复建议结构升级。
+3. 任务取消、重跑和失败任务一键验证。
+4. AI 测试用例生成草稿。
+5. 质量趋势和覆盖建议。
+6. AI 生成补丁 / 创建 PR。
+7. 平台内测试用例管理。
+
+详细执行方案见 `docs/quality-ai-capability-roadmap.zh-CN.md`。
 
 ## 后续能力池
 
