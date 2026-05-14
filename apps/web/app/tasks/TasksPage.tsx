@@ -133,7 +133,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
               return (
                 <tr key={task.id} className="transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
                   <td className="px-5 py-3 font-medium text-white">{relationName(task.projects) ?? '-'}</td>
-                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{testScopeDisplayName(task.test_suites, locale) || '-'}</td>
+                  <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{testScopeDisplayName(task.test_suites, t.common.testScopes) || '-'}</td>
                   <td className="px-5 py-3" style={{ color: 'var(--text-secondary)' }}>{task.environment}</td>
                   <td className="px-5 py-3">
                     <span className={`status-badge status-${task.status} px-2 py-0.5`}>{statusLabel}</span>
@@ -160,7 +160,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{relationName(task.projects) ?? '-'}</div>
-                    <div className="mt-1 text-xs truncate" style={{ color: 'var(--text-muted)' }}>{testScopeDisplayName(task.test_suites, locale) || '-'}</div>
+                    <div className="mt-1 text-xs truncate" style={{ color: 'var(--text-muted)' }}>{testScopeDisplayName(task.test_suites, t.common.testScopes) || '-'}</div>
                   </div>
                   <span className={`status-badge status-${task.status} shrink-0 px-2 py-0.5`}>{statusLabel}</span>
                 </div>

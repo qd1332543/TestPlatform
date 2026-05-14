@@ -105,7 +105,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const meta = [
     { label: t.common.project, value: project?.name ?? '-' },
-    { label: t.common.suite, value: testScopeDisplayName(suite, locale) || '-' },
+    { label: t.common.suite, value: testScopeDisplayName(suite, t.common.testScopes) || '-' },
     { label: t.common.environment, value: task.environment },
     { label: t.common.executor, value: executor?.name ?? '-' },
     { label: t.common.createdAt, value: formatDateTime(task.created_at, locale) },
@@ -116,7 +116,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     title: t.analysisPackage.taskTitle,
     taskId: displayRef,
     project: project?.name,
-    suite: testScopeDisplayName(suite, locale),
+    suite: testScopeDisplayName(suite, t.common.testScopes),
     environment: task.environment,
     status: statusLabel,
     executor: executor?.name,

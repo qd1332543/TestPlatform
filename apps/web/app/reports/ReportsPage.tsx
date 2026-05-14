@@ -127,7 +127,7 @@ export default async function ReportsPage() {
               title: t.analysisPackage.reportTitle,
               taskId: ref,
               project: relationName(report.projects),
-              suite: testScopeDisplayName(report.test_suites, locale),
+              suite: testScopeDisplayName(report.test_suites, t.common.testScopes),
               environment: report.environment,
               status: statusLabel,
               createdAt: formatDateTime(report.created_at, locale),
@@ -154,7 +154,7 @@ export default async function ReportsPage() {
                       {parameters.safe_demo ? <span className="status-badge status-running px-2 py-0.5">{t.taskDetail.previewTask}</span> : null}
                       <span className="text-sm text-white font-medium">{relationName(report.projects) ?? '-'}</span>
                       <span className="text-sm" style={{ color: 'var(--text-muted)' }}>·</span>
-                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{testScopeDisplayName(report.test_suites, locale) || '-'}</span>
+                      <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{testScopeDisplayName(report.test_suites, t.common.testScopes) || '-'}</span>
                     </div>
                     <div className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                       {parameters.display_name ? `${parameters.display_name} · ` : ''}{t.reports.environment} {report.environment} · {t.reports.created} {formatDateTime(report.created_at, locale)}

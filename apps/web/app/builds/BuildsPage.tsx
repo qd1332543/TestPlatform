@@ -146,7 +146,7 @@ export default async function BuildsPage() {
                           <Link key={task.id} href={`/tasks/${taskDisplayRef}`} className="soft-panel flex flex-col gap-3 rounded-lg px-3 py-2 transition-colors sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0">
                               <div className="text-sm font-medium text-white">{relationName(task.projects) ?? '-'}</div>
-                              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{testScopeDisplayName(task.test_suites, locale) || '-'} · {formatDateTime(task.created_at, locale)}</div>
+                              <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{testScopeDisplayName(task.test_suites, t.common.testScopes) || '-'} · {formatDateTime(task.created_at, locale)}</div>
                             </div>
                             <span className={`status-badge status-${task.status} px-2 py-0.5 shrink-0`} style={{ background: s.bg, color: s.color }}>{statusLabel}</span>
                           </Link>

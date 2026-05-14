@@ -394,7 +394,7 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)' }}>{t.common.suite}</div>
-                  <div className="mt-1 font-medium text-white truncate">{testScopeDisplayName(task.test_suites as Parameters<typeof testScopeDisplayName>[0], locale)}</div>
+                  <div className="mt-1 font-medium text-white truncate">{testScopeDisplayName(task.test_suites as Parameters<typeof testScopeDisplayName>[0], t.common.testScopes)}</div>
                 </div>
                 <div>
                   <div style={{ color: 'var(--text-muted)' }}>{t.common.environment}</div>
@@ -471,13 +471,11 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
 function TaskPickerCard({
   suggestion,
   t,
-  locale,
   disabled,
   onCreate,
 }: {
   suggestion: AiSuggestion
   t: Dictionary
-  locale: Locale
   disabled: boolean
   onCreate: (prompt: string) => void
 }) {
@@ -592,7 +590,7 @@ function TaskPickerCard({
             aria-label={t.ai.taskPickerScope}
             style={!selectedProject ? { color: 'var(--text-muted)' } : undefined}
           >
-            <span className="min-w-0 truncate">{selectedProject && selectedSuite ? testScopeDisplayName(selectedSuite, locale) : t.ai.taskPickerScope}</span>
+            <span className="min-w-0 truncate">{selectedProject && selectedSuite ? testScopeDisplayName(selectedSuite, t.common.testScopes) : t.ai.taskPickerScope}</span>
           </button>
           <span className="pointer-events-none absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-xs leading-none" style={{ color: 'var(--text-muted)' }}>
             <span className={`block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current transition-transform ${scopeMenuOpen ? 'rotate-180' : ''}`} />
@@ -614,7 +612,7 @@ function TaskPickerCard({
                   className="w-full rounded-md px-2.5 py-2 text-left text-xs transition-colors"
                   style={suite.suiteKey === selectedSuite?.suiteKey ? { background: 'var(--surface-soft)', color: 'var(--text-primary)' } : { color: 'var(--text-secondary)' }}
                 >
-                  <span className="block truncate font-medium">{testScopeDisplayName(suite, locale)}</span>
+                  <span className="block truncate font-medium">{testScopeDisplayName(suite, t.common.testScopes)}</span>
                   <span className="block truncate text-[11px]" style={{ color: 'var(--text-muted)' }}>{suite.suiteKey}</span>
                 </button>
               ))}
@@ -1157,7 +1155,6 @@ export default function AiPage() {
                         key={`picker-${suggestion.label}`}
                         suggestion={suggestion}
                         t={t}
-                        locale={locale}
                         disabled={loading}
                         onCreate={prompt => submitMessage(prompt)}
                       />

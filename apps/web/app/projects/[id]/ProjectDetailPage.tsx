@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import ImportSuitesForm from '@/components/ImportSuitesForm'
 import ProjectManagementPanel, { ProjectDangerZone } from '@/components/ProjectManagementPanel'
-import { getDictionary, getLocale } from '@/lib/i18n'
+import { getDictionary } from '@/lib/i18n'
 import { isLocalDemo, demoProjects } from '@/lib/localDemo'
 import { isUuid } from '@/lib/viewModels/displayRefs'
 import { testScopeDisplayName } from '@/lib/viewModels/testScopes'
@@ -20,7 +20,6 @@ type ProjectView = {
 export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: routeRef } = await params
   const t = await getDictionary()
-  const locale = await getLocale()
 
   let project: ProjectView | null = null
 
@@ -105,7 +104,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <tbody>
               {(project.test_suites as TestSuiteRow[]).map((s) => (
                 <tr key={s.suite_key} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td className="px-5 py-3 font-medium text-white">{testScopeDisplayName(s, locale)}</td>
+                  <td className="px-5 py-3 font-medium text-white">{testScopeDisplayName(s, t.common.testScopes)}</td>
                   <td className="px-5 py-3"><span className="meta-pill px-2 py-0.5 text-xs">{s.type}</span></td>
                   <td className="px-5 py-3 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{s.command}</td>
                 </tr>
