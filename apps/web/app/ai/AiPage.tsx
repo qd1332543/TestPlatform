@@ -501,6 +501,7 @@ function TaskPickerCard({
   }
 
   function updateProjectInput(value: string) {
+    setScopeMenuOpen(false)
     setProjectInput(value)
     const exact = projects.find(project => project.name === value || project.key === value)
     if (exact) {
@@ -528,7 +529,10 @@ function TaskPickerCard({
             className="field-input w-full px-3 py-2 pr-9 text-xs"
             value={projectInput}
             onChange={event => updateProjectInput(event.target.value)}
-            onFocus={() => setProjectMenuOpen(true)}
+            onFocus={() => {
+              setScopeMenuOpen(false)
+              setProjectMenuOpen(true)
+            }}
             onBlur={() => setTimeout(() => setProjectMenuOpen(false), 120)}
             placeholder={t.common.project}
             disabled={disabled}
@@ -538,17 +542,18 @@ function TaskPickerCard({
             disabled={disabled}
             onMouseDown={event => {
               event.preventDefault()
+              setScopeMenuOpen(false)
               setProjectMenuOpen(open => !open)
             }}
             className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md"
             aria-label={t.common.project}
             style={{ color: 'var(--text-muted)' }}
           >
-            <span className="block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current" />
+            <span className={`block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current transition-transform ${projectMenuOpen ? 'rotate-180' : ''}`} />
           </button>
           {projectMenuOpen ? (
             <div
-              className="quiet-scrollbar absolute left-0 right-0 top-[calc(100%+4px)] z-20 max-h-56 overflow-y-auto rounded-lg p-1 shadow-xl"
+              className="quiet-scrollbar absolute bottom-[calc(100%+4px)] left-0 right-0 z-20 max-h-56 overflow-y-auto rounded-lg p-1 shadow-xl"
               style={{ background: 'var(--bg-base)', border: '1px solid var(--border-light)' }}
             >
               {projects.map(project => (
@@ -576,6 +581,7 @@ function TaskPickerCard({
             onMouseDown={event => {
               event.preventDefault()
               if (disabled || !selectedProject) return
+              setProjectMenuOpen(false)
               setScopeMenuOpen(open => !open)
             }}
             onBlur={() => setTimeout(() => setScopeMenuOpen(false), 120)}
@@ -586,7 +592,7 @@ function TaskPickerCard({
             <span className="min-w-0 truncate">{selectedProject && selectedSuite ? selectedSuite.name : t.ai.taskPickerScope}</span>
           </button>
           <span className="pointer-events-none absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-xs leading-none" style={{ color: 'var(--text-muted)' }}>
-            <span className="block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current" />
+            <span className={`block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current transition-transform ${scopeMenuOpen ? 'rotate-180' : ''}`} />
           </span>
           {scopeMenuOpen && selectedProject ? (
             <div
