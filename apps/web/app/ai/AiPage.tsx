@@ -485,6 +485,7 @@ function TaskPickerCard({
   const [projectMenuOpen, setProjectMenuOpen] = useState(false)
   const activeProject = projects.find(project => project.key === projectKey) ?? projects[0]
   const [suiteKey, setSuiteKey] = useState(activeProject?.suites[0]?.suiteKey ?? '')
+  const [scopeMenuOpen, setScopeMenuOpen] = useState(false)
   const [environment, setEnvironment] = useState(environments[0] ?? 'dev')
   const selectedProject = projects.find(project => project.key === projectKey && (project.name === projectInput || project.key === projectInput))
     ?? projects.find(project => project.name === projectInput || project.key === projectInput)
@@ -496,6 +497,7 @@ function TaskPickerCard({
     setProjectInput(project.name)
     setSuiteKey(project.suites[0]?.suiteKey ?? '')
     setProjectMenuOpen(false)
+    setScopeMenuOpen(false)
   }
 
   function updateProjectInput(value: string) {
@@ -507,6 +509,7 @@ function TaskPickerCard({
     }
     setProjectKey('')
     setSuiteKey('')
+    setScopeMenuOpen(false)
   }
 
   if (!projects.length) return null
@@ -541,12 +544,12 @@ function TaskPickerCard({
             aria-label={t.common.project}
             style={{ color: 'var(--text-muted)' }}
           >
-            <span className="text-xs leading-none">⌄</span>
+            <span className="block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current" />
           </button>
           {projectMenuOpen ? (
             <div
               className="quiet-scrollbar absolute left-0 right-0 top-[calc(100%+4px)] z-20 max-h-56 overflow-y-auto rounded-lg p-1 shadow-xl"
-              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
+              style={{ background: 'var(--bg-base)', border: '1px solid var(--border-light)' }}
             >
               {projects.map(project => (
                 <button
@@ -567,22 +570,47 @@ function TaskPickerCard({
           ) : null}
         </div>
         <div className="relative">
-          <select
-            className="field-input w-full appearance-none px-3 py-2 pr-9 text-xs"
-            value={selectedProject ? (selectedSuite?.suiteKey ?? '') : ''}
-            onChange={event => setSuiteKey(event.target.value)}
+          <button
+            type="button"
             disabled={disabled || !selectedProject}
+            onMouseDown={event => {
+              event.preventDefault()
+              if (disabled || !selectedProject) return
+              setScopeMenuOpen(open => !open)
+            }}
+            onBlur={() => setTimeout(() => setScopeMenuOpen(false), 120)}
+            className="field-input flex min-h-[34px] w-full items-center justify-between gap-2 px-3 py-2 pr-9 text-left text-xs disabled:cursor-not-allowed disabled:opacity-70"
             aria-label={t.ai.taskPickerScope}
             style={!selectedProject ? { color: 'var(--text-muted)' } : undefined}
           >
-            {!selectedProject ? <option value="">{t.ai.taskPickerScope}</option> : null}
-            {(selectedProject?.suites ?? []).map(suite => (
-              <option key={suite.suiteKey} value={suite.suiteKey}>{suite.name}</option>
-            ))}
-          </select>
+            <span className="min-w-0 truncate">{selectedProject && selectedSuite ? selectedSuite.name : t.ai.taskPickerScope}</span>
+          </button>
           <span className="pointer-events-none absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-xs leading-none" style={{ color: 'var(--text-muted)' }}>
-            ⌄
+            <span className="block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current" />
           </span>
+          {scopeMenuOpen && selectedProject ? (
+            <div
+              className="quiet-scrollbar absolute left-0 right-0 top-[calc(100%+4px)] z-20 max-h-56 overflow-y-auto rounded-lg p-1 shadow-xl"
+              style={{ background: 'var(--bg-base)', border: '1px solid var(--border-light)' }}
+            >
+              {selectedProject.suites.map(suite => (
+                <button
+                  key={suite.suiteKey}
+                  type="button"
+                  onMouseDown={event => {
+                    event.preventDefault()
+                    setSuiteKey(suite.suiteKey)
+                    setScopeMenuOpen(false)
+                  }}
+                  className="w-full rounded-md px-2.5 py-2 text-left text-xs transition-colors"
+                  style={suite.suiteKey === selectedSuite?.suiteKey ? { background: 'var(--surface-soft)', color: 'var(--text-primary)' } : { color: 'var(--text-secondary)' }}
+                >
+                  <span className="block truncate font-medium">{suite.name}</span>
+                  <span className="block truncate text-[11px]" style={{ color: 'var(--text-muted)' }}>{suite.suiteKey}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-1.5">
           {environments.map(env => (
