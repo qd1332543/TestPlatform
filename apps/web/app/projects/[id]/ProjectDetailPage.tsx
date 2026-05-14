@@ -6,6 +6,7 @@ import ProjectManagementPanel, { ProjectDangerZone } from '@/components/ProjectM
 import { getDictionary } from '@/lib/i18n'
 import { isLocalDemo, demoProjects } from '@/lib/localDemo'
 import { isUuid } from '@/lib/viewModels/displayRefs'
+import { testScopeDisplayName } from '@/lib/viewModels/testScopes'
 
 type TestSuiteRow = { suite_key: string; name: string; type: string; command: string }
 type ProjectView = {
@@ -103,7 +104,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
             <tbody>
               {(project.test_suites as TestSuiteRow[]).map((s) => (
                 <tr key={s.suite_key} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td className="px-5 py-3 font-medium text-white">{s.name}</td>
+                  <td className="px-5 py-3 font-medium text-white">{testScopeDisplayName(s, t.common.testScopes)}</td>
                   <td className="px-5 py-3"><span className="meta-pill px-2 py-0.5 text-xs">{s.type}</span></td>
                   <td className="px-5 py-3 font-mono text-xs" style={{ color: 'var(--text-muted)' }}>{s.command}</td>
                 </tr>

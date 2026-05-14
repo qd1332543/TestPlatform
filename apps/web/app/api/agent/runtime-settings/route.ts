@@ -5,15 +5,15 @@ export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
 type RuntimeSettingsRow = {
-  id: string
   executor_name: string
   enabled: boolean
   task_check_interval_seconds: number
   task_source: string
   private_preview_only: boolean
-  updated_by: string | null
   updated_at: string
 }
+
+const runtimeSettingsFields = 'executor_name, enabled, task_check_interval_seconds, task_source, private_preview_only, updated_at'
 
 function serviceClient() {
   return createClient(
@@ -26,7 +26,7 @@ export async function GET() {
   const supabase = serviceClient()
   const { data, error } = await supabase
     .from('agent_runtime_settings')
-    .select('*')
+    .select(runtimeSettingsFields)
     .order('updated_at', { ascending: false })
     .limit(1)
     .single()
@@ -48,7 +48,7 @@ export async function PATCH(req: Request) {
     .from('agent_runtime_settings')
     .update(patch)
     .eq('executor_name', body.executor_name ?? 'default')
-    .select()
+    .select(runtimeSettingsFields)
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

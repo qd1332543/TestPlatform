@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { formatDateTime, getDictionary, getLocale } from '@/lib/i18n'
 import { buildAnalysisPackageMarkdown, markdownDataUrl } from '@/lib/analysisPackage'
 import { isUuid, taskRef } from '@/lib/viewModels/displayRefs'
+import { testScopeDisplayName } from '@/lib/viewModels/testScopes'
 
 const statusStyle: Record<string, { bg: string; color: string }> = {
   queued:    { bg: 'var(--status-queued-bg)', color: 'var(--status-queued-text)' },
@@ -39,7 +40,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
   const supabase = await createClient()
   const query = supabase
     .from('tasks')
-    .select('id, display_id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name, command), executors(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
+    .select('id, display_id, status, environment, parameters, created_at, started_at, finished_at, projects(name), test_suites(name, suite_key, command), executors(name), reports(summary, log_url, allure_url, created_at), ai_analyses(failure_reason, impact, suggestion, flaky_probability)')
   const { data: task } = isUuid(routeRef)
     ? await query.eq('id', routeRef).single()
     : await query.eq('display_id', routeRef).single()
@@ -104,7 +105,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
 
   const meta = [
     { label: t.common.project, value: project?.name ?? '-' },
-    { label: t.common.suite, value: suite?.name ?? '-' },
+    { label: t.common.suite, value: testScopeDisplayName(suite, t.common.testScopes) || '-' },
     { label: t.common.environment, value: task.environment },
     { label: t.common.executor, value: executor?.name ?? '-' },
     { label: t.common.createdAt, value: formatDateTime(task.created_at, locale) },
@@ -115,7 +116,7 @@ export default async function TaskDetailPage({ params }: { params: Promise<{ id:
     title: t.analysisPackage.taskTitle,
     taskId: displayRef,
     project: project?.name,
-    suite: suite?.name,
+    suite: testScopeDisplayName(suite, t.common.testScopes),
     environment: task.environment,
     status: statusLabel,
     executor: executor?.name,

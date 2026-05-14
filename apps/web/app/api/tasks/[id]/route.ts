@@ -26,7 +26,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { data: task } = await supabase
     .from('tasks')
-    .select('id, status, suite_id, project_id')
+    .select('id, display_id, status, suite_id, test_suites(name, suite_key), projects(name, key)')
     .eq('id', id)
     .single()
   if (!task) return NextResponse.json({ error: 'Task not found' }, { status: 404 })
@@ -48,9 +48,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       if (newStatus === 'failed' && prefs.notify_on_failure) {
         await fireWebhook(prefs.webhook_url, {
           event: 'task.failed',
-          task_id: id,
-          suite_id: task.suite_id,
-          project_id: task.project_id,
+          task_ref: task.display_id,
+          suite: Array.isArray(task.test_suites) ? task.test_suites[0] : task.test_suites,
+          project: Array.isArray(task.projects) ? task.projects[0] : task.projects,
         })
       }
 
@@ -67,9 +67,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         if (prevTask?.status === 'failed') {
           await fireWebhook(prefs.webhook_url, {
             event: 'task.recovered',
-            task_id: id,
-            suite_id: task.suite_id,
-            project_id: task.project_id,
+            task_ref: task.display_id,
+            suite: Array.isArray(task.test_suites) ? task.test_suites[0] : task.test_suites,
+            project: Array.isArray(task.projects) ? task.projects[0] : task.projects,
           })
         }
       }

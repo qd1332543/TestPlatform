@@ -1,4 +1,13 @@
-export type AiSuggestion = { label: string; prompt: string }
+export type AiTaskPickerSuite = { name: string; suiteKey: string }
+export type AiTaskPickerProject = { name: string; key: string; suites: AiTaskPickerSuite[] }
+export type AiSuggestion = {
+  label: string
+  prompt: string
+  autoSubmit?: boolean
+  kind?: 'task_picker'
+  projects?: AiTaskPickerProject[]
+  environments?: string[]
+}
 export type AiToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
 export type AiMessageRole = 'user' | 'assistant'
 export type AiMessage = {
@@ -30,7 +39,36 @@ function normalizeSuggestions(value: unknown): AiSuggestion[] | undefined {
       if (!isRecord(item)) return null
       const label = typeof item.label === 'string' ? item.label.trim() : ''
       const prompt = typeof item.prompt === 'string' ? item.prompt.trim() : ''
-      return label && prompt ? { label, prompt } : null
+      if (!label || !prompt) return null
+      const projects = Array.isArray(item.projects)
+        ? item.projects
+          .map(project => {
+            if (!isRecord(project)) return null
+            const name = typeof project.name === 'string' ? project.name.trim() : ''
+            const key = typeof project.key === 'string' ? project.key.trim() : ''
+            const suites = Array.isArray(project.suites)
+              ? project.suites
+                .map(suite => {
+                  if (!isRecord(suite)) return null
+                  const suiteName = typeof suite.name === 'string' ? suite.name.trim() : ''
+                  const suiteKey = typeof suite.suiteKey === 'string' ? suite.suiteKey.trim() : ''
+                  return suiteName && suiteKey ? { name: suiteName, suiteKey } : null
+                })
+                .filter(Boolean) as AiTaskPickerSuite[]
+              : []
+            return name && key && suites.length ? { name, key, suites } : null
+          })
+          .filter(Boolean) as AiTaskPickerProject[]
+        : undefined
+      const environments = Array.isArray(item.environments) ? item.environments.filter(env => typeof env === 'string') as string[] : undefined
+      return {
+        label,
+        prompt,
+        autoSubmit: item.autoSubmit === true,
+        kind: item.kind === 'task_picker' ? 'task_picker' : undefined,
+        projects,
+        environments,
+      }
     })
     .filter(Boolean) as AiSuggestion[]
   return suggestions.length ? suggestions : undefined

@@ -16,8 +16,7 @@ export function taskRef(row: { display_id?: unknown; id?: unknown; parameters?: 
   const parameters = isRecord(row.parameters) ? row.parameters : null
   const displayName = typeof parameters?.display_name === 'string' ? parameters.display_name : ''
   const displayId = typeof row.display_id === 'string' ? row.display_id : ''
-  const id = typeof row.id === 'string' ? row.id : ''
-  return displayId || displayName || `TASK-${shortInternalRef(id)}`
+  return displayId || displayName
 }
 
 export function buildRef(row: { display_id?: unknown; id?: unknown; platform?: unknown; version?: unknown; build_number?: unknown }) {
@@ -25,7 +24,6 @@ export function buildRef(row: { display_id?: unknown; id?: unknown; platform?: u
   const platform = typeof row.platform === 'string' ? row.platform.toUpperCase() : ''
   const version = typeof row.version === 'string' ? row.version : ''
   const buildNumber = typeof row.build_number === 'string' ? row.build_number : ''
-  const id = typeof row.id === 'string' ? row.id : ''
   const parts = [platform, version, buildNumber].filter(Boolean)
-  return parts.length ? parts.join('-') : `BUILD-${shortInternalRef(id)}`
+  return parts.length ? parts.join('-') : ''
 }
