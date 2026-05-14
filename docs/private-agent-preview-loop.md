@@ -98,6 +98,50 @@ python -m agent.agent --config agent/config.yaml --interval 10
    - log link exists when artifact upload or local artifact reporting is configured,
    - failed tasks show AI repair diagnostics and the AI repair handoff export.
 
+## Stable API Smoke Validation
+
+For the first platform-loop validation, prefer API smoke over iOS UI tests. UI tests depend on Xcode, Appium, a simulator or real device, and an app artifact. API smoke can run against a local mock API and gives a deterministic platform-chain check.
+
+Recommended flow:
+
+1. Prepare the test repository virtual environment:
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -U pip
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+2. Start the test repository mock API and verify health:
+
+```bash
+.venv/bin/python -m tools.mock_api.server --port 8010
+curl http://127.0.0.1:8010/health
+```
+
+3. Configure the test runtime before starting the Agent:
+
+```bash
+export API_BASE_URL=http://127.0.0.1:8010
+export METEORTEST_TEST_PYTHON=/absolute/path/to/iOS-Automation-Framework/.venv/bin/python
+```
+
+4. Optionally validate the test repository before using the platform loop:
+
+```bash
+API_BASE_URL=http://127.0.0.1:8010 \
+.venv/bin/python -m pytest API_Automation/cases -v -n 0 -m smoke \
+  --alluredir=Reports/platform/manual-smoke/allure-results
+```
+
+5. Create an `api_smoke` task from the Web console, use the `dev` environment, and do not select an app build unless artifact download is part of the validation.
+
+Success criteria:
+
+- The Web task detail status becomes `succeeded`.
+- Agent logs show task claim, command completion, and report write-back.
+- Task detail or reports show a report summary and log link.
+
 ## Non-Secret Checks
 
 These checks can be shared in issues or PRs:
@@ -114,6 +158,8 @@ Do not paste service-role keys, full `.env.local` contents, private Supabase URL
 
 - If the Agent picks up a task and fails with `Repository for project ... not found`, add that exact `projects.key` to `agent/config.yaml`.
 - If the task stays `queued`, verify the Agent is running in `platform.mode: supabase`, the service-role key is set, and the Agent can reach Supabase.
+- If `python: command not found` or `No module named pytest` appears, set `METEORTEST_TEST_PYTHON` to the test repository `.venv/bin/python` and verify dependencies are installed.
+- If API smoke is skipped or fails, verify `API_BASE_URL` points to the local mock API and `/health` is reachable.
 - If reports are written but links are local paths, configure `artifacts.supabase_bucket` and ensure the bucket exists.
 - If Allure links are missing, confirm the suite command writes to the `--alluredir` path and that the Agent can zip/upload the result directory.
 - If public pages expose local paths or secret variable names, stop the preview and run `npm run smoke:public-preview` before redeploying.
