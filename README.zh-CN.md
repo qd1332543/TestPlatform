@@ -38,13 +38,10 @@ MeteorTest 是一个通用自动化测试平台，用来管理多个测试项目
 - [成本说明](#成本说明)
 - [路线规划](#路线规划)
 
-补充文档：
+文档入口：
 
-- [平台架构与推进路线](docs/platform-architecture-roadmap.zh-CN.md)
-- [AI 与 LangChain 渐进改造方案](docs/ai-langchain-modernization-plan.zh-CN.md)
-- [Supabase 账号与账号级数据 SQL 执行手册](docs/supabase-account-data-runbook.zh-CN.md)
-- [私有 Agent 预览闭环](docs/private-agent-preview-loop.zh-CN.md)
-- [Local Agent 运维方式](docs/local-agent-operations.zh-CN.md)
+- [文档索引](docs/README.zh-CN.md)
+- [当前进度索引](PROGRESS.md)
 
 ## 维护者
 
@@ -190,63 +187,19 @@ MeteorTest/
 
 - `apps/web/`：Next.js Web 控制台，包含页面、组件、API routes 和 Supabase 访问。
 - `agent/`：Python Local Agent，负责轮询任务、执行 suite、收集日志并回传结果。
-- `docs/`：测试项目接入示例，重点是 `meteortest.yml` 协议。
+- `docs/`：文档索引、路线规划、部署 runbook、Agent 运维、数据安全和测试项目接入协议。
 - `packages/shared/`：共享的 TypeScript 协议类型。
 - `supabase/migrations/`：按顺序执行的数据库迁移 SQL。
 - `DESIGN.md`：产品边界、架构设计和长期方向。
-- `PROGRESS.md`：当前实现进度和后续计划。
+- `PROGRESS.md`：当前实现进度索引；详细执行计划按主题放在 `docs/` 下。
 
 ## 本地启动 Web 控制台
 
-### 1. 安装依赖
-
 ```bash
 cd apps/web
-npm install
-```
-
-### 2. 创建 Supabase 项目
-
-在 Supabase 控制台创建新项目，然后在 SQL Editor 中按顺序执行：
-
-```text
-supabase/migrations/001_init.sql
-supabase/migrations/002_app_builds.sql
-supabase/migrations/003_constraints.sql
-```
-
-如果 Agent 需要上传日志和 Allure 压缩包，创建一个 Storage bucket，例如：
-
-```text
-test-artifacts
-```
-
-MVP 阶段可以先使用 public bucket，方便 Web 控制台直接打开报告链接。生产环境应改成私有 bucket，并使用签名 URL。
-
-### 3. 配置环境变量
-
-```bash
-cd apps/web
+npm ci
 cp .env.local.example .env.local
-```
-
-填入：
-
-```text
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-DEEPSEEK_API_KEY=your-deepseek-api-key
-```
-
-`DEEPSEEK_API_KEY` 是可选项。没有它时，AI 助手不可用，但项目、任务、报告和执行器页面仍可开发和调试。
-
-如果要部署公网 Web 预览，把这些值配置到部署平台的受保护环境变量中，不要提交 `.env.local`。`SUPABASE_SERVICE_ROLE_KEY`、`DEEPSEEK_API_KEY`、本地仓库路径和 Local Agent 运行配置必须保持服务端或本机私有。公网预览应先开放 Web 控制台；由私有 Local Agent 执行真实任务属于后续接入步骤。
-
-### 4. 启动 Web 控制台
-
-```bash
-cd apps/web
-npm run dev
+npm run dev:local
 ```
 
 打开：
@@ -255,103 +208,25 @@ npm run dev
 http://127.0.0.1:3000
 ```
 
-如果没有真实 Supabase 配置，页面无法完整连接数据库。更新 `.env.local` 后，需要重启 `npm run dev`。
+`.env.local` 需要配置 Supabase URL、Anon Key、Service Role Key，以及可选的 `DEEPSEEK_API_KEY`。完整环境变量说明见 `apps/web/README.md`，Supabase SQL 执行顺序见 `docs/supabase-account-data-runbook.zh-CN.md`。
 
 ## 接入测试项目
 
-测试项目需要在仓库根目录提供 `meteortest.yml`。示例见：
+测试项目需要在仓库根目录提供 `meteortest.yml`。协议示例见：
 
 ```text
 docs/meteortest.example.yml
 ```
 
-最小结构：
-
-```yaml
-project:
-  key: yunlu-ios
-  name: Yunlu Mall iOS
-
-suites:
-  - id: api_smoke
-    name: API smoke test
-    type: api
-    command: python -m pytest API_Automation/cases -v --alluredir=Reports/platform/{task_id}/allure-results
-    requires:
-      - python
-      - pytest
-    report:
-      allure: true
-```
-
-导入 suite 时兼容 `id`、`key`、`suite_key` 三种 suite 标识字段。
-
-当 suite command 以 `python` 或 `python3` 开头时，Local Agent 会把测试仓库视为运行时所有者，并按以下顺序解析 Python 可执行文件：
-
-1. 任务中的 `parameters.python_executable`。
-2. Agent 环境变量 `METEORTEST_TEST_PYTHON`。
-3. 测试仓库内的 `.venv` 或 `venv`。
-4. 如果没有找到项目专属运行时，则保留原始 `python` 或 `python3` 命令。
-
-这样可以避免平台 Agent 自己的 Python 环境污染测试仓库。Windows 测试仓库建议使用项目内虚拟环境，确保 `pytest-xdist`、`pytest-rerunfailures`、`allure-pytest` 等插件解析一致。
+平台通过这个文件识别项目 key、测试范围、执行命令、依赖和报告产物。测试命令的运行时解析、Allure 输出和 Agent 执行细节见 `agent/README.md` 与 `docs/private-agent-preview-loop.zh-CN.md`。
 
 ## 运行 Local Agent
 
-### 1. 安装 Agent 依赖
-
 ```bash
 python -m pip install -r agent/requirements.txt
-```
-
-### 2. 准备配置
-
-```bash
-cd agent
-cp config.example.yaml config.yaml
-```
-
-关键配置：
-
-```yaml
-platform:
-  mode: local        # local or supabase
-  local_task_store: .meteortest-agent/tasks.json
-  supabase_url: https://your-project.supabase.co
-  supabase_service_role_key_env: SUPABASE_SERVICE_ROLE_KEY
-
-repositories:
-  - key: yunlu-ios
-    path: ../iOS-Automation-Framework
-    contract: meteortest.yml
-
-artifacts:
-  local_output_root: .meteortest-agent/artifacts
-  supabase_bucket: test-artifacts
-```
-
-Supabase 模式需要设置：
-
-```bash
-export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-export SUPABASE_ARTIFACT_BUCKET=test-artifacts
-```
-
-Windows PowerShell：
-
-```powershell
-$env:SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
-$env:SUPABASE_ARTIFACT_BUCKET="test-artifacts"
-```
-
-### 3. 启动 Agent
-
-本机日常使用推荐在仓库根目录运行：
-
-```bash
+cp agent/config.example.yaml agent/config.yaml
 ./scripts/start-local-agent.sh
 ```
-
-这个脚本会读取 `apps/web/.env.local`，复用 `agent/config.yaml`，并默认只领取 Web 控制台创建的 private preview 任务。
 
 如果希望 Agent 常驻，macOS 推荐安装用户级 `launchd` 服务：
 
@@ -359,57 +234,13 @@ $env:SUPABASE_ARTIFACT_BUCKET="test-artifacts"
 ./scripts/install-local-agent-launchd.sh
 ```
 
-安装后会在登录时自动启动，并在进程退出时自动拉起。常用管理命令：
-
-```bash
-launchctl list | grep com.meteortest.local-agent
-./scripts/check-local-agent.sh
-./scripts/restart-local-agent-launchd.sh
-./scripts/uninstall-local-agent-launchd.sh
-tail -f .meteortest-agent/logs/launchd.out.log
-tail -f .meteortest-agent/logs/launchd.err.log
-```
-
-如需手动启动：
-
-```bash
-python -m agent.agent --config agent/config.yaml --interval 10
-```
-
-Agent 会：
-
-- 注册或更新 executor。
-- 轮询 queued 任务。
-- 锁定任务并置为 running。
-- 下载任务关联的 app build。
-- 执行 suite command。
-- 写回 tasks、reports 和 ai_analyses。
-
-Web 执行器页面也会展示 Local Agent 状态，并提供启动入口。设置页可以控制打开执行器页面时是否自动启动 Agent。
-
-不要把 Local Agent 直接暴露到公网。需要公网访问 Web 时，Agent 应在私有机器或可信 runner 上运行，并通过受控凭据轮询平台后端。
+完整配置、心跳、任务检查频率、日志和排障见 `docs/local-agent-operations.zh-CN.md`。公网 Web 场景下，Agent 必须保持私有，通过受控凭据主动轮询后端，不直接暴露端点。
 
 ## 公网 Web 预览部署
 
-MeteorTest Web 需要能运行 Next.js 服务端路由的应用托管平台。GitHub Pages 不适合这个应用，因为 `/api/tasks`、`/api/projects`、`/api/ai/chat` 等路由需要服务端运行时。
+MeteorTest Web 需要能运行 Next.js 服务端路由的托管平台。GitHub Pages 不适合，因为 `/api/*` 需要服务端运行时。
 
-按以下顺序操作：
-
-1. 选择 Vercel、Netlify、带服务端运行时的 Cloudflare Workers/Pages，或受控服务器。
-2. 创建隔离的预览 Supabase 项目或 schema，并执行 `supabase/migrations/` 里的迁移。
-3. 在部署平台配置受保护环境变量：`NEXT_PUBLIC_SUPABASE_URL`、`NEXT_PUBLIC_SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`，以及可选的 `DEEPSEEK_API_KEY`。
-4. 不要把 Local Agent 路径和本机运行时变量放进公网 Web 部署。
-5. 使用 Node.js 22、`npm ci`、`npm run build` 部署 `apps/web`。
-6. 对公网路由做 smoke check，确认没有暴露密钥、本机路径或 Local Agent 端点。
-7. 私有 Agent 轮询和公网联网执行属于后续步骤，必须先完成安全和访问控制评审。
-
-详细 runbook 见 `apps/web/README.md`。
-
-Vercel 专项部署步骤见：
-
-```text
-docs/vercel-public-preview.zh-CN.md
-```
+公网预览部署步骤统一见 `docs/vercel-public-preview.zh-CN.md`。公网 Web + 私有 Agent 的联通验证统一见 `docs/private-agent-preview-loop.zh-CN.md`。
 
 ## 推荐验证流程
 

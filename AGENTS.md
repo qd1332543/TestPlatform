@@ -11,11 +11,11 @@ Use this file as the first project-specific context before editing code.
 ```text
 apps/web/                 Next.js web console
 agent/                    Python Local Agent implementation
-docs/                     Example meteortest.yml contract
+docs/                     Documentation index, roadmaps, runbooks, protocol examples
 packages/shared/          Shared TypeScript protocol types
 supabase/migrations/      Database schema migrations
 DESIGN.md                 Product and architecture design
-PROGRESS.md               Current progress and roadmap notes
+PROGRESS.md               Current progress index; detailed plans live in docs/
 README.md                 English setup and project overview
 README.zh-CN.md           Simplified Chinese mirror of README.md
 ```
@@ -25,9 +25,12 @@ README.zh-CN.md           Simplified Chinese mirror of README.md
 Before making non-trivial changes, read the relevant source plus:
 
 - `README.md` and `README.zh-CN.md` for setup, architecture, and validation flow.
+- `docs/README.md` and `docs/README.zh-CN.md` for the documentation map and read order.
 - `DESIGN.md` for product and protocol intent.
-- `PROGRESS.md` for current implementation status.
-- `docs/platform-architecture-roadmap.md` and `docs/platform-architecture-roadmap.zh-CN.md` for Auth/RLS, Agent preview loop, and architecture boundary decisions.
+- `PROGRESS.md` for current implementation status. Do not add large implementation plans there; link to focused docs instead.
+- `docs/supabase-account-data-runbook.md` and `docs/supabase-account-data-runbook.zh-CN.md` for Auth/RLS and account-data SQL execution.
+- `docs/local-agent-operations.md` and `docs/local-agent-operations.zh-CN.md` for Local Agent daemon and runtime behavior.
+- `docs/private-agent-preview-loop.md` and `docs/private-agent-preview-loop.zh-CN.md` for public Web plus private Agent validation.
 - `agent/README.md` before changing Local Agent behavior.
 - `docs/meteortest.example.yml` before changing suite import or contract parsing.
 
@@ -137,7 +140,7 @@ For public Web preview work:
 - Follow the public preview deployment runbook in `apps/web/README.md` before opening a live public URL. Do not skip directly to connected execution.
 - For Vercel deployment, follow `docs/vercel-public-preview.md` and `docs/vercel-public-preview.zh-CN.md`.
 - The current public preview URL is `https://meteortest.jcmeteor.com/`.
-- The current hardening sequence is recorded in `PROGRESS.md`: public preview mode, access protection, preview seed data, task/report experience, then private-Agent online loop.
+- Current status is recorded in `PROGRESS.md`; detailed public preview and private Agent steps live in the docs runbooks.
 - Public preview deployments should set `METEORTEST_AGENT_DISABLED=1` and `METEORTEST_PUBLIC_PREVIEW=1`.
 - Public preview access control is handled by Supabase Auth and RLS. Do not reintroduce a separate shared preview-token gate unless the access model is redesigned and documented.
 - In public preview mode, `/api/agent/status` and the Executors page must never attempt to start a machine-local Agent. They should show a clear disabled/unavailable state and instruct the operator to run the Agent privately.

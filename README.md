@@ -38,13 +38,10 @@ MeteorTest is a general-purpose automation testing platform for managing multipl
 - [Cost Notes](#cost-notes)
 - [Roadmap](#roadmap)
 
-Additional docs:
+Documentation entry:
 
-- [Platform architecture and roadmap](docs/platform-architecture-roadmap.md)
-- [AI and LangChain modernization plan](docs/ai-langchain-modernization-plan.md)
-- [Supabase account and account-scoped data SQL runbook](docs/supabase-account-data-runbook.md)
-- [Private Agent preview loop](docs/private-agent-preview-loop.md)
-- [Local Agent operations](docs/local-agent-operations.md)
+- [Documentation index](docs/README.md)
+- [Current progress index](PROGRESS.md)
 
 ## Maintainer
 
@@ -190,63 +187,19 @@ By responsibility:
 
 - `apps/web/`: Next.js Web console, including pages, components, API routes, and Supabase access.
 - `agent/`: Python Local Agent for polling tasks, running suites, collecting logs, and reporting results.
-- `docs/`: test-project integration examples, especially the `meteortest.yml` contract.
+- `docs/`: documentation index, roadmaps, deployment runbooks, Agent operations, data-safety notes, and the test-project contract.
 - `packages/shared/`: shared TypeScript protocol types.
 - `supabase/migrations/`: ordered database migration SQL files.
 - `DESIGN.md`: product boundaries, architecture design, and long-term direction.
-- `PROGRESS.md`: current implementation progress and planned work.
+- `PROGRESS.md`: current progress index; detailed execution plans live in focused `docs/` files.
 
 ## Start the Web Console Locally
 
-### 1. Install dependencies
-
 ```bash
 cd apps/web
-npm install
-```
-
-### 2. Create a Supabase project
-
-Create a new project in the Supabase console, then run these migrations in order in the SQL Editor:
-
-```text
-supabase/migrations/001_init.sql
-supabase/migrations/002_app_builds.sql
-supabase/migrations/003_constraints.sql
-```
-
-If the Agent needs to upload logs and zipped Allure results, create a Storage bucket, for example:
-
-```text
-test-artifacts
-```
-
-During the MVP stage, a public bucket can make report links easier to open from the Web console. For production use, switch to a private bucket with signed URLs.
-
-### 3. Configure environment variables
-
-```bash
-cd apps/web
+npm ci
 cp .env.local.example .env.local
-```
-
-Fill in:
-
-```text
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
-DEEPSEEK_API_KEY=your-deepseek-api-key
-```
-
-`DEEPSEEK_API_KEY` is optional. Without it, the AI assistant is unavailable, but projects, tasks, reports, and executor pages can still be developed and tested.
-
-For public Web previews, configure these values in the deployment provider's protected environment settings instead of committing `.env.local`. Keep `SUPABASE_SERVICE_ROLE_KEY`, `DEEPSEEK_API_KEY`, local repository paths, and Local Agent runtime settings server-only or private. A public preview should expose the Web console first; connected execution by a private Local Agent is a separate rollout step.
-
-### 4. Start the Web console
-
-```bash
-cd apps/web
-npm run dev
+npm run dev:local
 ```
 
 Open:
@@ -255,103 +208,25 @@ Open:
 http://127.0.0.1:3000
 ```
 
-If real Supabase settings are missing, the page cannot fully connect to the database. After updating `.env.local`, restart `npm run dev`.
+`.env.local` must contain Supabase URL, Anon Key, Service Role Key, and optional `DEEPSEEK_API_KEY`. See `apps/web/README.md` for Web environment notes and `docs/supabase-account-data-runbook.md` for SQL execution order.
 
 ## Connect a Test Project
 
-A test project should provide `meteortest.yml` at its repository root. See:
+A test project should provide `meteortest.yml` at its repository root. Contract example:
 
 ```text
 docs/meteortest.example.yml
 ```
 
-Minimum structure:
-
-```yaml
-project:
-  key: yunlu-ios
-  name: Yunlu Mall iOS
-
-suites:
-  - id: api_smoke
-    name: API smoke test
-    type: api
-    command: python -m pytest API_Automation/cases -v --alluredir=Reports/platform/{task_id}/allure-results
-    requires:
-      - python
-      - pytest
-    report:
-      allure: true
-```
-
-Suite import supports `id`, `key`, and `suite_key` as compatible suite identifiers.
-
-When a suite command starts with `python` or `python3`, the Local Agent treats the test repository as the runtime owner. It resolves the Python executable in this order:
-
-1. `parameters.python_executable` from the task.
-2. `METEORTEST_TEST_PYTHON` from the Agent environment.
-3. `.venv` or `venv` inside the test repository.
-4. The original `python` or `python3` command if no project-specific runtime is found.
-
-This keeps platform execution isolated from the Agent's own Python environment. For Windows test repositories, prefer a project-local virtual environment so pytest plugins such as `pytest-xdist`, `pytest-rerunfailures`, and `allure-pytest` are resolved consistently.
+MeteorTest uses this file to identify project key, test scopes, commands, dependencies, and report artifacts. Runtime resolution, Allure output, and Agent execution details live in `agent/README.md` and `docs/private-agent-preview-loop.md`.
 
 ## Run the Local Agent
 
-### 1. Install Agent dependencies
-
 ```bash
 python -m pip install -r agent/requirements.txt
-```
-
-### 2. Prepare configuration
-
-```bash
-cd agent
-cp config.example.yaml config.yaml
-```
-
-Important fields:
-
-```yaml
-platform:
-  mode: local        # local or supabase
-  local_task_store: .meteortest-agent/tasks.json
-  supabase_url: https://your-project.supabase.co
-  supabase_service_role_key_env: SUPABASE_SERVICE_ROLE_KEY
-
-repositories:
-  - key: yunlu-ios
-    path: ../iOS-Automation-Framework
-    contract: meteortest.yml
-
-artifacts:
-  local_output_root: .meteortest-agent/artifacts
-  supabase_bucket: test-artifacts
-```
-
-Supabase mode requires:
-
-```bash
-export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-export SUPABASE_ARTIFACT_BUCKET=test-artifacts
-```
-
-Windows PowerShell:
-
-```powershell
-$env:SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
-$env:SUPABASE_ARTIFACT_BUCKET="test-artifacts"
-```
-
-### 3. Start the Agent
-
-For daily local use, run this from the repository root:
-
-```bash
+cp agent/config.example.yaml agent/config.yaml
 ./scripts/start-local-agent.sh
 ```
-
-The script reads `apps/web/.env.local`, reuses `agent/config.yaml`, and defaults to claiming only Web-console private preview tasks.
 
 To keep the Agent running on macOS, install the user-level `launchd` service:
 
@@ -359,57 +234,13 @@ To keep the Agent running on macOS, install the user-level `launchd` service:
 ./scripts/install-local-agent-launchd.sh
 ```
 
-After installation, the Agent starts at login and is restarted if it exits. Common management commands:
-
-```bash
-launchctl list | grep com.meteortest.local-agent
-./scripts/check-local-agent.sh
-./scripts/restart-local-agent-launchd.sh
-./scripts/uninstall-local-agent-launchd.sh
-tail -f .meteortest-agent/logs/launchd.out.log
-tail -f .meteortest-agent/logs/launchd.err.log
-```
-
-For manual startup:
-
-```bash
-python -m agent.agent --config agent/config.yaml --interval 10
-```
-
-The Agent will:
-
-- Register or update the executor.
-- Poll queued tasks.
-- Lock tasks and move them to running.
-- Download the app build attached to a task.
-- Run the suite command.
-- Write back tasks, reports, and AI analysis records.
-
-The Web executor page also shows Local Agent status and provides a launch entry point. The Settings page can control whether the Agent starts automatically when the executor page is opened.
-
-Do not expose the Local Agent directly on the public internet. For public Web access, the Agent should run privately and poll the platform backend with scoped credentials.
+Full configuration, heartbeat, task check interval, logs, and troubleshooting live in `docs/local-agent-operations.md`. For public Web use, keep the Agent private and let it poll the backend with scoped credentials.
 
 ## Public Web Preview Deployment
 
-MeteorTest Web needs an application host that can run Next.js server routes. GitHub Pages is not enough for this app because routes such as `/api/tasks`, `/api/projects`, and `/api/ai/chat` require a server runtime.
+MeteorTest Web needs a host that can run Next.js server routes. GitHub Pages is not enough because `/api/*` requires a server runtime.
 
-Follow this order:
-
-1. Choose a host such as Vercel, Netlify, Cloudflare Workers/Pages with a server runtime, or a controlled server.
-2. Create an isolated preview Supabase project or schema and run the migrations in `supabase/migrations/`.
-3. Configure provider-managed environment variables for `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and optional `DEEPSEEK_API_KEY`.
-4. Keep Local Agent paths and machine-local runtime variables out of the public Web deployment.
-5. Deploy `apps/web` with Node.js 22, `npm ci`, and `npm run build`.
-6. Smoke-check all public routes and confirm no secrets, local paths, or Local Agent endpoints are exposed.
-7. Treat private Agent polling and public connected execution as later steps after safety and access controls are reviewed.
-
-The detailed runbook lives in `apps/web/README.md`.
-
-For Vercel-specific deployment steps, see:
-
-```text
-docs/vercel-public-preview.md
-```
+Public preview deployment steps live in `docs/vercel-public-preview.md`. Public Web plus private Agent validation lives in `docs/private-agent-preview-loop.md`.
 
 ## Recommended Validation Flow
 

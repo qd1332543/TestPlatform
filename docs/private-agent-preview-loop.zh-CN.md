@@ -98,6 +98,50 @@ python -m agent.agent --config agent/config.yaml --interval 10
    - 配置 artifact 上传或本地报告时，可以看到日志链接；
    - failed 任务展示 AI 修复诊断，并可以导出 AI 修复交接。
 
+## 稳定 API Smoke 验证
+
+第一次验证平台闭环时，优先使用 API smoke，不要直接使用 iOS UI 测试。UI 测试依赖 Xcode、Appium、模拟器或真机、App 构建产物，失败变量更多；API smoke 可以配合本地 mock API 做确定性验证。
+
+推荐流程：
+
+1. 在测试仓库准备虚拟环境并安装依赖：
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -U pip
+.venv/bin/python -m pip install -r requirements.txt
+```
+
+2. 启动测试仓库的 mock API，并确认健康检查通过：
+
+```bash
+.venv/bin/python -m tools.mock_api.server --port 8010
+curl http://127.0.0.1:8010/health
+```
+
+3. 启动 Agent 前设置测试运行时：
+
+```bash
+export API_BASE_URL=http://127.0.0.1:8010
+export METEORTEST_TEST_PYTHON=/absolute/path/to/iOS-Automation-Framework/.venv/bin/python
+```
+
+4. 如果要先绕过平台链路验证测试仓库本身：
+
+```bash
+API_BASE_URL=http://127.0.0.1:8010 \
+.venv/bin/python -m pytest API_Automation/cases -v -n 0 -m smoke \
+  --alluredir=Reports/platform/manual-smoke/allure-results
+```
+
+5. 再从 Web 创建 `api_smoke` / API 冒烟测试任务，环境选择 `dev`，构建产物不选。
+
+成功标准：
+
+- Web 任务详情状态变为 `succeeded`。
+- Agent 日志显示任务被领取、命令执行完成、报告已回传。
+- 任务详情或报告页能看到报告摘要和日志链接。
+
 ## 可公开分享的非敏感检查
 
 这些检查可以放到 issue 或 PR 中：
@@ -114,6 +158,8 @@ curl -I https://meteortest.jcmeteor.com/executors
 
 - 如果 Agent 领取任务后报 `Repository for project ... not found`，把报错里的 `projects.key` 原样加入 `agent/config.yaml`。
 - 如果任务一直停在 `queued`，检查 Agent 是否使用 `platform.mode: supabase`，service-role key 是否已设置，以及 Agent 是否能访问 Supabase。
+- 如果 `python: command not found` 或 `No module named pytest`，设置 `METEORTEST_TEST_PYTHON` 指向测试仓库 `.venv/bin/python`，并确认依赖已安装。
+- 如果 API smoke 被跳过或失败，确认 `API_BASE_URL` 指向本地 mock API，且 `/health` 可访问。
 - 如果 report 已写入但链接是本地路径，配置 `artifacts.supabase_bucket` 并确认 bucket 已存在。
 - 如果 Allure 链接缺失，确认 suite command 写入了 `--alluredir` 路径，并且 Agent 能 zip/upload 该目录。
 - 如果公网页面暴露了本机路径或密钥变量名，停止预览并先运行 `npm run smoke:public-preview`，再重新部署。

@@ -1,225 +1,67 @@
-# MeteorTest 开发进度
+# MeteorTest 进度索引
 
-> 参考方案：`DESIGN.md`
-> 当前判断：`iOS-Automation-Framework` 只作为测试工程和接入样板；通用 Local Agent 短期放在 `MeteorTest/agent`，成熟后再独立成仓库或包。
+更新时间：2026-05-15
 
-## 短期：职责拆分与本地闭环
+`PROGRESS.md` 只记录项目状态和下一步入口，不承载详细方案。详细计划、实施步骤和专项说明统一放在 `docs/`。
 
-### iOS-Automation-Framework 接入样板
+## 文档入口
 
-- [x] 新增 `meteortest.yml`
-- [x] 整理 README，明确它是测试工程，不是平台本体或通用 Agent
-- [x] 固化平台接入场景下的 Allure 输出目录
-- [x] 明确 API / UI / 性能 suite 的命令、依赖和产物路径
-- [x] 保留 `tools/webui` 作为本地 Demo，并弱化平台职责描述
+- 文档总索引：`docs/README.zh-CN.md`
+- 产品与架构意图：`DESIGN.md`
+- AI 编排与 LangChain 计划：`docs/ai-langchain-modernization-plan.zh-CN.md`
+- Supabase 执行手册：`docs/supabase-account-data-runbook.zh-CN.md`
+- Local Agent 运维：`docs/local-agent-operations.zh-CN.md`
+- 公网预览部署：`docs/vercel-public-preview.zh-CN.md`
+- 私有 Agent 闭环验证：`docs/private-agent-preview-loop.zh-CN.md`
+- 内部 ID / DTO 边界：`docs/internal-id-exposure-hardening.zh-CN.md`
 
-### Local Agent MVP（MeteorTest/agent）
+## 当前定位
 
-- [x] 新增 `agent/` 目录
-- [x] 支持读取测试工程的 `meteortest.yml`
-- [x] 支持本地 JSON/SQLite 模拟任务表
-- [x] 支持执行 API suite
-- [x] 支持执行 UI suite
-- [x] 支持收集日志
-- [x] 支持收集 Allure 结果
-- [x] 支持把任务状态写回本地任务表
+MeteorTest 当前是早期 Beta 形态的通用自动化测试平台，已经跑通：
 
-## 当前优先级：公网预览加固与 Beta 路径
+```text
+项目接入
+-> 测试范围导入
+-> Web / AI 创建任务
+-> 私有 Local Agent 执行
+-> 回写任务状态、日志、报告和 AI 分析
+-> Web 查看和导出分析上下文
+```
 
-> 当前公网预览：`https://meteortest.jcmeteor.com/`
-> 当前定位：Web Preview 已可访问；Local Agent 仍保持私有；公网联网执行 Demo 仍延期。
+公网 Web 预览地址：`https://meteortest.jcmeteor.com/`
 
-### 推荐推进顺序
+公网 Web 只作为控制台入口；Local Agent 继续在私有机器或可信 runner 上主动轮询后端，不暴露到公网。
 
-1. 完善公网预览模式，确保 Vercel 部署不会尝试启动本机 Local Agent。
-2. 为公网控制台增加访问保护，避免带服务端能力的控制台长期裸露。
-3. 准备预览数据初始化，让 Dashboard、Projects、Tasks、Reports、Executors 都有安全 demo 数据。
-4. 增强任务详情和报告体验，让 demo failed task 能清楚展示状态、日志、失败原因、AI 分析和下一步建议。
-5. 在公网 Web + preview Supabase 稳定后，再用私有 Local Agent 跑通线上任务闭环。
+## 已完成能力
 
-### Public Preview Mode
+- 项目中心：项目创建、详情查看、`meteortest.yml` 测试范围导入、项目编辑和删除。
+- 构建产物：登记 App/Web 构建，任务可关联构建产物。
+- 任务中心：创建任务、状态查询、任务详情、公开任务 display id。
+- Local Agent：轮询 Supabase、锁定任务、执行命令、上传日志和 Allure 产物、回写状态。
+- 报告中心：任务摘要、日志、Allure 链接、失败分类、AI 分析、Markdown 分析包导出。
+- AI 中枢：平台上下文问答、创建任务、创建项目、查询任务、历史会话、结构化行动卡片。
+- 账号权限：Supabase Auth、用户名/手机号登录策略、个人信息、反馈、viewer/operator/admin 角色边界、RLS。
+- 账号级数据：用户偏好、AI 会话历史、平台级 webhook 通知配置。
+- 安全边界：public preview 禁止公网启动本机 Agent；浏览器侧逐步使用 DTO 和公开引用，避免暴露内部 UUID。
+- Web 体验：多语言、主题、响应式基础布局、设置页、执行器页和本地预览脚本。
 
-- [x] 新增或明确 `METEORTEST_PUBLIC_PREVIEW=1` 作为公网预览模式开关
-- [x] 保留 `METEORTEST_AGENT_DISABLED=1` 用于禁用公网部署中的 Local Agent 启动
-- [x] `/api/agent/status` 在 public preview 下始终返回 disabled/unavailable，不尝试读取或启动本机 Agent
-- [x] Executors 页面在 public preview 下显示“公网部署不启动 Local Agent；请在私有机器上单独运行 Agent 并轮询后端”
-- [x] Settings 页面在 public preview 下隐藏或禁用 auto-start Agent 控制，避免误导
-- [x] Vercel runbook 明确不要配置 `METEORTEST_REPO_ROOT`、`METEORTEST_AGENT_PYTHON`、`METEORTEST_AGENT_INTERVAL` 或本机路径
-- [x] Smoke check 覆盖 `/executors` 和 `/api/agent/status`，确认不暴露本机路径、栈信息、密钥或 Agent 启动入口
-  - `apps/web/scripts/check-public-preview.mts` 使用 public-preview 环境构建并启动独立 smoke server。
-  - CI 通过 `npm run smoke:public-preview` 验证 `/api/agent/status` 禁用 Agent 控制、受保护页面跳转登录页，并扫描响应中是否出现本机路径、密钥变量、栈信息或 Agent 启动入口。
-  - smoke 使用 `METEORTEST_SMOKE_NO_SUPABASE=1` 跳过 Supabase 查询；Vercel 真实公网预览已配置 Supabase 密钥时仍可正常展示 preview 数据。
+## 当前主线
 
-### Authentication And Access Control
+下一阶段会继续围绕测试质量、AI 修复、任务操作和报告分析能力推进。详细阶段计划应放在对应 roadmap 文档中，本文件只保留状态和入口。
 
-- [x] 使用 Supabase Auth + RLS 作为公网预览和平台控制台访问边界
-- [x] 新增用户名/手机号密码登录页、个人信息页和 viewer/operator/admin 角色边界
-- [x] API 写操作按角色校验；数据库层启用 RLS
-- [ ] 后续：项目级权限、团队/组织模型、反馈管理后台
+## 后续能力池
 
-### Preview Data Initialization
+- 项目级权限、团队/组织模型、反馈管理后台。
+- AI Chat 模块拆分、SQL 型报告问答、LangChain JS 局部接入、pgvector/RAG。
+- 多 Agent 注册、能力调度、Agent 独立仓库或安装包。
+- 云真机、CI/CD 深度集成、质量门禁。
+- 报告可视化增强、失败趋势、flaky 用例识别。
+- 移动端细节验收和 WebView 封装。
 
-- [x] 增加 `supabase/seed-preview.sql` 或脚本化 seed 流程
-- [x] Demo project：`iOS-Automation-Framework`
-- [x] Demo suite：`api_smoke`
-- [x] Demo tasks：至少覆盖 queued、succeeded、failed
-- [x] Demo report：包含 pytest summary、日志链接占位、AI 分析摘要
-- [x] Demo executor：`local-agent-demo`，状态为 offline/disabled，明确不是公网 Agent
-- [x] Demo build：示例 app build 元数据，不包含真实包、内部 URL、账号或设备信息
-- [x] Runbook 记录如何在新的 preview Supabase 中初始化 demo 数据
+## 维护规则
 
-### Task And Report Experience
-
-- [x] 任务详情增加 preview 任务标识、执行摘要、Pytest 摘要、失败分类和无报告状态说明
-- [x] 报告列表增强 preview 任务标识、display name、Pytest 摘要和失败分类展示
-- [x] AI 分析结果绑定 task/report 上下文，而不是只作为独立聊天内容
-- [x] 增加“导出分析包”入口，便于二次 AI 分析
-  - 报告列表和任务详情均可导出 Markdown 分析包。
-  - 分析包内容由 `apps/web/lib/analysisPackage.ts` 统一生成，并通过 i18n 文案输出当前语言版本。
-- [x] 让一个 demo failed task 能在不看数据库的情况下说明发生了什么、为什么失败、下一步该做什么
-  - 任务详情页为 failed/timeout 任务增加“AI 修复诊断”，优先展示 AI 修复建议、验证方式、定位范围，并保留 report summary、Pytest 摘要、失败分类、AI 原因上下文和日志/Allure/分析包入口作为证据链。
-  - 诊断区提供可下载的“AI 修复交接” Markdown，便于把失败上下文直接交给代码 AI 继续修改产品或测试工程代码。
-
-### Private Agent Online Loop
-
-- [x] Vercel Web 连接 preview Supabase
-- [x] 私有机器 Local Agent 连接同一个 preview Supabase
-- [x] 从 `https://meteortest.jcmeteor.com/` 创建任务
-  - Web 任务创建 API 现在返回 `task_id` 并跳转到新任务详情页，任务参数会标记 `source=web-console` 和 `private_agent_preview`，便于追踪公网 Web + 私有 Agent 闭环。
-  - `docs/private-agent-preview-loop.md` 和中文 runbook 记录私有 Agent 配置、仓库 key 匹配、任务创建、Agent 启动、回写验证和排障步骤。
-- [x] 私有 Agent 轮询 queued 任务并执行 iOS-Automation-Framework smoke suite
-- [x] Agent 回写 task status、report、artifact/log URL
-- [x] Web 展示 succeeded/failed、报告摘要和 AI 分析
-- [x] 完成后，个人官网可以声明 `validated private-agent preview loop`，但仍不能声明 public connected execution
-  - 2026-05-12 验证任务：`79df0670-48f9-4398-832b-c8e70ac562b0`。公网任务详情页和报告页返回 200，私有 Agent `local-mac-01` 领取 preview Supabase queued 任务并执行 `iOS-Automation-Framework` `api_smoke`，最终状态 `succeeded`，report summary 为 `exit_code=0`，日志上传到 Supabase Storage。
-  - 本次成功路径没有生成可上传的 Allure URL；后续若要把 Allure 作为验收项，需要检查 suite 的 `--alluredir` 输出和 reporter 上传条件。
-
-## 中期：平台调度与多项目接入
-
-### 平台 Web MVP
-
-- [x] 创建 `MeteorTest` 仓库目录结构
-- [x] 初始化 Next.js 项目（apps/web）
-- [x] 接入 Supabase Auth
-- [x] 创建数据库表（projects / test_suites / executors / tasks / reports）
-- [x] 实现 Dashboard
-- [x] 实现项目中心
-- [x] 实现任务中心
-- [x] 实现任务详情
-- [x] Agent 改为轮询 Supabase 任务表
-- [x] 设置页支持平台名称、AI 模型、默认环境、通知策略和 Agent 启动策略
-- [x] Web 控制台支持主题设置：星流墨色、靛蓝瓷、沙丘、极光终端
-- [ ] 全量页面统一迁移到主题语义类，减少硬编码颜色
-  - [x] 增加 action / selected / solid accent 前景色 token，区分深色背景浅字、浅色背景深字的按钮和选中态
-  - [x] Reports、Builds、Executors、Settings 和 AI 页面完成第一轮主题语义类与手机端布局补强
-  - [x] 新增 `--danger` 主题语义变量，覆盖全部 8 个主题，危险区背景随主题变化
-
-### 构建产物与任务调度
-
-- [x] 增加或完善 `app_builds` 概念，支持 `.ipa` / `.apk` / build URL
-- [x] 任务支持关联 `app_build_id`
-- [x] Web 页面支持登记或选择构建产物
-- [x] Agent 支持下载或读取任务指定的 App 包
-- [x] Agent 支持任务锁定、心跳、超时和失败重试
-
-### AI 失败分析
-
-- [x] 收集失败日志和报告摘要
-- [x] 调用 Claude API
-- [x] 生成结构化分析
-- [x] 写入 ai_analyses 表
-- [x] 任务详情页展示
-
-### AI 报告问答
-
-- [x] AI 助手页面
-- [x] 查询任务、报告、分析结果
-- [x] 形成 AI 与 LangChain 渐进改造方案：`docs/ai-langchain-modernization-plan.zh-CN.md` / `docs/ai-langchain-modernization-plan.md`
-- [ ] 拆分 `/api/ai/chat/route.ts` 为 context、prompts、tools、reportQueries、suggestions 和 model 配置模块
-- [ ] 增加 SQL 型报告问答工具，先覆盖最近失败、suite 健康度、报告状态和失败原因汇总
-- [ ] 评估 LangChain JS 局部接入 Web AI 编排层，保持 Agent 失败分析暂不重构
-- [ ] 引入向量索引（pgvector）
-
-### 多项目接入
-
-- [x] 完善接入规范
-- [x] 支持多个 Git 仓库
-- [x] 提供示例 `meteortest.yml`
-- [x] 支持不同测试框架和执行器能力标签
-- [x] 项目详情页支持修改项目显示名称、仓库地址和描述
-- [x] 项目详情页支持删除项目，并清理该项目下任务、报告、AI 分析、套件和构建记录；公网预览模式禁用该危险操作
-  - 危险区独立为全宽行，位于页面最底部，使用 `--danger` 主题色高亮
-
-### Web 体验与国际化
-
-- [x] 侧栏支持从设置读取自定义平台名称
-- [x] 设置页主题选择写入本地设置并全站生效
-- [x] 主题扩展为深浅混合预设：墨水经典、靛蓝瓷、沙丘、极光终端、牛皮纸、晴空蓝、冰湖银、樱花雾
-- [x] 明确 Web UI 产品方向：工程测试控制台，融合 CI/DevOps 执行流、QA 报告语义和 AI 操作台能力
-- [x] 页面文件可维护性整理：保留 Next.js `page.tsx` 路由约定，但将复杂页面实现逐步迁移到具名组件文件，例如 `TasksPage.tsx`、`ReportsPage.tsx`
-- [x] Phase 11 公网 Web 预览准备：补齐 `.env.local.example`，明确部署环境变量、密钥边界和 Local Agent 不直接公网暴露
-- [x] Phase 11 Vercel 部署 runbook：记录账号操作、环境变量、Supabase 预览环境、Codex 可协助范围和人工必须提供内容
-- [x] Phase 11 公网 Web 预览部署：Vercel 预览已发布到 `https://meteortest.jcmeteor.com/`
-- [x] WebUI 本地预览入口固定为 `npm run dev:local`，锁定 `127.0.0.1:3000` 并提供 public-preview/local-preview 安全默认值
-- [ ] Phase 11 公网 Web 预览加固：完善 public preview mode、访问保护、demo 数据、任务/报告体验和私有 Agent 线上闭环
-- [ ] Phase 12 Public Connected Demo：基于独立预览后端和私有 Agent 打通可操作 Demo
-- [ ] 基于工程测试控制台方向重构首页、项目、任务、报告和 AI 页面
-  - [x] 首页、项目、任务和报告页完成第一轮控制台化布局：状态概览、接入状态卡片、执行队列和报告分析侧栏
-  - [x] AI 页面完成第一轮“操作指挥台”重构：新增操作入口卡片、平台上下文面板、执行对话区和移动端基础对话切换
-  - [x] Dashboard / Projects / Tasks 完成第二轮控制台化：Dashboard 强化今日运行态势和执行队列入口，Projects 强化接入状态和下一步动作，Tasks 强化队列健康与移动端任务卡片
-- [x] 新增 `zh-CN` / `en` 多语言文案层基础模块，使用 `supportedLocales` 通用语言归一化方式
-- [x] 参考 `junchen-meteor` 的内容配置方式，建设 `zh-CN` / `en` 多语言文案层
-- [x] 导航、设置、AI 模板、空状态、表单提示和页面标题接入多语言
-- [x] 设置页支持语言切换，语言状态通过 `meteortest.locale` cookie 驱动 Web UI
-- [x] README / DESIGN / PROGRESS 保持中英文文档同步
-- [x] Phase 11 Auth/RLS/Agent 加固第一轮：新增登录页、个人信息页、Supabase profiles/feedbacks/RLS、API 角色检查、Allure URL 修复、private Agent loop 半自动验证脚本和 Agent config 启动前校验
-- [x] 新增平台架构与路线文档：`docs/platform-architecture-roadmap.md` 和 `docs/platform-architecture-roadmap.zh-CN.md`
-- [x] Phase 12 账号级数据第一轮：新增 `user_preferences` 账号偏好、`ai_conversations` / `ai_messages` AI 会话历史、账号级 API、AI 页面历史同步和 Supabase SQL 执行手册
-  - SQL 执行手册：`docs/supabase-account-data-runbook.zh-CN.md` / `docs/supabase-account-data-runbook.md`
-  - 线上验证前需要在 Supabase SQL Editor 执行 `supabase/migrations/005_account_preferences_ai_history.sql`
-- [x] 平台级 Webhook 通知：`user_preferences` 新增 `webhook_url` / `notify_on_failure` / `notify_on_recovery`，任务状态变更时触发通知（migrations 006/007）
-- [x] AI 中枢历史面板折叠箭头修复：SVG 单向 + CSS rotate 切换，修复展开/折叠方向不变的问题
-- [x] AI 中枢历史会话卡片宽度修复：操作按钮改为绝对定位，卡片占满全宽
-- [x] AI 中枢折叠按钮图标改为双箭头风格，与侧边栏折叠按钮区分
-
-## 远期：独立 Agent 与高级执行能力
-
-### Agent 独立化
-
-- [ ] 将 `MeteorTest/agent` 拆分为 `meteortest-agent` 独立仓库或包
-- [ ] 支持 Agent 安装、配置、版本管理和自动升级
-- [ ] 支持插件化执行器：pytest、Appium、Playwright、Jest、Newman
-- [ ] 支持多机器 Agent 注册、心跳和能力管理
-
-### 移动端入口
-
-- [ ] WebUI 移动端适配专项：完整检查 Dashboard、Projects、Tasks、Reports、Builds、Executors、Settings 和 AI 页面在手机浏览器下的导航、表格、操作按钮、表单和滚动体验
-  - [x] 第一轮移动端壳层：手机端使用顶部品牌栏和横向导航，主内容缩小内边距，页面标题纵向堆叠
-  - [x] Dashboard / Tasks 表格在手机端提供卡片视图，避免横向表格成为唯一浏览方式
-  - [x] Projects 卡片在手机端纵向排列，保留接入状态、套件数量、仓库状态和下一步动作
-  - [x] Reports、Builds、Executors、Settings 和 AI 完成第一轮手机端布局检查：操作按钮可换行，核心列表提供卡片或更窄布局，设置页消除手机端负边距风险
-  - [x] 新增 viewport meta（`width=device-width, initialScale=1`）修复移动端缩放
-  - [ ] 继续检查详情页和表单页的手机端布局和滚动体验
-- [ ] WebView 封装
-
-### 云真机和高级调度
-
-- [ ] 抽象 CloudDeviceFarmExecutor
-- [ ] 接入云真机平台
-- [ ] 支持构建包上传、云端状态轮询和报告下载
-- [ ] 支持多执行器智能调度
-
-### 高级 AI 能力
-
-- [ ] 跨报告、日志、代码的向量检索
-- [ ] 自然语言生成测试用例草稿
-- [ ] 生成内容必须人工确认后进入分支或 PR
-
-### 平台产品化体验
-
-- [ ] 主题系统扩展为完整设计令牌，覆盖表格、图表、状态、表单和 AI 消息卡片
-- [x] 桌面端主内容与侧栏改为比例布局，移动端继续保持单列或移动端专用卡片模式
-  - Dashboard、Reports、Settings、AI、详情页局部分析区和新建 Project / Task / Build 表单页已移除固定像素侧栏
-- [ ] 支持用户级语言、主题、密度等偏好配置
-- [x] 增加 Web 控制台交互截图或视觉验收说明
-  - `docs/webui-visual-checklist.md` 和 `docs/webui-visual-checklist.zh-CN.md` 记录本地预览、视口、页面、主题和验收标准
+- 已完成/待完成状态更新到本文件。
+- 阶段计划更新到 `docs/*roadmap*.md`。
+- 具体操作步骤更新到对应 runbook。
+- 长期产品和架构判断更新到 `DESIGN.md`。
+- AI agent 工作规则更新到 `AGENTS.md`。
