@@ -482,6 +482,7 @@ function TaskPickerCard({
   const environments = suggestion.environments?.length ? suggestion.environments : ['dev', 'staging', 'prod']
   const [projectInput, setProjectInput] = useState(projects[0]?.name ?? '')
   const [projectKey, setProjectKey] = useState(projects[0]?.key ?? '')
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false)
   const activeProject = projects.find(project => project.key === projectKey) ?? projects[0]
   const [suiteKey, setSuiteKey] = useState(activeProject?.suites[0]?.suiteKey ?? '')
   const [environment, setEnvironment] = useState(environments[0] ?? 'dev')
@@ -494,6 +495,7 @@ function TaskPickerCard({
     setProjectKey(project.key)
     setProjectInput(project.name)
     setSuiteKey(project.suites[0]?.suiteKey ?? '')
+    setProjectMenuOpen(false)
   }
 
   function updateProjectInput(value: string) {
@@ -520,30 +522,68 @@ function TaskPickerCard({
       <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]">
         <div className="relative">
           <input
-            className="field-input w-full px-3 py-2 text-xs"
+            className="field-input w-full px-3 py-2 pr-9 text-xs"
             value={projectInput}
             onChange={event => updateProjectInput(event.target.value)}
-            list="ai-task-projects"
+            onFocus={() => setProjectMenuOpen(true)}
+            onBlur={() => setTimeout(() => setProjectMenuOpen(false), 120)}
             placeholder={t.common.project}
             disabled={disabled}
           />
-          <datalist id="ai-task-projects">
-            {projects.map(project => (
-              <option key={project.key} value={project.name}>{project.key}</option>
-            ))}
-          </datalist>
+          <button
+            type="button"
+            disabled={disabled}
+            onMouseDown={event => {
+              event.preventDefault()
+              setProjectMenuOpen(open => !open)
+            }}
+            className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md"
+            aria-label={t.common.project}
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <span className="text-xs leading-none">⌄</span>
+          </button>
+          {projectMenuOpen ? (
+            <div
+              className="quiet-scrollbar absolute left-0 right-0 top-[calc(100%+4px)] z-20 max-h-56 overflow-y-auto rounded-lg p-1 shadow-xl"
+              style={{ background: 'var(--bg-card)', border: '1px solid var(--border-light)' }}
+            >
+              {projects.map(project => (
+                <button
+                  key={project.key}
+                  type="button"
+                  onMouseDown={event => {
+                    event.preventDefault()
+                    setProject(project)
+                  }}
+                  className="w-full rounded-md px-2.5 py-2 text-left text-xs transition-colors"
+                  style={project.key === projectKey ? { background: 'var(--surface-soft)', color: 'var(--text-primary)' } : { color: 'var(--text-secondary)' }}
+                >
+                  <span className="block truncate font-medium">{project.name}</span>
+                  <span className="block truncate text-[11px]" style={{ color: 'var(--text-muted)' }}>{project.key}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
-        <select
-          className="field-input w-full px-3 py-2 text-xs"
-          value={selectedSuite?.suiteKey ?? ''}
-          onChange={event => setSuiteKey(event.target.value)}
-          disabled={disabled || !selectedProject}
-          aria-label={t.ai.taskPickerScope}
-        >
-          {(selectedProject?.suites ?? []).map(suite => (
-            <option key={suite.suiteKey} value={suite.suiteKey}>{suite.name}</option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            className="field-input w-full appearance-none px-3 py-2 pr-9 text-xs"
+            value={selectedProject ? (selectedSuite?.suiteKey ?? '') : ''}
+            onChange={event => setSuiteKey(event.target.value)}
+            disabled={disabled || !selectedProject}
+            aria-label={t.ai.taskPickerScope}
+            style={!selectedProject ? { color: 'var(--text-muted)' } : undefined}
+          >
+            {!selectedProject ? <option value="">{t.ai.taskPickerScope}</option> : null}
+            {(selectedProject?.suites ?? []).map(suite => (
+              <option key={suite.suiteKey} value={suite.suiteKey}>{suite.name}</option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-xs leading-none" style={{ color: 'var(--text-muted)' }}>
+            ⌄
+          </span>
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {environments.map(env => (
             <button
