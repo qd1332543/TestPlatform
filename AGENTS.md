@@ -28,6 +28,7 @@ Before making non-trivial changes, read the relevant source plus:
 - `docs/README.md` and `docs/README.zh-CN.md` for the documentation map and read order.
 - `DESIGN.md` for product and protocol intent.
 - `PROGRESS.md` for current implementation status. Do not add large implementation plans there; link to focused docs instead.
+- `docs/quality-ai-capability-roadmap.md` and `docs/quality-ai-capability-roadmap.zh-CN.md` for structured test results, AI repair guidance, rerun workflows, quality trends, and AI test generation.
 - `docs/supabase-account-data-runbook.md` and `docs/supabase-account-data-runbook.zh-CN.md` for Auth/RLS and account-data SQL execution.
 - `docs/local-agent-operations.md` and `docs/local-agent-operations.zh-CN.md` for Local Agent daemon and runtime behavior.
 - `docs/private-agent-preview-loop.md` and `docs/private-agent-preview-loop.zh-CN.md` for public Web plus private Agent validation.

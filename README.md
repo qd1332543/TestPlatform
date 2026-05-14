@@ -42,6 +42,7 @@ Documentation entry:
 
 - [Documentation index](docs/README.md)
 - [Current progress index](PROGRESS.md)
+- [Quality and AI capability roadmap](docs/quality-ai-capability-roadmap.md)
 
 ## Maintainer
 

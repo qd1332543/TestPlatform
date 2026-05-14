@@ -42,6 +42,7 @@ MeteorTest 是一个通用自动化测试平台，用来管理多个测试项目
 
 - [文档索引](docs/README.zh-CN.md)
 - [当前进度索引](PROGRESS.md)
+- [质量与 AI 能力增强路线](docs/quality-ai-capability-roadmap.zh-CN.md)
 
 ## 维护者
 

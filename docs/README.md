@@ -19,6 +19,7 @@ This is the single entry point for MeteorTest documentation. Start here for new 
 | Status index | `../PROGRESS.md` | Current state, active direction, future capability pool. |
 | Long-term design | `../DESIGN.md` | Product positioning, architecture intent, object model, long-term direction. |
 | Agent rules | `../AGENTS.md` | Mandatory engineering rules for AI coding agents. |
+| Quality and AI plan | `quality-ai-capability-roadmap.md` / `quality-ai-capability-roadmap.zh-CN.md` | Structured results, AI repair guidance, rerun workflows, trends, AI test generation, PR flow. |
 | AI orchestration plan | `ai-langchain-modernization-plan.md` / `ai-langchain-modernization-plan.zh-CN.md` | AI Chat split, SQL Q&A, LangChain, RAG, evaluation. |
 | Supabase runbook | `supabase-account-data-runbook.md` / `supabase-account-data-runbook.zh-CN.md` | Auth/RLS, preferences, AI history, display refs SQL execution and verification. |
 | Local Agent operations | `local-agent-operations.md` / `local-agent-operations.zh-CN.md` | Agent daemon, check interval, heartbeat, logs, OpenClaw checks. |
@@ -32,6 +33,7 @@ This is the single entry point for MeteorTest documentation. Start here for new 
 
 - Project capability and architecture: `../README.md`, then `../DESIGN.md`.
 - Current state: `../PROGRESS.md`.
+- Quality and AI capability work: `quality-ai-capability-roadmap.md`.
 - AI Chat or LangChain work: `ai-langchain-modernization-plan.md`.
 - Supabase SQL execution: `supabase-account-data-runbook.md`.
 - Agent startup, daemon, or troubleshooting: `local-agent-operations.md`.

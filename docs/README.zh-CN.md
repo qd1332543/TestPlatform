@@ -19,6 +19,7 @@
 | 状态索引 | `../PROGRESS.md` | 当前完成情况、当前主线、后续能力池。 |
 | 长期设计 | `../DESIGN.md` | 产品定位、架构意图、对象模型和长期方向。 |
 | Agent 规则 | `../AGENTS.md` | AI coding agent 必须遵守的工程规则。 |
+| 质量与 AI 计划 | `quality-ai-capability-roadmap.zh-CN.md` / `quality-ai-capability-roadmap.md` | 结构化测试结果、AI 修复建议、重跑、趋势、AI 用例生成和 PR 化。 |
 | AI 编排计划 | `ai-langchain-modernization-plan.zh-CN.md` / `ai-langchain-modernization-plan.md` | AI Chat 拆分、SQL 问答、LangChain、RAG 和评估。 |
 | Supabase 手册 | `supabase-account-data-runbook.zh-CN.md` / `supabase-account-data-runbook.md` | Auth/RLS、账号偏好、AI 历史、display refs 的 SQL 执行与验证。 |
 | Local Agent 运维 | `local-agent-operations.zh-CN.md` / `local-agent-operations.md` | Agent 常驻、检查频率、心跳、日志、OpenClaw 巡检。 |
@@ -32,6 +33,7 @@
 
 - 想知道项目能力和架构：读 `../README.zh-CN.md`，再读 `../DESIGN.md`。
 - 想知道现在做到哪了：读 `../PROGRESS.md`。
+- 要继续开发质量和 AI 能力：读 `quality-ai-capability-roadmap.zh-CN.md`。
 - 要改 AI Chat 或 LangChain：读 `ai-langchain-modernization-plan.zh-CN.md`。
 - 要执行 Supabase SQL：读 `supabase-account-data-runbook.zh-CN.md`。
 - 要启动、常驻或排查 Agent：读 `local-agent-operations.zh-CN.md`。
