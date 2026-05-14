@@ -9,7 +9,14 @@ import { dictionaries, normalizeLocale, type Dictionary } from '@/content/i18n'
 type ChatMessage = { role: 'user' | 'assistant'; content: string }
 type ToolResult = { ok: boolean; action?: string; data?: unknown; error?: string }
 type AiConfig = { aiModel?: string; aiBaseUrl?: string }
-type Suggestion = { label: string; prompt: string }
+type Suggestion = {
+  label: string
+  prompt: string
+  autoSubmit?: boolean
+  kind?: 'task_picker'
+  projects?: Array<{ name: string; key: string; suites: Array<{ name: string; suiteKey: string }> }>
+  environments?: string[]
+}
 type AiApiCopy = Dictionary['aiApi']
 type SuiteSnapshot = { name: string; suite_key: string; type?: string }
 type ProjectSnapshot = { name: string; key: string; test_suites?: SuiteSnapshot[] | null }
@@ -79,8 +86,8 @@ function getTaskActionRef(action: ToolResult) {
   return taskRef(action.data as { id?: unknown; display_id?: unknown; parameters?: unknown })
 }
 
-function extractTaskId(text: string) {
-  return text.match(/\bMT-\d{8}-\d{4}\b/i)?.[0] ?? text.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0]
+function extractTaskRef(text: string) {
+  return text.match(/\bMT-\d{8}-\d{4}\b/i)?.[0]
 }
 
 function uniqueSuggestions(suggestions: Suggestion[]) {
@@ -104,7 +111,7 @@ function taskLabel(task: TaskSnapshot, copy: AiApiCopy) {
 }
 
 function hasPublicTaskRef(task?: TaskSnapshot) {
-  return Boolean(task && taskRef(task) !== 'TASK-')
+  return Boolean(task && taskRef(task))
 }
 
 function buildTaskListSuggestions(snapshot: { recentTasks?: TaskSnapshot[] }, copy: AiApiCopy) {
@@ -158,32 +165,50 @@ function buildSuiteTaskSuggestions(text: string, snapshot: { projects: ProjectSn
     return Boolean((name && text.includes(name)) || (key && text.includes(key)))
   })
   const projects = matchedProjects.length ? matchedProjects : snapshot.projects.slice(0, 2)
+  const environments = matchedProjects.length ? ['dev', 'staging'] : ['dev']
 
-  return projects.flatMap(project => {
+  const suggestions = projects.flatMap(project => {
     const matchedSuites = (project.test_suites ?? []).filter(suite => {
       const name = normalize(suite.name)
       const key = normalize(suite.suite_key)
       return Boolean((name && text.includes(name)) || (key && text.includes(key)))
     })
-    const suites = matchedSuites.length ? matchedSuites : (project.test_suites ?? []).slice(0, 3)
-    return suites.flatMap(suite => [
-      {
-        label: copy.createSuiteTaskLabel(project.name, suite.name, 'dev'),
-        prompt: copy.createSuiteTaskPrompt(project.name, suite.name, 'dev'),
-      },
-      {
-        label: copy.createSuiteTaskLabel(project.name, suite.name, 'staging'),
-        prompt: copy.createSuiteTaskPrompt(project.name, suite.name, 'staging'),
-      },
-    ])
+    const suites = matchedSuites.length ? matchedSuites : (project.test_suites ?? []).slice(0, matchedProjects.length ? 2 : 1)
+    return suites.flatMap(suite => environments.map(env => ({
+        label: copy.createSuiteTaskLabel(project.name, suite.name, env),
+        prompt: copy.createSuiteTaskPrompt(project.name, suite.name, env),
+        autoSubmit: true,
+      })))
   })
+  return suggestions.slice(0, 4)
+}
+
+function buildTaskPickerSuggestion(snapshot: { projects: ProjectSnapshot[] }, copy: AiApiCopy): Suggestion | null {
+  const projects = snapshot.projects
+    .map(project => ({
+      name: project.name,
+      key: project.key,
+      suites: (project.test_suites ?? [])
+        .map(suite => ({ name: suite.name, suiteKey: suite.suite_key }))
+        .filter(suite => suite.name && suite.suiteKey),
+    }))
+    .filter(project => project.name && project.key && project.suites.length)
+
+  if (!projects.length) return null
+  return {
+    kind: 'task_picker',
+    label: copy.taskPickerLabel,
+    prompt: copy.createTaskPrompt,
+    projects,
+    environments: ['dev', 'staging', 'prod'],
+  }
 }
 
 function buildSuggestions(message: string, reply: string, snapshot: { projects: ProjectSnapshot[]; recentTasks?: TaskSnapshot[] }, actions: ToolResult[], copy: AiApiCopy, history: ChatMessage[] = []): Suggestion[] {
   const historyText = normalize(history.slice(-4).map(item => item.content).join(' ')) ?? ''
   const text = normalize(`${historyText} ${message} ${reply}`) ?? ''
   const currentText = normalize(`${message} ${reply}`) ?? ''
-  const activeTaskId = actions.map(getTaskActionRef).find(Boolean) ?? extractTaskId(text)
+  const activeTaskId = actions.map(getTaskActionRef).find(Boolean) ?? extractTaskRef(text)
   const hasCreatedTask = actions.some(action => action.ok && action.action === 'create_task')
   const hasTaskDetail = actions.some(action => action.ok && action.action === 'get_task_detail')
   const latestTaskId = activeTaskId ?? (snapshot.recentTasks?.[0] ? taskRef(snapshot.recentTasks[0]) : null)
@@ -218,9 +243,10 @@ function buildSuggestions(message: string, reply: string, snapshot: { projects: 
 
   if (/套件|suite|测试集|用例集/.test(text)) {
     return uniqueSuggestions([
+      buildTaskPickerSuggestion(snapshot, copy),
       ...buildSuiteTaskSuggestions(text, snapshot, copy),
       { label: copy.executorStatus, prompt: copy.executorCapabilitiesPrompt },
-    ])
+    ].filter(Boolean) as Suggestion[])
   }
 
   if (/(任务|状态|运行|结果|queued|running|succeeded|failed|timeout)/.test(currentText) && latestTaskId) {
@@ -242,7 +268,10 @@ function buildSuggestions(message: string, reply: string, snapshot: { projects: 
   const wantsTask = /任务|执行|运行|触发|创建|新建|套件|suite/.test(text)
   if (!wantsTask) return []
 
-  return uniqueSuggestions(buildSuiteTaskSuggestions(text, snapshot, copy))
+  return uniqueSuggestions([
+    buildTaskPickerSuggestion(snapshot, copy),
+    ...buildSuiteTaskSuggestions(text, snapshot, copy),
+  ].filter(Boolean) as Suggestion[])
 }
 
 function finalReplyForActions(actions: ToolResult[], copy: AiApiCopy) {

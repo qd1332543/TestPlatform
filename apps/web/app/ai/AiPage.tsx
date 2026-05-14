@@ -9,6 +9,8 @@ import {
   normalizeAiConversation,
   type AiConversation,
   type AiMessage,
+  type AiSuggestion,
+  type AiTaskPickerProject,
   type AiToolResult,
 } from '@/lib/account/aiHistory'
 import { taskRef } from '@/lib/viewModels/displayRefs'
@@ -24,6 +26,7 @@ const defaultAiSettings = {
   aiBaseUrl: 'https://api.deepseek.com',
 }
 const taskRefPattern = /\bMT-\d{8}-\d{4}\b/gi
+const internalUuidPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi
 
 const TemplateIcons = {
   failed: (
@@ -282,6 +285,38 @@ function renderTaskLinks(text: string) {
   return nodes.length ? nodes : text
 }
 
+function hasInternalUuid(text: string) {
+  internalUuidPattern.lastIndex = 0
+  return internalUuidPattern.test(text)
+}
+
+function sanitizeVisibleText(text: string, t: Dictionary) {
+  return text.replace(internalUuidPattern, t.ai.hiddenInternalId)
+}
+
+function sanitizeSuggestionPrompt(prompt: string, t: Dictionary) {
+  if (!hasInternalUuid(prompt)) return prompt
+  if (/任务|task/i.test(prompt)) return t.ai.sanitizedTaskStatusPrompt
+  return sanitizeVisibleText(prompt, t)
+}
+
+function sanitizeSuggestionLabel(label: string, prompt: string, t: Dictionary) {
+  if (!hasInternalUuid(`${label} ${prompt}`)) return label
+  if (/任务|task/i.test(`${label} ${prompt}`)) return t.ai.sanitizedTaskStatusAction
+  return sanitizeVisibleText(label, t)
+}
+
+function stripInlineMarkup(text: string) {
+  return text
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .trim()
+}
+
+function renderInlineText(text: string, t: Dictionary) {
+  return renderTaskLinks(stripInlineMarkup(sanitizeVisibleText(text, t)))
+}
+
 function OperationCards({
   templates,
   t,
@@ -432,6 +467,113 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
   )
 }
 
+function TaskPickerCard({
+  suggestion,
+  t,
+  disabled,
+  onCreate,
+}: {
+  suggestion: AiSuggestion
+  t: Dictionary
+  disabled: boolean
+  onCreate: (prompt: string) => void
+}) {
+  const projects = suggestion.projects ?? []
+  const environments = suggestion.environments?.length ? suggestion.environments : ['dev', 'staging', 'prod']
+  const [projectInput, setProjectInput] = useState(projects[0]?.name ?? '')
+  const [projectKey, setProjectKey] = useState(projects[0]?.key ?? '')
+  const activeProject = projects.find(project => project.key === projectKey) ?? projects[0]
+  const [suiteKey, setSuiteKey] = useState(activeProject?.suites[0]?.suiteKey ?? '')
+  const [environment, setEnvironment] = useState(environments[0] ?? 'dev')
+  const selectedProject = projects.find(project => project.key === projectKey && (project.name === projectInput || project.key === projectInput))
+    ?? projects.find(project => project.name === projectInput || project.key === projectInput)
+    ?? null
+  const selectedSuite = selectedProject?.suites.find(suite => suite.suiteKey === suiteKey) ?? selectedProject?.suites[0]
+
+  function setProject(project: AiTaskPickerProject) {
+    setProjectKey(project.key)
+    setProjectInput(project.name)
+    setSuiteKey(project.suites[0]?.suiteKey ?? '')
+  }
+
+  function updateProjectInput(value: string) {
+    setProjectInput(value)
+    const exact = projects.find(project => project.name === value || project.key === value)
+    if (exact) {
+      setProject(exact)
+      return
+    }
+    setProjectKey('')
+    setSuiteKey('')
+  }
+
+  if (!projects.length) return null
+
+  return (
+    <div className="mt-3 rounded-xl p-3" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="text-sm font-semibold text-white">{t.ai.taskPickerTitle}</div>
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{t.ai.taskPickerHint}</div>
+        </div>
+      </div>
+      <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+        <div className="relative">
+          <input
+            className="field-input w-full px-3 py-2 text-xs"
+            value={projectInput}
+            onChange={event => updateProjectInput(event.target.value)}
+            list="ai-task-projects"
+            placeholder={t.common.project}
+            disabled={disabled}
+          />
+          <datalist id="ai-task-projects">
+            {projects.map(project => (
+              <option key={project.key} value={project.name}>{project.key}</option>
+            ))}
+          </datalist>
+        </div>
+        <select
+          className="field-input w-full px-3 py-2 text-xs"
+          value={selectedSuite?.suiteKey ?? ''}
+          onChange={event => setSuiteKey(event.target.value)}
+          disabled={disabled || !selectedProject}
+          aria-label={t.ai.taskPickerScope}
+        >
+          {(selectedProject?.suites ?? []).map(suite => (
+            <option key={suite.suiteKey} value={suite.suiteKey}>{suite.name}</option>
+          ))}
+        </select>
+        <div className="flex flex-wrap gap-1.5">
+          {environments.map(env => (
+            <button
+              key={env}
+              type="button"
+              onClick={() => setEnvironment(env)}
+              disabled={disabled}
+              className="secondary-action rounded-lg px-2.5 py-2 text-xs"
+              style={environment === env ? { borderColor: 'var(--accent)', color: 'var(--text-primary)' } : undefined}
+            >
+              {env}
+            </button>
+          ))}
+        </div>
+      </div>
+      <button
+        type="button"
+        disabled={disabled || !selectedProject || !selectedSuite}
+        onClick={() => {
+          if (!selectedProject || !selectedSuite) return
+          onCreate(t.aiApi.createSuiteTaskPrompt(selectedProject.name, selectedSuite.name, environment))
+        }}
+        className="primary-action mt-3 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-60"
+      >
+        {t.ai.taskPickerCreate}
+      </button>
+    </div>
+  )
+}
+
 function isTableSeparator(line: string) {
   return /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line)
 }
@@ -440,7 +582,7 @@ function splitTableRow(line: string) {
   return line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim())
 }
 
-function MessageContent({ content, hasActions }: { content: string; hasActions: boolean }) {
+function MessageContent({ content, hasActions, t }: { content: string; hasActions: boolean; t: Dictionary }) {
   const lines = content.split('\n')
   const nodes: React.ReactNode[] = []
   let index = 0
@@ -468,7 +610,7 @@ function MessageContent({ content, hasActions }: { content: string; hasActions: 
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex} style={{ borderTop: '1px solid var(--border)' }}>
                   {row.map((cell, cellIndex) => (
-                    <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top" style={{ color: 'var(--text-secondary)' }}>{renderTaskLinks(cell.replace(/\*\*/g, '').replace(/`/g, ''))}</td>
+                    <td key={`${rowIndex}-${cellIndex}`} className="px-3 py-2 align-top" style={{ color: 'var(--text-secondary)' }}>{renderInlineText(cell, t)}</td>
                   ))}
                 </tr>
               ))}
@@ -479,13 +621,53 @@ function MessageContent({ content, hasActions }: { content: string; hasActions: 
       continue
     }
 
+    if (/^\s*[-*]\s+/.test(lines[index] ?? '')) {
+      const items: string[] = []
+      while (index < lines.length && /^\s*[-*]\s+/.test(lines[index] ?? '')) {
+        items.push((lines[index] ?? '').replace(/^\s*[-*]\s+/, ''))
+        index += 1
+      }
+      nodes.push(
+        <div key={`list-${index}`} className="space-y-2">
+          {items.map((item, itemIndex) => (
+            <div key={`${item}-${itemIndex}`} className="flex gap-2 rounded-lg px-3 py-2" style={{ background: 'var(--surface-soft)', border: '1px solid var(--border)' }}>
+              <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: 'var(--accent)' }} />
+              <span className="min-w-0 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{renderInlineText(item, t)}</span>
+            </div>
+          ))}
+        </div>
+      )
+      continue
+    }
+
+    if (/^\s*\*\*[^*]+\*\*\s*:?\s*$/.test(lines[index] ?? '')) {
+      nodes.push(
+        <div key={`heading-${index}`} className="pt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          {renderInlineText(lines[index], t)}
+        </div>
+      )
+      index += 1
+      continue
+    }
+
     const paragraph: string[] = []
-    while (index < lines.length && !(lines[index]?.includes('|') && isTableSeparator(lines[index + 1] ?? ''))) {
+    while (
+      index < lines.length
+      && !(lines[index]?.includes('|') && isTableSeparator(lines[index + 1] ?? ''))
+      && !/^\s*[-*]\s+/.test(lines[index] ?? '')
+      && !/^\s*\*\*[^*]+\*\*\s*:?\s*$/.test(lines[index] ?? '')
+    ) {
       paragraph.push(lines[index])
       index += 1
     }
     const text = paragraph.join('\n').trim()
-    if (text) nodes.push(<div key={`text-${index}`} className="whitespace-pre-wrap">{renderTaskLinks(text)}</div>)
+    if (text) {
+      nodes.push(
+        <p key={`text-${index}`} className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          {renderInlineText(text, t)}
+        </p>
+      )
+    }
   }
 
   return <div className={hasActions ? 'mt-3 space-y-2' : 'space-y-2'}>{nodes}</div>
@@ -668,15 +850,16 @@ export default function AiPage() {
   }
 
   function applySuggestion(prompt: string) {
-    setInput(prompt)
+    setInput(sanitizeSuggestionPrompt(prompt, t))
     setTimeout(() => inputRef.current?.focus(), 0)
   }
 
-  async function handleSend() {
-    if (!input.trim() || loading) return
-    const userMsg: Message = { role: 'user', content: input }
+  async function submitMessage(messageText = input) {
+    const cleanInput = sanitizeSuggestionPrompt(messageText, t).trim()
+    if (!cleanInput || loading) return
+    const userMsg: Message = { role: 'user', content: cleanInput }
     const history = messages.map(({ role, content }) => ({ role, content }))
-    const currentInput = input
+    const currentInput = cleanInput
     const withUser = [...messages, userMsg]
     persistMessages(withUser, [userMsg])
     setInput('')
@@ -700,6 +883,19 @@ export default function AiPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  function applySuggestionAction(suggestion: AiSuggestion) {
+    const prompt = sanitizeSuggestionPrompt(suggestion.prompt, t)
+    if (suggestion.autoSubmit) {
+      submitMessage(prompt)
+      return
+    }
+    applySuggestion(prompt)
+  }
+
+  async function handleSend() {
+    await submitMessage()
   }
 
   return (
@@ -874,20 +1070,34 @@ export default function AiPage() {
                 : { background: 'var(--bg-card)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
               }>
               <ActionCards actions={m.actions} t={t} locale={locale} />
-              {m.content && <MessageContent content={m.content} hasActions={Boolean(m.actions?.length)} />}
+              {m.content && <MessageContent content={m.content} hasActions={Boolean(m.actions?.length)} t={t} />}
               {m.role === 'assistant' && Boolean(m.suggestions?.length) && (
+                <>
+                  {m.suggestions
+                    ?.filter(suggestion => suggestion.kind === 'task_picker')
+                    .map(suggestion => (
+                      <TaskPickerCard
+                        key={`picker-${suggestion.label}`}
+                        suggestion={suggestion}
+                        t={t}
+                        disabled={loading}
+                        onCreate={prompt => submitMessage(prompt)}
+                      />
+                    ))}
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {m.suggestions?.map(suggestion => (
+                  {m.suggestions?.filter(suggestion => suggestion.kind !== 'task_picker').map(suggestion => (
                     <button
                       key={suggestion.prompt}
                       type="button"
-                      onClick={() => applySuggestion(suggestion.prompt)}
+                      onClick={() => applySuggestionAction(suggestion)}
+                      disabled={loading}
                       className="chip-action rounded-lg px-3 py-1.5 text-xs font-medium text-left transition-colors"
                     >
-                      {suggestion.label}
+                      {sanitizeSuggestionLabel(suggestion.label, suggestion.prompt, t)}
                     </button>
                   ))}
                 </div>
+                </>
               )}
             </div>
           </div>
