@@ -317,6 +317,17 @@ function renderInlineText(text: string, t: Dictionary) {
   return renderTaskLinks(stripInlineMarkup(sanitizeVisibleText(text, t)))
 }
 
+function scopeDisplayName(name: string, suiteKey: string, locale: Locale) {
+  const source = `${name} ${suiteKey}`.toLowerCase()
+  if (locale !== 'zh-CN') return name
+  if (/smoke|冒烟/.test(source)) return '冒烟测试'
+  if (/full|regression|all|全量|回归/.test(source)) return '全量回归'
+  if (/performance|perf|性能/.test(source)) return '性能测试'
+  if (/ui|界面/.test(source)) return '界面测试'
+  if (/api|接口/.test(source)) return '接口测试'
+  return name
+}
+
 function OperationCards({
   templates,
   t,
@@ -470,11 +481,13 @@ function ActionCards({ actions, t, locale }: { actions?: ToolResult[]; t: Dictio
 function TaskPickerCard({
   suggestion,
   t,
+  locale,
   disabled,
   onCreate,
 }: {
   suggestion: AiSuggestion
   t: Dictionary
+  locale: Locale
   disabled: boolean
   onCreate: (prompt: string) => void
 }) {
@@ -589,7 +602,7 @@ function TaskPickerCard({
             aria-label={t.ai.taskPickerScope}
             style={!selectedProject ? { color: 'var(--text-muted)' } : undefined}
           >
-            <span className="min-w-0 truncate">{selectedProject && selectedSuite ? selectedSuite.name : t.ai.taskPickerScope}</span>
+            <span className="min-w-0 truncate">{selectedProject && selectedSuite ? scopeDisplayName(selectedSuite.name, selectedSuite.suiteKey, locale) : t.ai.taskPickerScope}</span>
           </button>
           <span className="pointer-events-none absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-xs leading-none" style={{ color: 'var(--text-muted)' }}>
             <span className={`block h-0 w-0 border-x-[4px] border-t-[5px] border-x-transparent border-t-current transition-transform ${scopeMenuOpen ? 'rotate-180' : ''}`} />
@@ -611,7 +624,7 @@ function TaskPickerCard({
                   className="w-full rounded-md px-2.5 py-2 text-left text-xs transition-colors"
                   style={suite.suiteKey === selectedSuite?.suiteKey ? { background: 'var(--surface-soft)', color: 'var(--text-primary)' } : { color: 'var(--text-secondary)' }}
                 >
-                  <span className="block truncate font-medium">{suite.name}</span>
+                  <span className="block truncate font-medium">{scopeDisplayName(suite.name, suite.suiteKey, locale)}</span>
                   <span className="block truncate text-[11px]" style={{ color: 'var(--text-muted)' }}>{suite.suiteKey}</span>
                 </button>
               ))}
@@ -638,7 +651,7 @@ function TaskPickerCard({
         disabled={disabled || !selectedProject || !selectedSuite}
         onClick={() => {
           if (!selectedProject || !selectedSuite) return
-          onCreate(t.aiApi.createSuiteTaskPrompt(selectedProject.name, selectedSuite.name, environment))
+          onCreate(t.aiApi.createSuiteTaskPrompt(selectedProject.name, selectedSuite.suiteKey, environment))
         }}
         className="primary-action mt-3 rounded-lg px-3 py-2 text-xs font-semibold disabled:opacity-60"
       >
@@ -1154,6 +1167,7 @@ export default function AiPage() {
                         key={`picker-${suggestion.label}`}
                         suggestion={suggestion}
                         t={t}
+                        locale={locale}
                         disabled={loading}
                         onCreate={prompt => submitMessage(prompt)}
                       />

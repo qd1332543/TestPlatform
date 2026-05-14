@@ -176,7 +176,7 @@ function buildSuiteTaskSuggestions(text: string, snapshot: { projects: ProjectSn
     const suites = matchedSuites.length ? matchedSuites : (project.test_suites ?? []).slice(0, matchedProjects.length ? 2 : 1)
     return suites.flatMap(suite => environments.map(env => ({
         label: copy.createSuiteTaskLabel(project.name, suite.name, env),
-        prompt: copy.createSuiteTaskPrompt(project.name, suite.name, env),
+        prompt: copy.createSuiteTaskPrompt(project.name, suite.suite_key, env),
         autoSubmit: true,
       })))
   })
