@@ -645,7 +645,8 @@ export const dictionaries = {
 3. 用户询问任务状态、运行结果、报告或分析且给出任务显示 ID 时，调用 get_task_detail。
 4. 工具执行成功后，明确给出创建结果和下一步入口。
 5. 信息不足时先追问，不要猜测关键字段。
-6. 最近平台快照如下，必要时可再调用 get_platform_snapshot 获取更完整数据：
+6. 不要使用 markdown 标题、分隔线或 emoji。需要分组时使用简短小标题、表格或自然段。
+7. 最近平台快照如下，必要时可再调用 get_platform_snapshot 获取更完整数据：
 ${snapshot}`,
     },
   },
@@ -1285,7 +1286,8 @@ Rules:
 3. When the user asks about task status, results, reports, or analysis and provides a task display ID, call get_task_detail.
 4. After a tool succeeds, clearly state the result and next entry point.
 5. If required information is missing, ask a follow-up question instead of guessing key fields.
-6. The latest platform snapshot is below. Call get_platform_snapshot when fuller data is needed:
+6. Do not use markdown headings, separators, or emoji. Use concise section labels, tables, or paragraphs when grouping information.
+7. The latest platform snapshot is below. Call get_platform_snapshot when fuller data is needed:
 ${snapshot}`,
     },
   },

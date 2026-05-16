@@ -314,6 +314,22 @@ function stripInlineMarkup(text: string) {
     .trim()
 }
 
+function stripBlockDecorators(text: string) {
+  return stripInlineMarkup(text)
+    .replace(/^\s*(?:-{3,}|_{3,}|\*{3,})\s*/, '')
+    .replace(/^\s{0,3}#{1,6}\s*/, '')
+    .replace(/^[\s\p{Extended_Pictographic}\uFE0F]+/u, '')
+    .trim()
+}
+
+function localizedStatusHeading(text: string, t: Dictionary) {
+  const clean = stripBlockDecorators(text)
+  return clean.replace(/^(queued|running|succeeded|failed|cancelled|timeout)\b/i, status => {
+    const key = status.toLowerCase() as keyof typeof t.status
+    return t.status[key] ?? status
+  })
+}
+
 function renderInlineText(text: string, t: Dictionary) {
   return renderTaskLinks(stripInlineMarkup(sanitizeVisibleText(text, t)))
 }
@@ -663,6 +679,14 @@ function MessageContent({ content, hasActions, t }: { content: string; hasAction
   let index = 0
 
   while (index < lines.length) {
+    const currentLine = lines[index] ?? ''
+    const cleanCurrentLine = stripBlockDecorators(currentLine)
+
+    if (!cleanCurrentLine && /^\s*(?:-{3,}|_{3,}|\*{3,})\s*$/.test(currentLine)) {
+      index += 1
+      continue
+    }
+
     if (lines[index]?.includes('|') && isTableSeparator(lines[index + 1] ?? '')) {
       const headers = splitTableRow(lines[index])
       index += 2
@@ -715,10 +739,17 @@ function MessageContent({ content, hasActions, t }: { content: string; hasAction
       continue
     }
 
-    if (/^\s*\*\*[^*]+\*\*\s*:?\s*$/.test(lines[index] ?? '')) {
+    if (/^\s*(?:-{3,}\s*)?(?:#{1,6}\s*)?(?:[\p{Extended_Pictographic}\uFE0F]\s*)?\*\*[^*]+\*\*\s*:?\s*$/u.test(currentLine)
+      || /^\s*(?:-{3,}\s*)?#{1,6}\s+/.test(currentLine)
+    ) {
+      const heading = localizedStatusHeading(currentLine, t)
+      if (!heading) {
+        index += 1
+        continue
+      }
       nodes.push(
         <div key={`heading-${index}`} className="pt-1 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-          {renderInlineText(lines[index], t)}
+          {renderInlineText(heading, t)}
         </div>
       )
       index += 1
@@ -730,9 +761,11 @@ function MessageContent({ content, hasActions, t }: { content: string; hasAction
       index < lines.length
       && !(lines[index]?.includes('|') && isTableSeparator(lines[index + 1] ?? ''))
       && !/^\s*[-*]\s+/.test(lines[index] ?? '')
-      && !/^\s*\*\*[^*]+\*\*\s*:?\s*$/.test(lines[index] ?? '')
+      && !/^\s*(?:-{3,}\s*)?(?:#{1,6}\s*)?(?:[\p{Extended_Pictographic}\uFE0F]\s*)?\*\*[^*]+\*\*\s*:?\s*$/u.test(lines[index] ?? '')
+      && !/^\s*(?:-{3,}\s*)?#{1,6}\s+/.test(lines[index] ?? '')
     ) {
-      paragraph.push(lines[index])
+      const cleanLine = stripBlockDecorators(lines[index] ?? '')
+      if (cleanLine) paragraph.push(cleanLine)
       index += 1
     }
     const text = paragraph.join('\n').trim()

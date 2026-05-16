@@ -9,7 +9,9 @@ if [ ! -f "$PLIST_PATH" ]; then
   exit 1
 fi
 
-launchctl unload "$PLIST_PATH" >/dev/null 2>&1 || true
-launchctl load "$PLIST_PATH"
+launchctl bootout "gui/$(id -u)" "$PLIST_PATH" >/dev/null 2>&1 || true
+launchctl bootstrap "gui/$(id -u)" "$PLIST_PATH"
+launchctl enable "gui/$(id -u)/${LABEL}" >/dev/null 2>&1 || true
+launchctl kickstart -k "gui/$(id -u)/${LABEL}"
 
 echo "Restarted ${LABEL}"
