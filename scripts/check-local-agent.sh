@@ -25,8 +25,8 @@ PY
 )"
 
 echo "Local process supervisor:"
-if launchctl list | grep -q "$LABEL"; then
-  launchctl list | grep "$LABEL"
+if launchctl print "gui/$(id -u)/${LABEL}" >/dev/null 2>&1; then
+  launchctl print "gui/$(id -u)/${LABEL}" | sed -n '1,12p'
 else
   echo "  ${LABEL} is not loaded"
 fi

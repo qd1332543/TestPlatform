@@ -33,10 +33,12 @@ cat > "$PLIST_PATH" <<PLIST
 </plist>
 PLIST
 
-launchctl unload "$PLIST_PATH" >/dev/null 2>&1 || true
-launchctl load "$PLIST_PATH"
+launchctl bootout "gui/$(id -u)" "$PLIST_PATH" >/dev/null 2>&1 || true
+launchctl bootstrap "gui/$(id -u)" "$PLIST_PATH"
+launchctl enable "gui/$(id -u)/${LABEL}" >/dev/null 2>&1 || true
+launchctl kickstart -k "gui/$(id -u)/${LABEL}"
 
 echo "Installed ${LABEL}"
 echo "Plist: ${PLIST_PATH}"
 echo "Logs: ${LOG_DIR}/launchd.out.log and ${LOG_DIR}/launchd.err.log"
-echo "Status: launchctl list | grep ${LABEL}"
+echo "Status: launchctl print gui/$(id -u)/${LABEL}"
